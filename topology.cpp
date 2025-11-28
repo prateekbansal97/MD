@@ -171,7 +171,7 @@ int Topology::read_topology()
     }
 
 
-    print_atom_details(100);
+    print_atom_details(200);
     // print_atom_details_to_file();
 
     file.close();
@@ -442,6 +442,7 @@ void Topology::process_residue_pointer_section(std::string& line)
         for (unsigned long int i = last_residue_num - 1; i < res2 - 1; i++)
         {
             atom_list[i].residue_number = res_num;
+            atom_list[i].residue_name = residue_labels_[res_num - 1];
         }
     }
 
@@ -461,6 +462,7 @@ void Topology::process_residue_pointer_section(std::string& line)
         for (unsigned long int i = res1 - 1; i < res2 - 1; i++)
         {
             atom_list[i].residue_number = res_num;
+            atom_list[i].residue_name = residue_labels_[res_num - 1];
         }
     }
 }   
