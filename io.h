@@ -12,8 +12,11 @@
 bool check_first_char(const std::string& line, char target);
 bool check_if_line_starts_with_string(const std::string& line, const std::string& target);
 bool check_if_line_empty(const std::string& line);
+bool check_if_whitespace_in_string(const std::string& line);
 
+std::vector<std::string> split_line_fixed_length(const std::string& line, size_t field_length);
+std::string remove_whitespaces_from_string(const std::string& str);
 std::string extract_header(const std::string& line);
-std::vector<std::string> split_line_on_delimiter(const std::string& line, std::string& delimiter);
-std::vector<std::string> split_line_over_empty_spaces(std::string& line);
+std::vector<std::string> split_line_on_delimiter(const std::string& line, const std::string& delimiter);
+std::vector<std::string> split_line_over_empty_spaces(const std::string& line);
 #endif // IO_H
