@@ -115,6 +115,7 @@ int Topology::read_topology()
                 }
                 else if (header == "RESIDUE_POINTER")
                 {
+                    res_num = 0;
                     current_section = Section::Residue_Pointer;
                 }
                 else
@@ -170,20 +171,21 @@ int Topology::read_topology()
     }
 
 
-    print_atom_details();
+    print_atom_details(100);
     // print_atom_details_to_file();
 
     file.close();
     return 0;
 }
 
-void Topology::print_atom_details()
+void Topology::print_atom_details(int max_print)
 {
     int printed = 0;
     for (const auto& atom : atom_list) {
-        if (printed >= 1000) break; // Print only first 1000 atoms for brevity
+        if (printed >= max_print) break; // Print only first 1000 atoms for brevity
         printed++;
-        std::cout << "Atom Name: " << atom.name
+        std::cout << "Atom Index " << printed
+                  << ", Atom Name: " << atom.name
                   << ", Type: " << atom.type
                   << ", Charge: " << atom.partial_charge
                   << ", Atomic Number: " << atom.atomic_number
@@ -431,30 +433,34 @@ void Topology::process_residue_pointer_section(std::string& line)
 {
     // Residue pointers are values that indicate the starting atom index for each residue.
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    std::vector<unsigned long int> residue_starts;
-    for (const auto& entry : entries) {
-        unsigned long int start_index = static_cast<unsigned long int>(std::stoul(entry));
-        residue_starts.push_back(start_index);
-    }
-    // Now assign residue names to atoms based on these pointers
-    for (size_t i = 0; i < residue_starts.size(); ++i) {
-        unsigned long int start = residue_starts[i];
-        unsigned long int end = (i + 1 < residue_starts.size()) ? residue_starts[i + 1] : static_cast<unsigned long int>(atom_list.size() + 1);
-        std::string residue_name = (i < residue_labels_.size()) ? residue_labels_[i] : "UNK";
-        for (unsigned long int j = start; j < end; ++j) {
-            if (j - 1 < atom_list.size()) { // Convert to 0-based index
-                atom_list[j - 1].residue_name = residue_name;
-            }
+
+    if (res_num > 0)
+    {
+        res_num += 1;
+        // int res1 = last_residue_num;
+        unsigned long int res2 = static_cast<unsigned long int>(std::stoul(entries[0]));
+        for (unsigned long int i = last_residue_num - 1; i < res2 - 1; i++)
+        {
+            atom_list[i].residue_number = res_num;
         }
     }
-    // assign residue numbers using the counter index_processed
-    for (size_t i = 0; i < residue_starts.size(); ++i) {
-        unsigned long int start = residue_starts[i];
-        unsigned long int end = (i + 1 < residue_starts.size()) ? residue_starts[i + 1] : static_cast<unsigned long int>(atom_list.size() + 1);
-        for (unsigned long int j = start; j < end; ++j) {
-            if (j - 1 < atom_list.size()) { // Convert to 0-based index
-                atom_list[j - 1].residue_number = i + 1; // 1-based residue numbering
-            }
+
+    for (size_t i = 0; i < entries.size() - 1; ++i)
+    {
+
+        unsigned long int res1 = static_cast<unsigned long int>(std::stoul(entries[i]));
+        unsigned long int res2 = static_cast<unsigned long int>(std::stoul(entries[i+1]));
+
+        if (i == entries.size() - 2)
+        {
+            last_residue_num = res2;
+        }
+
+        res_num += 1;
+
+        for (unsigned long int i = res1 - 1; i < res2 - 1; i++)
+        {
+            atom_list[i].residue_number = res_num;
         }
     }
 }   

@@ -22,7 +22,7 @@ public:
 
     int read_topology();
     std::vector<unsigned long int> get_pointers();
-    void print_atom_details();
+    void print_atom_details(int max_print);
     void print_atom_details_to_file();
     
     void process_pointers_section(std::string& line);
@@ -45,6 +45,8 @@ private:
     
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
+    int res_num = 0;
+    int last_residue_num = 0;
 
     // nbmatrix of shape (nTypes_, nTypes_)
     std::vector<std::vector<unsigned long int>> nbmatrix_;
