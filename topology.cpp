@@ -21,6 +21,10 @@ enum class Section {
     Nonbonded_Parm_Index,
     Residue_Label,
     Residue_Pointer,
+    Bond_Force_Constant,
+    Bond_Equil_Value,
+    Angle_Force_Constant,
+    Angle_Equil_Value,
     // add more as needed
 };
 
@@ -118,6 +122,24 @@ int Topology::read_topology()
                     res_num = 0;
                     current_section = Section::Residue_Pointer;
                 }
+                else if (header == "BOND_FORCE_CONSTANT")
+                {
+                    res_num = 0;
+                    current_section = Section::Bond_Force_Constant;
+                }
+                else if (header == "BOND_EQUIL_VALUE")
+                {
+                    res_num = 0;
+                    current_section = Section::Bond_Equil_Value;
+                }
+                else if (header == "ANGLE_FORCE_CONSTANT")
+                {
+                    current_section = Section::Angle_Force_Constant;
+                }
+                else if (header == "ANGLE_EQUIL_VALUE")
+                {
+                    current_section = Section::Angle_Equil_Value;
+                }
                 else
                 {   
                     current_section = Section::None;
@@ -162,6 +184,22 @@ int Topology::read_topology()
             }
             else if (current_section == Section::Residue_Pointer) {
                 process_residue_pointer_section(line); 
+            }
+            else if (current_section == Section::Bond_Force_Constant)
+            {
+                process_bond_force_constant_section(line);
+            }
+            else if (current_section == Section::Bond_Equil_Value)
+            {
+                process_bond_equil_section(line);
+            }
+            else if (current_section == Section::Angle_Force_Constant)
+            {
+                process_angle_force_constant_section(line);
+            }
+            else if (current_section == Section::Angle_Equil_Value)
+            {
+                process_angle_equil_section(line);
             }
             else {
                 // Skip unhandled sections
@@ -466,4 +504,53 @@ void Topology::process_residue_pointer_section(std::string& line)
         }
     }
 }   
+
+void Topology::process_bond_force_constant_section(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float force_constant = std::stof(entries[i]);
+        bond_force_constants_.push_back(force_constant);
+}
+}
+
+void Topology::process_bond_equil_section(std::string& line)
+{
+        std::vector<std::string> entries = split_line_over_empty_spaces(line);
+
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float force_constant = std::stof(entries[i]);
+        bond_force_equils_.push_back(force_constant);
+}
+}
+
+void Topology::process_angle_force_constant_section(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float force_constant = std::stof(entries[i]);
+        angle_force_constants_.push_back(force_constant);
+}
+}
+
+void Topology::process_angle_equil_section(std::string& line)
+{
+        std::vector<std::string> entries = split_line_over_empty_spaces(line);
+
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float force_constant = std::stof(entries[i]);
+        angle_force_equils_.push_back(force_constant);
+}
+}
+
+
+
+
+
 

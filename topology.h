@@ -35,13 +35,22 @@ public:
     void process_nonbonded_parm_index_section(std::string& line);
     void process_residue_label_section(std::string& line);
     void process_residue_pointer_section(std::string& line);
-
+    void process_bond_force_constant_section(std::string& line);
+    void process_bond_equil_section(std::string& line);
+    void process_angle_force_constant_section(std::string& line);
+    void process_angle_equil_section(std::string& line);
+    
     void assign_hyperparameters();
 
 private:
     std::vector<unsigned long int> pointers_;
     std::vector<Atom> atom_list;
     std::vector<std::string> residue_labels_;
+    std::vector<float> bond_force_constants_;
+    std::vector<float> bond_force_equils_;
+    std::vector<float> angle_force_constants_;
+    std::vector<float> angle_force_equils_;
+
     
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
