@@ -17,7 +17,7 @@ public:
     Atom(std::string atomtype, bool isType)
         : type(atomtype), partial_charge(0.0f), name("") {}
 
-    Atom(std::string atomtype, float charge)
+    Atom(std::string atomtype, double charge)
         : type(atomtype), partial_charge(charge) {}
 
 
@@ -27,7 +27,7 @@ public:
     std::string residue_name;
     unsigned long int residue_number;
     int atomic_number;
-    float mass;
+    double mass;
     std::string element;
     unsigned long int atom_type_index;
     int nExcluded_Atoms;

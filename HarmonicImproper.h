@@ -9,13 +9,13 @@ class HarmonicImproper
 {
 
     public:
-        HarmonicImproper(float IMP_force_constant, float IMP_force_equil) : 
+        HarmonicImproper(double IMP_force_constant, double IMP_Phase) : 
         IMP_force_constant(IMP_force_constant), 
-        IMP_force_equil(IMP_force_equil), type(0) {}
+        IMP_Phase(IMP_Phase), type(0) {}
         
-        HarmonicImproper(float IMP_force_constant, float IMP_force_equil, Atom atomA, Atom atomB, Atom atomC, Atom atomD) : 
+        HarmonicImproper(double IMP_force_constant, double IMP_Phase, Atom atomA, Atom atomB, Atom atomC, Atom atomD) : 
         IMP_force_constant(IMP_force_constant), 
-        IMP_force_equil(IMP_force_equil), 
+        IMP_Phase(IMP_Phase), 
         atomA(atomA), 
         atomB(atomB),
         atomC(atomC),
@@ -23,22 +23,22 @@ class HarmonicImproper
 
         HarmonicImproper(Atom atomA, Atom atomB, Atom atomC, Atom atomD) : 
         IMP_force_constant(0.0), 
-        IMP_force_equil(0.0), 
+        IMP_Phase(0.0), 
         atomA(atomA), 
         atomB(atomB), 
         atomC(atomC),
         atomD(atomD), type(0) {}
 
-        float return_force(float distance);
+        double return_energy(double distance);
 
         void set_type(int type_id) { type = type_id; }
         int get_type() const { return type; }
 
-        void set_IMP_force_constant(float force_constant) {IMP_force_constant = force_constant; }
-        float get_IMP_force_constant() const {return IMP_force_constant; }
+        void set_IMP_force_constant(double force_constant) {IMP_force_constant = force_constant; }
+        double get_IMP_force_constant() const {return IMP_force_constant; }
 
-        void set_IMP_equil_value(float equil_value) {IMP_force_equil = equil_value; }
-        float get_IMP_equil_value() const {return IMP_force_equil; }
+        void set_IMP_phase_value(double phase_value) {IMP_Phase = phase_value; }
+        double get_IMP_phase_value() const {return IMP_Phase; }
 
         const Atom& get_atomA() const {return atomA; }
         const Atom& get_atomB() const {return atomB; }
@@ -46,8 +46,8 @@ class HarmonicImproper
         const Atom& get_atomD() const {return atomD; }
     
     private:
-        float IMP_force_constant;
-        float IMP_force_equil;
+        double IMP_force_constant;
+        double IMP_Phase;
         Atom atomA;
         Atom atomB;
         Atom atomC;

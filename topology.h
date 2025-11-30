@@ -63,6 +63,14 @@ public:
     void process_charmm_num_impropers(std::string& line);
     void process_charmm_impropers(std::string& line);
     void process_charmm_improper_assign();
+    void process_charmm_num_impr_types(std::string& line);
+    void process_charmm_improper_force_constant(std::string& line);
+    void process_charmm_improper_phase(std::string& line);
+    void process_improper_bradley_assign_ffparams(); 
+    void print_IMP_bonds(int max_print);
+
+    void process_Lennard_Jones_Acoef(std::string& line);
+    void process_Lennard_Jones_Bcoef(std::string& line);
 
 
     void assign_hyperparameters();
@@ -72,30 +80,32 @@ private:
     std::vector<Atom> atom_list;
     std::vector<std::string> residue_labels_;
     
-    std::vector<float> bond_force_constants_;
-    std::vector<float> bond_force_equils_;
+    std::vector<double> bond_force_constants_;
+    std::vector<double> bond_force_equils_;
     
-    std::vector<float> angle_force_constants_;
-    std::vector<float> angle_force_equils_;
+    std::vector<double> angle_force_constants_;
+    std::vector<double> angle_force_equils_;
 
     std::vector<int> charmm_urey_bradley_indices;
     std::vector<HarmonicUB> HarmonicUB_list;
-    std::vector<float> charmm_urey_bradley_force_constants_;
-    std::vector<float> charmm_urey_bradley_equil_values_;
+    std::vector<double> charmm_urey_bradley_force_constants_;
+    std::vector<double> charmm_urey_bradley_equil_values_;
 
-    std::vector<float> dihedral_force_constants_;
-    std::vector<float> dihedral_equil_values_;
-    std::vector<float> dihedral_periodicities_;
-    std::vector<float> dihedral_phases_;
+    std::vector<double> dihedral_force_constants_;
+    std::vector<double> dihedral_equil_values_;
+    std::vector<double> dihedral_periodicities_;
+    std::vector<double> dihedral_phases_;
 
-    std::vector<float> scee_scale_factors_;
-    std::vector<float> scnb_scale_factors_;
+    std::vector<double> scee_scale_factors_;
+    std::vector<double> scnb_scale_factors_;
 
     std::vector<int> charmm_improper_indices_;
     std::vector<HarmonicImproper> HarmonicIMP_list;
-    std::vector<float> charmm_improper_force_constants_;
-    std::vector<float> charmm_improper_equil_values_;
+    std::vector<double> charmm_improper_force_constants_;
+    std::vector<double> charmm_improper_phases_;
 
+    std::vector<double> lennard_jones_Acoefs_;
+    std::vector<double> lennard_jones_Bcoefs_;
 
 
     unsigned long int processed_atoms_index = 0;
@@ -110,7 +120,7 @@ private:
     unsigned long int nTypesUreyBradley;
 
     unsigned long int nCharmmImpropers_;
-
+    unsigned long int nCharmmImproperTypes_;
     // Hyperparameters
     unsigned long int nAtoms_;
     unsigned long int nTypes_;

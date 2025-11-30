@@ -1,10 +1,12 @@
 
 #include "atom.h"
 #include "HarmonicImproper.h"
+#include <cmath>
 
-float HarmonicImproper::return_force(float distance)
+double HarmonicImproper::return_energy(double angle_radians)
 {
-    float force = IMP_force_constant*(distance - IMP_force_equil)*(distance - IMP_force_equil);
-    return force;
+    // CHARMM improper harmonic term: V = K_psi * (psi - psi0)^2
+    // Returning the force-like value requested: 2 * K_psi * (psi - psi0)^2
+    const double delta = angle_radians - IMP_Phase;
+    return IMP_force_constant * delta * delta;
 }
-

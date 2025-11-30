@@ -36,6 +36,11 @@ enum class Section {
     Scnb_Scale_Factor,
     Charmm_Num_Impropers,
     Charmm_Impropers,
+    Charmm_Num_Impr_Types,
+    Charmm_Improper_Force_Constants,
+    Charmm_Improper_Phases,
+    Lennard_Jones_Acoef,
+    Lennard_Jones_Bcoef
     // add more as needed
 };
 
@@ -117,6 +122,9 @@ int Topology::read_topology()
                 
                 else if (header == "CHARMM_NUM_IMPROPERS") current_section = Section::Charmm_Num_Impropers;
                 else if (header == "CHARMM_IMPROPERS") current_section = Section::Charmm_Impropers;
+                else if (header == "CHARMM_NUM_IMPR_TYPES") current_section = Section::Charmm_Num_Impr_Types;
+                else if (header == "CHARMM_IMPROPER_FORCE_CONSTANT") current_section = Section::Charmm_Improper_Force_Constants;
+                else if (header == "CHARMM_IMPROPER_PHASE") current_section = Section::Charmm_Improper_Phases;
                 
                 else current_section = Section::None;
 
@@ -162,6 +170,9 @@ int Topology::read_topology()
             
             else if (current_section == Section::Charmm_Num_Impropers) process_charmm_num_impropers(line);
             else if (current_section == Section::Charmm_Impropers) process_charmm_impropers(line);
+            else if (current_section == Section::Charmm_Num_Impr_Types) process_charmm_num_impr_types(line);
+            else if (current_section == Section::Charmm_Improper_Force_Constants) process_charmm_improper_force_constant(line);
+            else if (current_section == Section::Charmm_Improper_Phases) process_charmm_improper_phase(line);
 
             else continue;
         }
@@ -170,9 +181,11 @@ int Topology::read_topology()
     process_charmm_urey_bradley_assign();
     process_charmm_urey_bradley_assign_ffparams();
     process_charmm_improper_assign();
+    process_improper_bradley_assign_ffparams();
 
     // print_atom_details(200);
-    print_UB_bonds(100);
+    // print_UB_bonds(100);
+    print_IMP_bonds(100);
     // print_atom_details_to_file();
 
     file.close();
@@ -349,7 +362,7 @@ void Topology::process_mass_section(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);  
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float mass = std::stof(entries[i]);
+        double mass = std::stod(entries[i]);
         if (processed_atoms_index < atom_list.size()) {
             atom_list[processed_atoms_index].mass = mass;
             processed_atoms_index++;
@@ -465,7 +478,7 @@ void Topology::process_bond_force_constant_section(std::string& line)
 
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float force_constant = std::stof(entries[i]);
+        double force_constant = std::stod(entries[i]);
         bond_force_constants_.push_back(force_constant);
     }
 }
@@ -476,7 +489,7 @@ void Topology::process_bond_equil_section(std::string& line)
 
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float force_constant = std::stof(entries[i]);
+        double force_constant = std::stod(entries[i]);
         bond_force_equils_.push_back(force_constant);
     }
 }
@@ -487,7 +500,7 @@ void Topology::process_angle_force_constant_section(std::string& line)
 
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float force_constant = std::stof(entries[i]);
+        double force_constant = std::stod(entries[i]);
         angle_force_constants_.push_back(force_constant);
     }
 }
@@ -498,7 +511,7 @@ void Topology::process_angle_equil_section(std::string& line)
 
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float force_constant = std::stof(entries[i]);
+        double force_constant = std::stod(entries[i]);
         angle_force_equils_.push_back(force_constant);
     }
 }
@@ -522,7 +535,7 @@ void Topology::process_charmm_urey_bradley(std::string& line)
 
 void Topology::process_charmm_urey_bradley_assign()
 {
-    for (int i = 0; i < charmm_urey_bradley_indices.size(); i=i+3)
+    for (int i = 0; i + 3 < static_cast<int>(charmm_urey_bradley_indices.size()); i=i+3)
     {
         int indexA = charmm_urey_bradley_indices[i] - 1;
         int indexB = charmm_urey_bradley_indices[i+1] - 1;
@@ -541,7 +554,7 @@ void Topology::process_charmm_urey_bradley_force_constant(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float force_constant = std::stof(entries[i]);
+        double force_constant = std::stod(entries[i]);
         charmm_urey_bradley_force_constants_.push_back(force_constant);
     }
 }
@@ -551,7 +564,7 @@ void Topology::process_charmm_urey_bradley_equil_value(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float equil_value = std::stof(entries[i]);
+        double equil_value = std::stod(entries[i]);
         charmm_urey_bradley_equil_values_.push_back(equil_value);
     }
 }
@@ -561,8 +574,8 @@ void Topology::process_charmm_urey_bradley_assign_ffparams()
     for (auto& UB_bond: HarmonicUB_list)
     {
         int type = UB_bond.get_type();
-        float force_constant = charmm_urey_bradley_force_constants_[type];
-        float equil_value = charmm_urey_bradley_equil_values_[type];
+        double force_constant = charmm_urey_bradley_force_constants_[type];
+        double equil_value = charmm_urey_bradley_equil_values_[type];
         UB_bond.set_UB_force_constant(force_constant);
         UB_bond.set_UB_equil_value(equil_value);
     }
@@ -600,7 +613,7 @@ void Topology::process_dihedral_force_constant(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float force_constant = std::stof(entries[i]);
+        double force_constant = std::stod(entries[i]);
         dihedral_force_constants_.push_back(force_constant);
     }
 }
@@ -610,7 +623,7 @@ void Topology::process_dihedral_periodicity(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float periodicity = std::stof(entries[i]);
+        double periodicity = std::stod(entries[i]);
         dihedral_periodicities_.push_back(periodicity);
     }
 }
@@ -620,7 +633,7 @@ void Topology::process_dihedral_phase(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float phase = std::stof(entries[i]);
+        double phase = std::stod(entries[i]);
         dihedral_phases_.push_back(phase);
     }
 }
@@ -630,7 +643,7 @@ void Topology::process_scee_scale_factor(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float scee = std::stof(entries[i]);
+        double scee = std::stod(entries[i]);
         scee_scale_factors_.push_back(scee);
     }
 }
@@ -640,7 +653,7 @@ void Topology::process_scnb_scale_factor(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
     
-        float scnb = std::stof(entries[i]);
+        double scnb = std::stod(entries[i]);
         scnb_scale_factors_.push_back(scnb);
     }
 }
@@ -662,13 +675,13 @@ void Topology::process_charmm_impropers(std::string& line)
 
 void Topology::process_charmm_improper_assign()
 {
-    for (int i = 0; i < charmm_improper_indices_.size(); i=i+5)
+    for (int i = 0; i + 4 < static_cast<int>(charmm_improper_indices_.size()); i=i+5)
     {
-        int indexA = charmm_urey_bradley_indices[i] - 1;
-        int indexB = charmm_urey_bradley_indices[i+1] - 1;
-        int indexC = charmm_urey_bradley_indices[i+2] - 1;
-        int indexD = charmm_urey_bradley_indices[i+3] - 1;
-        int index_CI_type = charmm_urey_bradley_indices[i+4] - 1;
+        int indexA = charmm_improper_indices_[i] - 1;
+        int indexB = charmm_improper_indices_[i+1] - 1;
+        int indexC = charmm_improper_indices_[i+2] - 1;
+        int indexD = charmm_improper_indices_[i+3] - 1;
+        int index_CI_type = charmm_improper_indices_[i+4] - 1;
 
         Atom atomA = atom_list[indexA];
         Atom atomB = atom_list[indexB];
@@ -681,5 +694,79 @@ void Topology::process_charmm_improper_assign()
     }
 }
 
+void Topology::process_charmm_num_impr_types(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    nCharmmImproperTypes_ = std::stoi(entries[0]);
+}
+
+void Topology::process_charmm_improper_force_constant(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        double force_constant = std::stod(entries[i]);
+        charmm_improper_force_constants_.push_back(force_constant);
+    }
+}
+
+void Topology::process_charmm_improper_phase(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        double phase = std::stod(entries[i]);
+        charmm_improper_phases_.push_back(phase);
+    }
+}
+
+void Topology::process_improper_bradley_assign_ffparams()
+{
+    for (HarmonicImproper& IMP_bond: HarmonicIMP_list)
+    {
+        int type = IMP_bond.get_type();
+        double force_constant = charmm_improper_force_constants_[type];
+        double phase_value = charmm_improper_phases_[type];
+        IMP_bond.set_IMP_force_constant(force_constant);
+        IMP_bond.set_IMP_phase_value(phase_value);
+    }
+}
+
+void Topology::print_IMP_bonds(int max_print)
+{
+    if (HarmonicIMP_list.empty()) {
+        std::cout << "No Improper torsions parsed." << std::endl;
+        return;
+    }
+
+    size_t count = HarmonicIMP_list.size();
+    if (max_print > 0 && static_cast<size_t>(max_print) < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = 0; i < count; i++)
+    {
+        const HarmonicImproper& IMP_bond = HarmonicIMP_list[i];
+        const Atom& atomA = IMP_bond.get_atomA();
+        const Atom& atomB = IMP_bond.get_atomB();
+        const Atom& atomC = IMP_bond.get_atomC();
+        const Atom& atomD = IMP_bond.get_atomD();
+
+        std::cout << "IMP[" << i << "] "
+                  << "type=" << IMP_bond.get_type() + 1
+                  << " k=" << IMP_bond.get_IMP_force_constant()
+                  << " phase=" << IMP_bond.get_IMP_phase_value()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << " - " << atomC.name << " (" << atomC.residue_name << atomC.residue_number << ")"
+                  << " - " << atomD.name << " (" << atomD.residue_name << atomD.residue_number << ")"
+                  << std::endl;
+    }
+}
+
+void Topology::process_Lennard_Jones_Acoef(std::string& line)
+{
+
+}
 
 
