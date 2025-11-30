@@ -7,7 +7,11 @@
 class Atom 
 {
 public:
-
+    Atom(): partial_charge(0.0L), type(""), name(""), residue_name(""), 
+            residue_number(0), atomic_number(0), 
+            mass(0.0f), element(""), 
+            atom_type_index(0), nExcluded_Atoms(0) {}
+    
     Atom (std::string atomname)
         : name(atomname), type(""), partial_charge(0.0f) {}
     Atom(std::string atomtype, bool isType)

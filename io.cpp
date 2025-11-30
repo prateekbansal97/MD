@@ -3,6 +3,9 @@
 #include <vector>
 #include <cctype>
 #include <algorithm>
+#include <numeric> 
+#include <stdexcept>
+
 #include "io.h"
 
 bool check_first_char(const std::string& line, char target)
@@ -108,3 +111,29 @@ std::vector<std::string> split_line_over_empty_spaces(const std::string& line)
     }
     return tokens;
 }
+
+std::vector<std::vector<std::string>> split_vector_into_chunks(const std::vector<std::string>& entries, const std::vector<std::size_t>& chunks)
+{
+    // entries will be an array like ["0", "3", "4", "0", "3", "4", "0", "3", "4", "0"]
+    // chunks will be an array like {3, 3, 4} for the entries array
+    // First ensure that the sum of elements in chunks is the same as the length of entries
+    // Then do the chunking and return the output
+
+
+    const std::size_t total = std::accumulate(chunks.begin(), chunks.end(), std::size_t{0});
+    if (total != entries.size()) {
+        throw std::invalid_argument("sum(chunks) must equal entries.size()");
+    }
+
+    std::vector<std::vector<std::string>> result;
+    result.reserve(chunks.size());
+
+    std::size_t index = 0;
+    for (std::size_t c : chunks) {
+        result.emplace_back(entries.begin() + index, entries.begin() + index + c);
+        index += c;
+    }
+    return result;
+}
+
+

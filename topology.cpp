@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include "topology.h"
+#include "harmonicUB.h"
 #include <vector>
 #include "atom.h"
 #include "io.h"
@@ -25,6 +26,10 @@ enum class Section {
     Bond_Equil_Value,
     Angle_Force_Constant,
     Angle_Equil_Value,
+    Charmm_Urey_Bradley_Count,
+    Charmm_Urey_Bradley,
+    Charmm_Urey_Bradley_Force_Constant,
+    Charmm_Urey_Bradley_Equil_Value
     // add more as needed
 };
 
@@ -140,6 +145,18 @@ int Topology::read_topology()
                 {
                     current_section = Section::Angle_Equil_Value;
                 }
+                else if (header == "CHARMM_UREY_BRADLEY_COUNT")
+                {
+                    current_section = Section::Charmm_Urey_Bradley_Count;
+                }
+                else if (header == "CHARMM_UREY_BRADLEY")
+                {
+                    current_section = Section::Charmm_Urey_Bradley;
+                }
+                else if (header == "CHARMM_UREY_BRADLEY_FORCE_CONSTANT")
+                {
+                    current_section = Section::Charmm_Urey_Bradley_Force_Constant;
+                }
                 else
                 {   
                     current_section = Section::None;
@@ -201,6 +218,15 @@ int Topology::read_topology()
             {
                 process_angle_equil_section(line);
             }
+            else if (current_section == Section::Charmm_Urey_Bradley_Count)
+            {
+                process_charmm_urey_bradley_count_section(line);
+            }
+            else if (current_section == Section::Charmm_Urey_Bradley)
+            {
+                process_charmm_urey_bradley(line);
+            }
+
             else {
                 // Skip unhandled sections
                 continue;
@@ -208,7 +234,8 @@ int Topology::read_topology()
         }
     }
 
-
+    process_charmm_urey_bradley_assign();
+    
     print_atom_details(200);
     // print_atom_details_to_file();
 
@@ -549,8 +576,37 @@ void Topology::process_angle_equil_section(std::string& line)
 }
 }
 
+void Topology::process_charmm_urey_bradley_count_section(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    nUreyBradley_ =  static_cast<unsigned long int>(std::stoul(entries[0]));
+    nTypesUreyBradley = static_cast<unsigned long int>(std::stoul(entries[1]));
 
+}
 
+void Topology::process_charmm_urey_bradley(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
 
+    for (size_t i = 0; i < entries.size(); ++i) {
+        int index = std::stoi(entries[i]);
+        charmm_urey_bradley_indices.push_back(index);
+}
+}
+
+void Topology::process_charmm_urey_bradley_assign()
+{
+    for (int i = 0; i < charmm_urey_bradley_indices.size(); i=i+3)
+    {
+        int indexA = charmm_urey_bradley_indices[i];
+        int indexB = charmm_urey_bradley_indices[i+1];
+        int index_CUB_type = charmm_urey_bradley_indices[i+2];
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        HarmonicUB UB_bond = HarmonicUB(atomA, atomB);
+        HarmonicUB_list.push_back(UB_bond);
+    }
+}
 
 

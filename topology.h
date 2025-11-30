@@ -4,6 +4,7 @@
 #include <vector>
 #include "atom.h"
 #include "io.h"
+#include "harmonicUB.h"
 
 class Topology 
 
@@ -33,13 +34,22 @@ public:
     void process_atom_type_index_section(std::string& line);
     void process_number_excluded_atoms_section(std::string& line);
     void process_nonbonded_parm_index_section(std::string& line);
+    
     void process_residue_label_section(std::string& line);
     void process_residue_pointer_section(std::string& line);
+    
     void process_bond_force_constant_section(std::string& line);
     void process_bond_equil_section(std::string& line);
+    
     void process_angle_force_constant_section(std::string& line);
     void process_angle_equil_section(std::string& line);
-    
+   
+    void process_charmm_urey_bradley_count_section(std::string& line);
+    void process_charmm_urey_bradley(std::string& line);
+    void process_charmm_urey_bradley_assign();
+
+
+
     void assign_hyperparameters();
 
 private:
@@ -50,8 +60,9 @@ private:
     std::vector<float> bond_force_equils_;
     std::vector<float> angle_force_constants_;
     std::vector<float> angle_force_equils_;
+    std::vector<int> charmm_urey_bradley_indices;
+    std::vector<HarmonicUB> HarmonicUB_list;
 
-    
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
     int res_num = 0;
@@ -59,6 +70,10 @@ private:
 
     // nbmatrix of shape (nTypes_, nTypes_)
     std::vector<std::vector<unsigned long int>> nbmatrix_;
+
+    unsigned long int nUreyBradley_;
+    unsigned long int nTypesUreyBradley;
+
 
     // Hyperparameters
     unsigned long int nAtoms_;
