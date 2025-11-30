@@ -29,7 +29,13 @@ enum class Section {
     Charmm_Urey_Bradley_Count,
     Charmm_Urey_Bradley,
     Charmm_Urey_Bradley_Force_Constant,
-    Charmm_Urey_Bradley_Equil_Value
+    Charmm_Urey_Bradley_Equil_Value,
+    Dihedral_Force_Constant,
+    Dihedral_Periodicity,
+    Scee_Scale_Factor,
+    Scnb_Scale_Factor,
+    Charmm_Num_Impropers,
+    Charmm_Impropers,
     // add more as needed
 };
 
@@ -78,89 +84,41 @@ int Topology::read_topology()
             else if (check_if_line_starts_with_string(line, "%FLAG"))
             {
                 std::string header = extract_header(line);
-                if (header == "POINTERS")
-                {
-                    current_section = Section::Pointers;
-                }
-                else if (header == "ATOM_NAME")
-                {
-                    current_section = Section::AtomName;
-                }
-                else if (header == "CHARGE")
-                {
-                    processed_atoms_index = 0;
-                    current_section = Section::Charge;
-                }
-                else if (header == "ATOMIC_NUMBER")
-                {
-                    processed_atoms_index = 0;
-                    current_section = Section::Atomic_Number;
-                }
-                else if (header == "MASS")
-                {
-                    processed_atoms_index = 0;
-                    current_section = Section::Mass;
-                }
-                else if (header == "ATOM_TYPE_INDEX")
-                {
-                    processed_atoms_index = 0;
-                    current_section = Section::Atom_Type_Index;
-                }
-                else if (header == "NUMBER_EXCLUDED_ATOMS")
-                {
-                    processed_atoms_index = 0;
-                    current_section = Section::Number_Excluded_Atoms;
-                }
-                else if (header == "NONBONDED_PARM_INDEX")
-                {
-                    processed_atoms_index = 0;
-                    index_processed = 0;
-                    current_section = Section::Nonbonded_Parm_Index;
-                }
-                else if (header == "RESIDUE_LABEL")
-                {
-                    index_processed = 0;
-                    current_section = Section::Residue_Label;
-                }
-                else if (header == "RESIDUE_POINTER")
-                {
-                    res_num = 0;
-                    current_section = Section::Residue_Pointer;
-                }
-                else if (header == "BOND_FORCE_CONSTANT")
-                {
-                    res_num = 0;
-                    current_section = Section::Bond_Force_Constant;
-                }
-                else if (header == "BOND_EQUIL_VALUE")
-                {
-                    res_num = 0;
-                    current_section = Section::Bond_Equil_Value;
-                }
-                else if (header == "ANGLE_FORCE_CONSTANT")
-                {
-                    current_section = Section::Angle_Force_Constant;
-                }
-                else if (header == "ANGLE_EQUIL_VALUE")
-                {
-                    current_section = Section::Angle_Equil_Value;
-                }
-                else if (header == "CHARMM_UREY_BRADLEY_COUNT")
-                {
-                    current_section = Section::Charmm_Urey_Bradley_Count;
-                }
-                else if (header == "CHARMM_UREY_BRADLEY")
-                {
-                    current_section = Section::Charmm_Urey_Bradley;
-                }
-                else if (header == "CHARMM_UREY_BRADLEY_FORCE_CONSTANT")
-                {
-                    current_section = Section::Charmm_Urey_Bradley_Force_Constant;
-                }
-                else
-                {   
-                    current_section = Section::None;
-                }
+                if (header == "POINTERS") current_section = Section::Pointers;
+                
+                else if (header == "ATOM_NAME") current_section = Section::AtomName;
+                else if (header == "CHARGE") { processed_atoms_index = 0; current_section = Section::Charge; }
+                else if (header == "ATOMIC_NUMBER") { processed_atoms_index = 0; current_section = Section::Atomic_Number; }
+                else if (header == "MASS") { processed_atoms_index = 0; current_section = Section::Mass; }
+                else if (header == "ATOM_TYPE_INDEX") { processed_atoms_index = 0; current_section = Section::Atom_Type_Index; }
+                
+                else if (header == "NUMBER_EXCLUDED_ATOMS") { processed_atoms_index = 0; current_section = Section::Number_Excluded_Atoms; }
+                else if (header == "NONBONDED_PARM_INDEX"){ processed_atoms_index = 0; index_processed = 0; current_section = Section::Nonbonded_Parm_Index; }
+                
+                else if (header == "RESIDUE_LABEL") { index_processed = 0; current_section = Section::Residue_Label; }
+                else if (header == "RESIDUE_POINTER") { res_num = 0; current_section = Section::Residue_Pointer; }
+                
+                else if (header == "BOND_FORCE_CONSTANT") { res_num = 0; current_section = Section::Bond_Force_Constant; }
+                else if (header == "BOND_EQUIL_VALUE") { res_num = 0; current_section = Section::Bond_Equil_Value; }
+                
+                else if (header == "ANGLE_FORCE_CONSTANT") current_section = Section::Angle_Force_Constant; 
+                else if (header == "ANGLE_EQUIL_VALUE") current_section = Section::Angle_Equil_Value; 
+                
+                else if (header == "CHARMM_UREY_BRADLEY_COUNT") current_section = Section::Charmm_Urey_Bradley_Count;
+                else if (header == "CHARMM_UREY_BRADLEY") current_section = Section::Charmm_Urey_Bradley;
+                else if (header == "CHARMM_UREY_BRADLEY_FORCE_CONSTANT") current_section = Section::Charmm_Urey_Bradley_Force_Constant;
+                else if (header == "CHARMM_UREY_BRADLEY_EQUIL_VALUE") current_section = Section::Charmm_Urey_Bradley_Equil_Value;
+                
+                else if (header == "DIHEDRAL_FORCE_CONSTANT") current_section = Section::Dihedral_Force_Constant;
+                else if (header == "DIHEDRAL_PERIODICITY") current_section = Section::Dihedral_Periodicity;
+                
+                else if (header == "SCEE_SCALE_FACTOR") current_section = Section::Scee_Scale_Factor;
+                else if (header == "SCNB_SCALE_FACTOR") current_section = Section::Scnb_Scale_Factor;
+                
+                else if (header == "CHARMM_NUM_IMPROPERS") current_section = Section::Charmm_Num_Impropers;
+                else if (header == "CHARMM_IMPROPERS") current_section = Section::Charmm_Impropers;
+                
+                else current_section = Section::None;
 
             }
 
@@ -171,72 +129,48 @@ int Topology::read_topology()
             }
         }
         else {
-            if (current_section == Section::Pointers) {
-                process_pointers_section(line);
-            }
-            else if (current_section == Section::AtomName) {
-                assign_hyperparameters();
-                process_atom_names_section(line);
-            }
-            else if (current_section == Section::Charge) {
-                process_charge_section(line);
-            }
-            else if (current_section == Section::Atomic_Number) {
-                process_atomic_number_section(line);
-            }
-            else if (current_section == Section::Mass) {
-                process_mass_section(line);
-            }
-            else if (current_section == Section::Atom_Type_Index) {
-                process_atom_type_index_section(line);
-            }
-            else if (current_section == Section::Number_Excluded_Atoms) {
-                process_number_excluded_atoms_section(line);
-            }
-            else if (current_section == Section::Nonbonded_Parm_Index) {
-                process_nonbonded_parm_index_section(line);
-            }
-            else if (current_section == Section::Residue_Label) {
-                process_residue_label_section(line);
-            }
-            else if (current_section == Section::Residue_Pointer) {
-                process_residue_pointer_section(line); 
-            }
-            else if (current_section == Section::Bond_Force_Constant)
-            {
-                process_bond_force_constant_section(line);
-            }
-            else if (current_section == Section::Bond_Equil_Value)
-            {
-                process_bond_equil_section(line);
-            }
-            else if (current_section == Section::Angle_Force_Constant)
-            {
-                process_angle_force_constant_section(line);
-            }
-            else if (current_section == Section::Angle_Equil_Value)
-            {
-                process_angle_equil_section(line);
-            }
-            else if (current_section == Section::Charmm_Urey_Bradley_Count)
-            {
-                process_charmm_urey_bradley_count_section(line);
-            }
-            else if (current_section == Section::Charmm_Urey_Bradley)
-            {
-                process_charmm_urey_bradley(line);
-            }
-
-            else {
-                // Skip unhandled sections
-                continue;
-            }
+            if (current_section == Section::Pointers) process_pointers_section(line);
+            
+            else if (current_section == Section::AtomName) { assign_hyperparameters(); process_atom_names_section(line); }
+            else if (current_section == Section::Charge) process_charge_section(line);
+            else if (current_section == Section::Atomic_Number) process_atomic_number_section(line);
+            else if (current_section == Section::Mass) process_mass_section(line);
+            else if (current_section == Section::Atom_Type_Index) process_atom_type_index_section(line);
+            
+            else if (current_section == Section::Number_Excluded_Atoms) process_number_excluded_atoms_section(line);
+            else if (current_section == Section::Nonbonded_Parm_Index) process_nonbonded_parm_index_section(line);
+            
+            else if (current_section == Section::Residue_Label) process_residue_label_section(line);
+            else if (current_section == Section::Residue_Pointer) process_residue_pointer_section(line);
+            
+            else if (current_section == Section::Bond_Force_Constant) process_bond_force_constant_section(line);
+            else if (current_section == Section::Bond_Equil_Value) process_bond_equil_section(line);
+            
+            else if (current_section == Section::Angle_Force_Constant) process_angle_force_constant_section(line);
+            else if (current_section == Section::Angle_Equil_Value) process_angle_equil_section(line);
+            
+            else if (current_section == Section::Charmm_Urey_Bradley_Count) process_charmm_urey_bradley_count_section(line);
+            else if (current_section == Section::Charmm_Urey_Bradley) process_charmm_urey_bradley(line);
+            else if (current_section == Section::Charmm_Urey_Bradley_Force_Constant) process_charmm_urey_bradley_force_constant(line);
+            else if (current_section == Section::Charmm_Urey_Bradley_Equil_Value) process_charmm_urey_bradley_equil_value(line);
+            
+            else if (current_section == Section::Dihedral_Force_Constant) process_dihedral_force_constant(line);
+            else if (current_section == Section::Dihedral_Periodicity) process_dihedral_periodicity(line);
+            
+            else if (current_section == Section::Scee_Scale_Factor) process_scee_scale_factor(line);
+            else if (current_section == Section::Scnb_Scale_Factor) process_scnb_scale_factor(line);
+            
+            else if (current_section == Section::Charmm_Num_Impropers) process_charmm_num_impropers(line);
+            else continue;
         }
     }
 
     process_charmm_urey_bradley_assign();
-    
-    print_atom_details(200);
+    process_charmm_urey_bradley_assign_ffparams();
+
+
+    // print_atom_details(200);
+    print_UB_bonds(100);
     // print_atom_details_to_file();
 
     file.close();
@@ -598,15 +532,133 @@ void Topology::process_charmm_urey_bradley_assign()
 {
     for (int i = 0; i < charmm_urey_bradley_indices.size(); i=i+3)
     {
-        int indexA = charmm_urey_bradley_indices[i];
-        int indexB = charmm_urey_bradley_indices[i+1];
-        int index_CUB_type = charmm_urey_bradley_indices[i+2];
+        int indexA = charmm_urey_bradley_indices[i] - 1;
+        int indexB = charmm_urey_bradley_indices[i+1] - 1;
+        int index_CUB_type = charmm_urey_bradley_indices[i+2] - 1;
 
         Atom atomA = atom_list[indexA];
         Atom atomB = atom_list[indexB];
         HarmonicUB UB_bond = HarmonicUB(atomA, atomB);
+        UB_bond.set_type(index_CUB_type);
         HarmonicUB_list.push_back(UB_bond);
     }
 }
+
+void Topology::process_charmm_urey_bradley_force_constant(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float force_constant = std::stof(entries[i]);
+        charmm_urey_bradley_force_constants_.push_back(force_constant);
+    }
+}
+
+void Topology::process_charmm_urey_bradley_equil_value(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float equil_value = std::stof(entries[i]);
+        charmm_urey_bradley_equil_values_.push_back(equil_value);
+    }
+}
+
+void Topology::process_charmm_urey_bradley_assign_ffparams()
+{
+    for (auto& UB_bond: HarmonicUB_list)
+    {
+        int type = UB_bond.get_type();
+        float force_constant = charmm_urey_bradley_force_constants_[type];
+        float equil_value = charmm_urey_bradley_equil_values_[type];
+        UB_bond.set_UB_force_constant(force_constant);
+        UB_bond.set_UB_equil_value(equil_value);
+    }
+}
+
+void Topology::print_UB_bonds(int max_print)
+{
+    if (HarmonicUB_list.empty()) {
+        std::cout << "No Urey-Bradley bonds parsed." << std::endl;
+        return;
+    }
+
+    size_t count = HarmonicUB_list.size();
+    if (max_print > 0 && static_cast<size_t>(max_print) < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = 0; i < count; i++)
+    {
+        const HarmonicUB& UB_bond = HarmonicUB_list[i];
+        const Atom& atomA = UB_bond.get_atomA();
+        const Atom& atomB = UB_bond.get_atomB();
+        std::cout << "UB[" << i << "] "
+                  << "type=" << UB_bond.get_type() + 1
+                  << " k=" << UB_bond.get_UB_force_constant()
+                  << " r0=" << UB_bond.get_UB_equil_value()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << std::endl;
+    }
+}
+
+void Topology::process_dihedral_force_constant(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float force_constant = std::stof(entries[i]);
+        dihedral_force_constants_.push_back(force_constant);
+}
+}
+
+void Topology::process_dihedral_periodicity(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float periodicity = std::stof(entries[i]);
+        dihedral_periodicities_.push_back(periodicity);
+}
+}
+
+void Topology::process_dihedral_phase(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float phase = std::stof(entries[i]);
+        dihedral_phases_.push_back(phase);
+}
+}
+
+void Topology::process_scee_scale_factor(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float scee = std::stof(entries[i]);
+        scee_scale_factors_.push_back(scee);
+}
+}
+
+void Topology::process_scnb_scale_factor(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        float scnb = std::stof(entries[i]);
+        scnb_scale_factors_.push_back(scnb);
+}
+}
+
+void Topology::process_charmm_num_impropers(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    nCharmmImpropers_ = std::stoi(entries[0]);
+}
+
+
 
 

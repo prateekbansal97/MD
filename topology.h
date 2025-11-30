@@ -47,7 +47,19 @@ public:
     void process_charmm_urey_bradley_count_section(std::string& line);
     void process_charmm_urey_bradley(std::string& line);
     void process_charmm_urey_bradley_assign();
+    void process_charmm_urey_bradley_force_constant(std::string& line);
+    void process_charmm_urey_bradley_equil_value(std::string& line);
+    void process_charmm_urey_bradley_assign_ffparams();
+    void print_UB_bonds(int max_print);
 
+    void process_dihedral_force_constant(std::string& line);
+    void process_dihedral_periodicity(std::string& line);
+    void process_dihedral_phase(std::string& line);
+
+    void process_scee_scale_factor(std::string& line);
+    void process_scnb_scale_factor(std::string& line);
+
+    void process_charmm_num_impropers(std::string& line);
 
 
     void assign_hyperparameters();
@@ -56,12 +68,29 @@ private:
     std::vector<unsigned long int> pointers_;
     std::vector<Atom> atom_list;
     std::vector<std::string> residue_labels_;
+    
     std::vector<float> bond_force_constants_;
     std::vector<float> bond_force_equils_;
+    
     std::vector<float> angle_force_constants_;
     std::vector<float> angle_force_equils_;
+
     std::vector<int> charmm_urey_bradley_indices;
     std::vector<HarmonicUB> HarmonicUB_list;
+    std::vector<float> charmm_urey_bradley_force_constants_;
+    std::vector<float> charmm_urey_bradley_equil_values_;
+
+    std::vector<float> dihedral_force_constants_;
+    std::vector<float> dihedral_equil_values_;
+    std::vector<float> dihedral_periodicities_;
+    std::vector<float> dihedral_phases_;
+
+    std::vector<float> scee_scale_factors_;
+    std::vector<float> scnb_scale_factors_;
+
+
+
+
 
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
@@ -74,6 +103,7 @@ private:
     unsigned long int nUreyBradley_;
     unsigned long int nTypesUreyBradley;
 
+    unsigned long int nCharmmImpropers_;
 
     // Hyperparameters
     unsigned long int nAtoms_;
