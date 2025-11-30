@@ -161,13 +161,15 @@ int Topology::read_topology()
             else if (current_section == Section::Scnb_Scale_Factor) process_scnb_scale_factor(line);
             
             else if (current_section == Section::Charmm_Num_Impropers) process_charmm_num_impropers(line);
+            else if (current_section == Section::Charmm_Impropers) process_charmm_impropers(line);
+
             else continue;
         }
     }
 
     process_charmm_urey_bradley_assign();
     process_charmm_urey_bradley_assign_ffparams();
-
+    process_charmm_improper_assign();
 
     // print_atom_details(200);
     print_UB_bonds(100);
@@ -208,15 +210,6 @@ void Topology::print_atom_details_to_file()
     }
     for (const auto& atom : atom_list) {
         outfile << "\""<< atom.name << "\", ";
-                // << ", Type: " << atom.type
-                // << ", Charge: " << atom.partial_charge
-                // << ", Atomic Number: " << atom.atomic_number
-                // << ", Mass: " << atom.mass
-                // << ", Element: " << atom.element
-                // << ", Atom Type Index: " << atom.atom_type_index
-                // << ", Number of Excluded Atoms: " << atom.nExcluded_Atoms
-                // << ", Nonbonded Parm Index: " << atom.nonbonded_parm_index
-                // << std::endl;
     }
 }
 
@@ -347,8 +340,8 @@ void Topology::process_atomic_number_section(std::string& line)
             processed_atoms_index++;
         } else {
             std::cerr << "Atomic number index out of range: " << i << std::endl;        
+        }
     }
-}
 }
 
 void Topology::process_mass_section(std::string& line)
@@ -362,8 +355,8 @@ void Topology::process_mass_section(std::string& line)
             processed_atoms_index++;
         } else {
             std::cerr << "Mass index out of range: " << i << std::endl;        
+        }
     }
-}
 }
 
 void Topology::process_atom_type_index_section(std::string& line)
@@ -377,8 +370,8 @@ void Topology::process_atom_type_index_section(std::string& line)
             processed_atoms_index++;
         } else {
             std::cerr << "Atom type index out of range: " << i << std::endl;        
+        }
     }
-}
 }
 
 void Topology::process_number_excluded_atoms_section(std::string& line)
@@ -392,8 +385,8 @@ void Topology::process_number_excluded_atoms_section(std::string& line)
             processed_atoms_index++;
         } else {
             std::cerr << "Number of excluded atoms index out of range: " << i << std::endl;        
+        }
     }
-}
 }
 
 void Topology::process_nonbonded_parm_index_section(std::string& line)
@@ -474,7 +467,7 @@ void Topology::process_bond_force_constant_section(std::string& line)
     
         float force_constant = std::stof(entries[i]);
         bond_force_constants_.push_back(force_constant);
-}
+    }
 }
 
 void Topology::process_bond_equil_section(std::string& line)
@@ -485,7 +478,7 @@ void Topology::process_bond_equil_section(std::string& line)
     
         float force_constant = std::stof(entries[i]);
         bond_force_equils_.push_back(force_constant);
-}
+    }
 }
 
 void Topology::process_angle_force_constant_section(std::string& line)
@@ -496,7 +489,7 @@ void Topology::process_angle_force_constant_section(std::string& line)
     
         float force_constant = std::stof(entries[i]);
         angle_force_constants_.push_back(force_constant);
-}
+    }
 }
 
 void Topology::process_angle_equil_section(std::string& line)
@@ -507,7 +500,7 @@ void Topology::process_angle_equil_section(std::string& line)
     
         float force_constant = std::stof(entries[i]);
         angle_force_equils_.push_back(force_constant);
-}
+    }
 }
 
 void Topology::process_charmm_urey_bradley_count_section(std::string& line)
@@ -515,7 +508,6 @@ void Topology::process_charmm_urey_bradley_count_section(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     nUreyBradley_ =  static_cast<unsigned long int>(std::stoul(entries[0]));
     nTypesUreyBradley = static_cast<unsigned long int>(std::stoul(entries[1]));
-
 }
 
 void Topology::process_charmm_urey_bradley(std::string& line)
@@ -525,7 +517,7 @@ void Topology::process_charmm_urey_bradley(std::string& line)
     for (size_t i = 0; i < entries.size(); ++i) {
         int index = std::stoi(entries[i]);
         charmm_urey_bradley_indices.push_back(index);
-}
+    }
 }
 
 void Topology::process_charmm_urey_bradley_assign()
@@ -610,7 +602,7 @@ void Topology::process_dihedral_force_constant(std::string& line)
     
         float force_constant = std::stof(entries[i]);
         dihedral_force_constants_.push_back(force_constant);
-}
+    }
 }
 
 void Topology::process_dihedral_periodicity(std::string& line)
@@ -620,7 +612,7 @@ void Topology::process_dihedral_periodicity(std::string& line)
     
         float periodicity = std::stof(entries[i]);
         dihedral_periodicities_.push_back(periodicity);
-}
+    }
 }
 
 void Topology::process_dihedral_phase(std::string& line)
@@ -630,7 +622,7 @@ void Topology::process_dihedral_phase(std::string& line)
     
         float phase = std::stof(entries[i]);
         dihedral_phases_.push_back(phase);
-}
+    }
 }
 
 void Topology::process_scee_scale_factor(std::string& line)
@@ -640,7 +632,7 @@ void Topology::process_scee_scale_factor(std::string& line)
     
         float scee = std::stof(entries[i]);
         scee_scale_factors_.push_back(scee);
-}
+    }
 }
 
 void Topology::process_scnb_scale_factor(std::string& line)
@@ -650,7 +642,7 @@ void Topology::process_scnb_scale_factor(std::string& line)
     
         float scnb = std::stof(entries[i]);
         scnb_scale_factors_.push_back(scnb);
-}
+    }
 }
 
 void Topology::process_charmm_num_impropers(std::string& line)
@@ -659,6 +651,35 @@ void Topology::process_charmm_num_impropers(std::string& line)
     nCharmmImpropers_ = std::stoi(entries[0]);
 }
 
+void Topology::process_charmm_impropers(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+        int index = std::stoi(entries[i]);
+        charmm_improper_indices_.push_back(index);   
+    }
+}
+
+void Topology::process_charmm_improper_assign()
+{
+    for (int i = 0; i < charmm_improper_indices_.size(); i=i+5)
+    {
+        int indexA = charmm_urey_bradley_indices[i] - 1;
+        int indexB = charmm_urey_bradley_indices[i+1] - 1;
+        int indexC = charmm_urey_bradley_indices[i+2] - 1;
+        int indexD = charmm_urey_bradley_indices[i+3] - 1;
+        int index_CI_type = charmm_urey_bradley_indices[i+4] - 1;
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        Atom atomC = atom_list[indexC];
+        Atom atomD = atom_list[indexD];
+
+        HarmonicImproper IMP_bond = HarmonicImproper(atomA, atomB, atomC, atomD);
+        IMP_bond.set_type(index_CI_type);
+        HarmonicIMP_list.push_back(IMP_bond);
+    }
+}
 
 
 

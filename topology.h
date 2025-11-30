@@ -5,6 +5,7 @@
 #include "atom.h"
 #include "io.h"
 #include "harmonicUB.h"
+#include "HarmonicImproper.h"
 
 class Topology 
 
@@ -60,6 +61,8 @@ public:
     void process_scnb_scale_factor(std::string& line);
 
     void process_charmm_num_impropers(std::string& line);
+    void process_charmm_impropers(std::string& line);
+    void process_charmm_improper_assign();
 
 
     void assign_hyperparameters();
@@ -88,7 +91,10 @@ private:
     std::vector<float> scee_scale_factors_;
     std::vector<float> scnb_scale_factors_;
 
-
+    std::vector<int> charmm_improper_indices_;
+    std::vector<HarmonicImproper> HarmonicIMP_list;
+    std::vector<float> charmm_improper_force_constants_;
+    std::vector<float> charmm_improper_equil_values_;
 
 
 
