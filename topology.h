@@ -6,6 +6,7 @@
 #include "io.h"
 #include "harmonicUB.h"
 #include "HarmonicImproper.h"
+#include "HarmonicBond.h"
 
 class Topology 
 
@@ -71,7 +72,11 @@ public:
 
     void process_Lennard_Jones_Acoef(std::string& line);
     void process_Lennard_Jones_Bcoef(std::string& line);
+    void process_Lennard_Jones_14_Acoef(std::string& line);
+    void process_Lennard_Jones_14_Bcoef(std::string& line);
 
+    void process_bonds_including_H(std::string& line);// BONDS_INC_HYDROGEN
+    void process_bonds_including_H();
 
     void assign_hyperparameters();
 
@@ -106,7 +111,11 @@ private:
 
     std::vector<double> lennard_jones_Acoefs_;
     std::vector<double> lennard_jones_Bcoefs_;
+    std::vector<double> lennard_jones_14_Acoefs_;
+    std::vector<double> lennard_jones_14_Bcoefs_;
 
+    std::vector<int> bonds_including_h_;
+    std::vector<HarmonicBond> HarmonicBond_list;
 
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;

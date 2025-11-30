@@ -9,6 +9,7 @@
 #include "io.h"
 #include <map>
 #include "element.h"
+#include "HarmonicBond.h"
 
 enum class Section {
     None,
@@ -40,7 +41,10 @@ enum class Section {
     Charmm_Improper_Force_Constants,
     Charmm_Improper_Phases,
     Lennard_Jones_Acoef,
-    Lennard_Jones_Bcoef
+    Lennard_Jones_Bcoef,
+    Lennard_Jones_14_Acoef,
+    Lennard_Jones_14_Bcoef,
+    Bonds_Inc_Hydrogen
     // add more as needed
 };
 
@@ -126,6 +130,12 @@ int Topology::read_topology()
                 else if (header == "CHARMM_IMPROPER_FORCE_CONSTANT") current_section = Section::Charmm_Improper_Force_Constants;
                 else if (header == "CHARMM_IMPROPER_PHASE") current_section = Section::Charmm_Improper_Phases;
                 
+                else if (header == "LENNARD_JONES_ACOEF") current_section = Section::Lennard_Jones_Acoef;
+                else if (header == "LENNARD_JONES_BCOEF") current_section = Section::Lennard_Jones_Bcoef;
+                else if (header == "LENNARD_JONES_14_ACOEF") current_section = Section::Lennard_Jones_14_Acoef;
+                else if (header == "LENNARD_JONES_14_BCOEF") current_section = Section::Lennard_Jones_14_Bcoef;
+
+                else if (header == "BONDS_INC_HYDROGEN") current_section = Section::Bonds_Inc_Hydrogen;
                 else current_section = Section::None;
 
             }
@@ -173,6 +183,11 @@ int Topology::read_topology()
             else if (current_section == Section::Charmm_Num_Impr_Types) process_charmm_num_impr_types(line);
             else if (current_section == Section::Charmm_Improper_Force_Constants) process_charmm_improper_force_constant(line);
             else if (current_section == Section::Charmm_Improper_Phases) process_charmm_improper_phase(line);
+
+            else if (current_section == Section::Lennard_Jones_Acoef) process_Lennard_Jones_Acoef(line);
+            else if (current_section == Section::Lennard_Jones_Bcoef) process_Lennard_Jones_Bcoef(line);
+
+            else if (current_section == Section::Bonds_Inc_Hydrogen) process_bonds_including_H(line);
 
             else continue;
         }
@@ -766,7 +781,70 @@ void Topology::print_IMP_bonds(int max_print)
 
 void Topology::process_Lennard_Jones_Acoef(std::string& line)
 {
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        double Acoef = std::stod(entries[i]);
+        lennard_jones_Acoefs_.push_back(Acoef);
+    }
+}
 
+void Topology::process_Lennard_Jones_Bcoef(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        double Bcoef = std::stod(entries[i]);
+        lennard_jones_Bcoefs_.push_back(Bcoef);
+    }
+}
+
+void Topology::process_Lennard_Jones_14_Acoef(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        double Acoef = std::stod(entries[i]);
+        lennard_jones_14_Acoefs_.push_back(Acoef);
+    }
+}
+
+void Topology::process_Lennard_Jones_14_Bcoef(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        double Bcoef = std::stod(entries[i]);
+        lennard_jones_14_Bcoefs_.push_back(Bcoef);
+    }
+}
+
+void Topology::process_bonds_including_H(std::string& line) // BONDS_INC_HYDROGEN
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        int Acoef = std::stoi(entries[i]);
+        bonds_including_h_.push_back(Acoef);
+    }
+}
+
+void Topology::process_bonds_including_H()
+{
+    for (size_t i = 0; i + 2 < bonds_including_h_.size(); i = i + 2)
+    {
+        int indexA = bond_force_constants_[i]*3;
+        int indexB = bond_force_constants_[i+1]*3;
+        int force_type = bond_force_constants_[i+2] - 1;
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        double force_constant = bond_force_constants_[force_type];
+        double equil_length = bond_force_equils_[force_type];
+
+        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, atomA, atomB);
+        HarmonicBond_list.push_back(Bond);
+    }
 }
 
 
