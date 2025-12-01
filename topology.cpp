@@ -197,10 +197,11 @@ int Topology::read_topology()
     process_charmm_urey_bradley_assign_ffparams();
     process_charmm_improper_assign();
     process_improper_bradley_assign_ffparams();
-
+    process_bonds_including_H();
     // print_atom_details(200);
     // print_UB_bonds(100);
-    print_IMP_bonds(100);
+    print_bonds(100, 2600);
+    // print_IMP_bonds(100);
     // print_atom_details_to_file();
 
     file.close();
@@ -831,11 +832,17 @@ void Topology::process_bonds_including_H(std::string& line) // BONDS_INC_HYDROGE
 
 void Topology::process_bonds_including_H()
 {
-    for (size_t i = 0; i + 2 < bonds_including_h_.size(); i = i + 2)
+    for (size_t i = 0; i + 3 < bonds_including_h_.size(); i = i + 3)
     {
-        int indexA = bond_force_constants_[i]*3;
-        int indexB = bond_force_constants_[i+1]*3;
-        int force_type = bond_force_constants_[i+2] - 1;
+        int indexA = (bonds_including_h_[i])/3;
+        int indexB = (bonds_including_h_[i+1])/3;
+        int force_type = bonds_including_h_[i+2] - 1;
+
+        // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
+        if (force_type < 0)
+        {
+            std::cout << "Invalid indices";
+        }
 
         Atom atomA = atom_list[indexA];
         Atom atomB = atom_list[indexB];
@@ -847,4 +854,30 @@ void Topology::process_bonds_including_H()
     }
 }
 
+void Topology::print_bonds(int max_print, int start_point)
+{
+    if (HarmonicBond_list.empty()) {
+        std::cout << "No bonds parsed." << std::endl;
+        return;
+    }
+
+    size_t count = HarmonicBond_list.size();
+    if (max_print > 0 && static_cast<size_t>(max_print) < count && start_point + max_print < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = start_point; i < count + start_point; i++)
+    {
+        const HarmonicBond& bond = HarmonicBond_list[i];
+        const Atom& atomA = bond.get_atomA();
+        const Atom& atomB = bond.get_atomB();
+        std::cout << "Bond[" << i << "] "
+                  << "type=" << bond.get_type() + 1
+                  << " k=" << bond.get_Bond_force_constant()
+                  << " r0=" << bond.get_Bond_equil_length()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << std::endl;
+    }
+}
 

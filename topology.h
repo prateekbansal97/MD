@@ -77,6 +77,7 @@ public:
 
     void process_bonds_including_H(std::string& line);// BONDS_INC_HYDROGEN
     void process_bonds_including_H();
+    void print_bonds(int max_print, int start_point);
 
     void assign_hyperparameters();
 

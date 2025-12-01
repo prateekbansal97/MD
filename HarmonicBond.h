@@ -33,8 +33,8 @@ class HarmonicBond
         void set_Bond_force_constant(double force_constant) {Bond_force_constant = force_constant; }
         double get_Bond_force_constant() const {return Bond_force_constant; }
 
-        void set_Bond_phase_value(double phase_value) {Bond_Equil = phase_value; }
-        double get_Bond_phase_value() const {return Bond_Equil; }
+        void set_Bond_equil_length(double equil_length) {Bond_Equil = equil_length; }
+        double get_Bond_equil_length() const {return Bond_Equil; }
 
         const Atom& get_atomA() const {return atomA; }
         const Atom& get_atomB() const {return atomB; }
