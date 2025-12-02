@@ -2,14 +2,18 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstdlib>
+#include <map>
+#include <vector>
+
 #include "topology.h"
 #include "harmonicUB.h"
-#include <vector>
 #include "atom.h"
 #include "io.h"
-#include <map>
 #include "element.h"
 #include "HarmonicBond.h"
+#include "HarmonicAngle.h"
+#include "CosineDihedral.h"
 
 enum class Section {
     None,
@@ -44,7 +48,12 @@ enum class Section {
     Lennard_Jones_Bcoef,
     Lennard_Jones_14_Acoef,
     Lennard_Jones_14_Bcoef,
-    Bonds_Inc_Hydrogen
+    Bonds_Inc_Hydrogen,
+    Bonds_without_Hydrogen,
+    Angles_Inc_Hydrogen,
+    Angles_without_Hydrogen,
+    Dihedrals_Inc_Hydrogen,
+    Dihedrals_without_Hydrogen
     // add more as needed
 };
 
@@ -136,6 +145,13 @@ int Topology::read_topology()
                 else if (header == "LENNARD_JONES_14_BCOEF") current_section = Section::Lennard_Jones_14_Bcoef;
 
                 else if (header == "BONDS_INC_HYDROGEN") current_section = Section::Bonds_Inc_Hydrogen;
+                else if (header == "BONDS_WITHOUT_HYDROGEN") current_section = Section::Bonds_without_Hydrogen;
+
+                else if (header == "ANGLES_INC_HYDROGEN") current_section = Section::Angles_Inc_Hydrogen;
+                else if (header == "ANGLES_WITHOUT_HYDROGEN") current_section = Section::Angles_without_Hydrogen;
+
+                else if (header == "DIHEDRALS_INC_HYDROGEN") current_section = Section::Dihedrals_Inc_Hydrogen;
+                else if (header == "DIHEDRALS_WITHOUT_HYDROGEN") current_section = Section::Dihedrals_without_Hydrogen;
                 else current_section = Section::None;
 
             }
@@ -188,6 +204,13 @@ int Topology::read_topology()
             else if (current_section == Section::Lennard_Jones_Bcoef) process_Lennard_Jones_Bcoef(line);
 
             else if (current_section == Section::Bonds_Inc_Hydrogen) process_bonds_including_H(line);
+            else if (current_section == Section::Bonds_without_Hydrogen) process_bonds_without_H(line);
+
+            else if (current_section == Section::Angles_Inc_Hydrogen) process_angles_including_H(line);
+            else if (current_section == Section::Angles_without_Hydrogen) process_angles_without_H(line);
+
+            else if (current_section == Section::Dihedrals_Inc_Hydrogen) process_dihedrals_including_H(line);
+            else if (current_section == Section::Dihedrals_without_Hydrogen) process_dihedrals_without_H(line);
 
             else continue;
         }
@@ -197,13 +220,19 @@ int Topology::read_topology()
     process_charmm_urey_bradley_assign_ffparams();
     process_charmm_improper_assign();
     process_improper_bradley_assign_ffparams();
-    process_bonds_including_H();
+    create_bonds_including_H();
+    create_bonds_without_H();
+    create_angles_including_H();
+    create_angles_without_H();
+    create_dihedrals_including_H();
+    create_dihedrals_without_H();
     // print_atom_details(200);
     // print_UB_bonds(100);
-    print_bonds(100, 2600);
+    // print_bonds_including_H(100, 87600);
     // print_IMP_bonds(100);
     // print_atom_details_to_file();
 
+    print_dihedrals_including_H(100, 0);
     file.close();
     return 0;
 }
@@ -830,7 +859,7 @@ void Topology::process_bonds_including_H(std::string& line) // BONDS_INC_HYDROGE
     }
 }
 
-void Topology::process_bonds_including_H()
+void Topology::create_bonds_including_H()
 {
     for (size_t i = 0; i + 3 < bonds_including_h_.size(); i = i + 3)
     {
@@ -849,12 +878,12 @@ void Topology::process_bonds_including_H()
         double force_constant = bond_force_constants_[force_type];
         double equil_length = bond_force_equils_[force_type];
 
-        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, atomA, atomB);
+        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, atomA, atomB, true);
         HarmonicBond_list.push_back(Bond);
     }
 }
 
-void Topology::print_bonds(int max_print, int start_point)
+void Topology::print_bonds_without_H(int max_print, int start_point)
 {
     if (HarmonicBond_list.empty()) {
         std::cout << "No bonds parsed." << std::endl;
@@ -862,6 +891,7 @@ void Topology::print_bonds(int max_print, int start_point)
     }
 
     size_t count = HarmonicBond_list.size();
+    std::cout << "Total number of bonds: " << count << std::endl;
     if (max_print > 0 && static_cast<size_t>(max_print) < count && start_point + max_print < count) {
         count = static_cast<size_t>(max_print);
     }
@@ -881,3 +911,365 @@ void Topology::print_bonds(int max_print, int start_point)
     }
 }
 
+void Topology::process_bonds_without_H(std::string& line) // BONDS_WITHOUT_HYDROGEN
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        int Acoef = std::stoi(entries[i]);
+        bonds_without_h_.push_back(Acoef);
+    }
+}
+
+void Topology::create_bonds_without_H()
+{
+    for (size_t i = 0; i + 3 < bonds_without_h_.size(); i = i + 3)
+    {
+        int indexA = (bonds_without_h_[i])/3;
+        int indexB = (bonds_without_h_[i+1])/3;
+        int force_type = bonds_without_h_[i+2] - 1;
+
+        // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
+        if (force_type < 0)
+        {
+            std::cout << "Invalid indices";
+        }
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        double force_constant = bond_force_constants_[force_type];
+        double equil_length = bond_force_equils_[force_type];
+
+        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, atomA, atomB, false);
+        HarmonicBond_list.push_back(Bond);
+    }
+}
+
+void Topology::print_bonds_including_H(int max_print, int start_point)
+{
+    if (HarmonicBond_list.empty()) {
+        std::cout << "No bonds parsed." << std::endl;
+        return;
+    }
+
+    size_t count = HarmonicBond_list.size();
+    std::cout << "Total number of bonds: " << count << std::endl;
+    if (max_print > 0 && static_cast<size_t>(max_print) < count && start_point + max_print < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = start_point; i < count + start_point; i++)
+    {
+        const HarmonicBond& bond = HarmonicBond_list[i];
+        const Atom& atomA = bond.get_atomA();
+        const Atom& atomB = bond.get_atomB();
+        std::cout << "Bond[" << i << "] "
+                  << "type=" << bond.get_type() + 1
+                  << " k=" << bond.get_Bond_force_constant()
+                  << " r0=" << bond.get_Bond_equil_length()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << std::endl;
+    }
+}
+
+void Topology::process_angles_including_H(std::string& line) // BONDS_INC_HYDROGEN
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        int Acoef = std::stoi(entries[i]);
+        angles_including_h_.push_back(Acoef);
+    }
+}
+
+void Topology::create_angles_including_H()
+{
+    for (size_t i = 0; i + 4 < angles_including_h_.size(); i = i + 4)
+    {
+        int indexA = (angles_including_h_[i])/3;
+        int indexB = (angles_including_h_[i+1])/3;
+        int indexC = (angles_including_h_[i+2])/3;
+        int force_type = angles_including_h_[i+3] - 1;
+
+        // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
+        if (force_type < 0)
+        {
+            std::cout << "Invalid indices";
+        }
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        Atom atomC = atom_list[indexC];
+        double force_constant = angle_force_constants_[force_type];
+        double equil_angle = angle_force_equils_[force_type];
+
+        HarmonicAngle Angle = HarmonicAngle(force_constant, equil_angle, atomA, atomB, atomC, true);
+        HarmonicAngle_list.push_back(Angle);
+    }
+}
+
+void Topology::print_angles_without_H(int max_print, int start_point)
+{
+    if (HarmonicAngle_list.empty()) {
+        std::cout << "No angles parsed." << std::endl;
+        return;
+    }
+
+    size_t count = HarmonicAngle_list.size();
+    std::cout << "Total number of angles: " << count << std::endl;
+    if (max_print > 0 && static_cast<size_t>(max_print) < count && start_point + max_print < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = start_point; i < count + start_point; i++)
+    {
+        const HarmonicAngle& angle = HarmonicAngle_list[i];
+        const Atom& atomA = angle.get_atomA();
+        const Atom& atomB = angle.get_atomB();
+        const Atom& atomC = angle.get_atomC();
+        std::cout << "Angle[" << i << "] "
+                  << "type=" << angle.get_type() + 1
+                  << " k=" << angle.get_Angle_force_constant()
+                  << " r0=" << angle.get_Angle_equil_angle()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << " - " << atomC.name << " (" << atomC.residue_name << atomC.residue_number << ")"
+                  << std::endl;
+    }
+}
+
+void Topology::process_angles_without_H(std::string& line) // BONDS_WITHOUT_HYDROGEN
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        int Acoef = std::stoi(entries[i]);
+        angles_without_h_.push_back(Acoef);
+    }
+}
+
+void Topology::create_angles_without_H()
+{
+    for (size_t i = 0; i + 4 < angles_without_h_.size(); i = i + 4)
+    {
+        int indexA = (angles_without_h_[i])/3;
+        int indexB = (angles_without_h_[i+1])/3;
+        int indexC = (angles_without_h_[i+2])/3;
+        int force_type = angles_without_h_[i+3] - 1;
+
+        // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
+        if (force_type < 0)
+        {
+            std::cout << "Invalid indices";
+        }
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        Atom atomC = atom_list[indexC];
+        double force_constant = angle_force_constants_[force_type];
+        double equil_angle = angle_force_equils_[force_type];
+
+        HarmonicAngle Angle = HarmonicAngle(force_constant, equil_angle, atomA, atomB, atomC, false);
+        HarmonicAngle_list.push_back(Angle);
+    }
+}
+
+void Topology::print_angles_including_H(int max_print, int start_point)
+{
+    if (HarmonicAngle_list.empty()) {
+        std::cout << "No angles parsed." << std::endl;
+        return;
+    }
+
+    size_t count = HarmonicAngle_list.size();
+    std::cout << "Total number of angles: " << count << std::endl;
+    if (max_print > 0 && static_cast<size_t>(max_print) < count && start_point + max_print < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = start_point; i < count + start_point; i++)
+    {
+        const HarmonicAngle& angle = HarmonicAngle_list[i];
+        const Atom& atomA = angle.get_atomA();
+        const Atom& atomB = angle.get_atomB();
+        const Atom& atomC = angle.get_atomC();
+        std::cout << "Angle[" << i << "] "
+                  << "type=" << angle.get_type() + 1
+                  << " k=" << angle.get_Angle_force_constant()
+                  << " r0=" << angle.get_Angle_equil_angle()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << " - " << atomC.name << " (" << atomC.residue_name << atomC.residue_number << ")"
+                  << std::endl;
+    }
+}
+
+void Topology::process_dihedrals_including_H(std::string& line) // BONDS_INC_HYDROGEN
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line, false);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        int Acoef = std::stoi(entries[i]);
+        dihedrals_including_h_.push_back(Acoef);
+    }
+}
+
+void Topology::create_dihedrals_including_H()
+{
+    for (size_t i = 0; i + 5 < dihedrals_including_h_.size(); i = i + 5)
+    {
+        bool exclude_14 = false;
+        bool improper = false;
+        int indexA = (dihedrals_including_h_[i])/3;
+        int indexB = (dihedrals_including_h_[i+1])/3;
+        int indexC = (dihedrals_including_h_[i+2])/3;
+        if (indexC < 0)
+        {
+            exclude_14 = true;
+            indexC = std::abs(indexC);
+        } 
+        int indexD = (dihedrals_including_h_[i+3])/3;
+        if (indexD < 0)
+        {
+            improper = true;
+            indexD = std::abs(indexD);
+        }
+
+        int force_type = dihedrals_including_h_[i+4] - 1;
+
+        // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
+        if (force_type < 0)
+        {
+            std::cout << "Invalid indices";
+        }
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        Atom atomC = atom_list[indexC];
+        Atom atomD = atom_list[indexD];
+
+        double force_constant = dihedral_force_constants_[force_type];
+        double phase = dihedral_phases_[force_type];
+        double periodicity = dihedral_periodicities_[force_type];
+
+        CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, atomA, atomB, atomC, atomD, true, improper, exclude_14);
+        CosineDihedral_list.push_back(Dihedral);
+    }
+}
+
+void Topology::print_dihedrals_without_H(int max_print, int start_point)
+{
+    if (CosineDihedral_list.empty()) {
+        std::cout << "No dihedrals parsed." << std::endl;
+        return;
+    }
+
+    size_t count = CosineDihedral_list.size();
+    std::cout << "Total number of dihedrals: " << count << std::endl;
+    if (max_print > 0 && static_cast<size_t>(max_print) < count && start_point + max_print < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = start_point; i < count + start_point; i++)
+    {
+        const CosineDihedral& dihedral = CosineDihedral_list[i];
+        const Atom& atomA = dihedral.get_atomA();
+        const Atom& atomB = dihedral.get_atomB();
+        const Atom& atomC = dihedral.get_atomC();
+        const Atom& atomD = dihedral.get_atomD();
+        std::cout << "Dihedral[" << i << "] "
+                  << "type=" << dihedral.get_type() + 1
+                  << " k=" << dihedral.get_Dihedral_force_constant()
+                  << " r0=" << dihedral.get_Dihedral_phase()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << " - " << atomC.name << " (" << atomC.residue_name << atomC.residue_number << ")"
+                  << " - " << atomD.name << " (" << atomD.residue_name << atomD.residue_number << ")"
+                  << std::endl;
+    }
+}
+
+void Topology::process_dihedrals_without_H(std::string& line) // BONDS_WITHOUT_HYDROGEN
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+    
+        int Acoef = std::stoi(entries[i]);
+        dihedrals_without_h_.push_back(Acoef);
+    }
+}
+
+void Topology::create_dihedrals_without_H()
+{
+    for (size_t i = 0; i + 5 < dihedrals_without_h_.size(); i = i + 5)
+    {
+        bool exclude_14 = false;
+        bool improper = false;
+        int indexA = (dihedrals_without_h_[i])/3;
+        int indexB = (dihedrals_without_h_[i+1])/3;
+        int indexC = (dihedrals_without_h_[i+2])/3;
+        if (indexC < 0)
+        {
+            exclude_14 = true;
+            indexC = std::abs(indexC);
+        } 
+        int indexD = (dihedrals_without_h_[i+3])/3;
+        if (indexD < 0)
+        {
+            improper = true;
+            indexD = std::abs(indexD);
+        }
+        int force_type = dihedrals_without_h_[i+4] - 1;
+
+        // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
+        if (force_type < 0)
+        {
+            std::cout << "Invalid indices";
+        }
+
+        Atom atomA = atom_list[indexA];
+        Atom atomB = atom_list[indexB];
+        Atom atomC = atom_list[indexC];
+        Atom atomD = atom_list[indexD];
+
+        double force_constant = dihedral_force_constants_[force_type];
+        double phase = dihedral_phases_[force_type];
+        double periodicity = dihedral_periodicities_[force_type];
+
+        CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, atomA, atomB, atomC, atomD, false, improper, exclude_14);
+        CosineDihedral_list.push_back(Dihedral);
+    }
+}
+
+void Topology::print_dihedrals_including_H(int max_print, int start_point)
+{
+    if (CosineDihedral_list.empty()) {
+        std::cout << "No dihedrals parsed." << std::endl;
+        return;
+    }
+
+    size_t count = CosineDihedral_list.size();
+    std::cout << "Total number of dihedrals: " << count << std::endl;
+    if (max_print > 0 && static_cast<size_t>(max_print) < count && start_point + max_print < count) {
+        count = static_cast<size_t>(max_print);
+    }
+
+    for (size_t i = start_point; i < count + start_point; i++)
+    {
+        const CosineDihedral& dihedral = CosineDihedral_list[i];
+		const Atom& atomA = dihedral.get_atomA();
+        const Atom& atomB = dihedral.get_atomB();
+        const Atom& atomC = dihedral.get_atomC();
+        const Atom& atomD = dihedral.get_atomD();
+        std::cout << "Dihedral[" << i << "] "
+                  << "type=" << dihedral.get_type() + 1
+                  << " k=" << dihedral.get_Dihedral_force_constant()
+                  << " r0=" << dihedral.get_Dihedral_phase()
+                  << " atoms: " << atomA.name << " (" << atomA.residue_name << atomA.residue_number << ")"
+                  << " - " << atomB.name << " (" << atomB.residue_name << atomB.residue_number << ")"
+                  << " - " << atomC.name << " (" << atomC.residue_name << atomC.residue_number << ")"
+                  << " - " << atomD.name << " (" << atomD.residue_name << atomD.residue_number << ")"
+                  << std::endl;
+    }
+}

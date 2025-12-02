@@ -18,7 +18,7 @@ std::vector<std::string> split_line_fixed_length(const std::string& line, size_t
 std::string remove_whitespaces_from_string(const std::string& str);
 std::string extract_header(const std::string& line);
 std::vector<std::string> split_line_on_delimiter(const std::string& line, const std::string& delimiter);
-std::vector<std::string> split_line_over_empty_spaces(const std::string& line);
+std::vector<std::string> split_line_over_empty_spaces(const std::string& line, bool check_if_negative = false);
 
 std::vector<std::vector<std::string>> split_vector_into_chunks(const std::vector<std::string>& entries, const std::vector<std::size_t>& chunks);
 

@@ -7,6 +7,8 @@
 #include "harmonicUB.h"
 #include "HarmonicImproper.h"
 #include "HarmonicBond.h"
+#include "HarmonicAngle.h"
+#include "CosineDihedral.h"
 
 class Topology 
 
@@ -76,8 +78,26 @@ public:
     void process_Lennard_Jones_14_Bcoef(std::string& line);
 
     void process_bonds_including_H(std::string& line);// BONDS_INC_HYDROGEN
-    void process_bonds_including_H();
-    void print_bonds(int max_print, int start_point);
+    void create_bonds_including_H();
+    void print_bonds_without_H(int max_print, int start_point);
+    void process_bonds_without_H(std::string& line);
+    void create_bonds_without_H();
+    void print_bonds_including_H(int max_print, int start_point);
+
+    void process_angles_including_H(std::string& line);// ANGLES_INC_HYDROGEN
+    void create_angles_including_H();
+    void print_angles_without_H(int max_print, int start_point);
+    void process_angles_without_H(std::string& line);
+    void create_angles_without_H();
+    void print_angles_including_H(int max_print, int start_point);
+
+
+    void process_dihedrals_including_H(std::string& line);// DIHEDRALS_INC_HYDROGEN
+    void create_dihedrals_including_H();
+    void print_dihedrals_without_H(int max_print, int start_point);
+    void process_dihedrals_without_H(std::string& line);
+    void create_dihedrals_without_H();
+    void print_dihedrals_including_H(int max_print, int start_point);
 
     void assign_hyperparameters();
 
@@ -98,7 +118,6 @@ private:
     std::vector<double> charmm_urey_bradley_equil_values_;
 
     std::vector<double> dihedral_force_constants_;
-    std::vector<double> dihedral_equil_values_;
     std::vector<double> dihedral_periodicities_;
     std::vector<double> dihedral_phases_;
 
@@ -117,6 +136,15 @@ private:
 
     std::vector<int> bonds_including_h_;
     std::vector<HarmonicBond> HarmonicBond_list;
+    std::vector<int> bonds_without_h_;
+
+    std::vector<int> angles_including_h_;
+    std::vector<HarmonicAngle> HarmonicAngle_list;
+    std::vector<int> angles_without_h_;
+
+    std::vector<int> dihedrals_including_h_;
+    std::vector<CosineDihedral> CosineDihedral_list;
+    std::vector<int> dihedrals_without_h_;
 
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;

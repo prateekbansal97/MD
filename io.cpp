@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <numeric> 
 #include <stdexcept>
-
+#include <iostream>
 #include "io.h"
 
 bool check_first_char(const std::string& line, char target)
@@ -93,7 +93,7 @@ std::vector<std::string> split_line_on_delimiter(const std::string& line, std::s
     return tokens;
 }
 
-std::vector<std::string> split_line_over_empty_spaces(const std::string& line)
+std::vector<std::string> split_line_over_empty_spaces(const std::string& line, bool check_if_negative)
 {
     // Split line over empty spaces of any length. 
     std::vector<std::string> tokens;
@@ -108,6 +108,16 @@ std::vector<std::string> split_line_over_empty_spaces(const std::string& line)
     }
     if (start != std::string::npos) {
         tokens.push_back(line.substr(start));
+    }
+    if (check_if_negative)
+    {
+        for (auto& element: tokens)
+        {
+            if (std::stod(element) < 0)
+            {
+                std::cout << "Negative element: " << element << std::endl;
+            }
+        }   
     }
     return tokens;
 }

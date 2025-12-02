@@ -11,19 +11,19 @@ class HarmonicBond
     public:
         HarmonicBond(double Bond_force_constant, double Bond_Equil) : 
         Bond_force_constant(Bond_force_constant), 
-        Bond_Equil(Bond_Equil), type(0) {}
+        Bond_Equil(Bond_Equil), type(0), isH(false) {}
         
-        HarmonicBond(double Bond_force_constant, double Bond_Equil, Atom atomA, Atom atomB) : 
+        HarmonicBond(double Bond_force_constant, double Bond_Equil, Atom atomA, Atom atomB, bool isH) : 
         Bond_force_constant(Bond_force_constant), 
         Bond_Equil(Bond_Equil), 
         atomA(atomA), 
-        atomB(atomB), type(0) {}
+        atomB(atomB), type(0), isH(isH) {}
 
         HarmonicBond(Atom atomA, Atom atomB) : 
         Bond_force_constant(0.0), 
         Bond_Equil(0.0), 
         atomA(atomA), 
-        atomB(atomB), type(0) {}
+        atomB(atomB), type(0), isH(false) {}
 
         double return_energy(double distance);
 
@@ -38,6 +38,8 @@ class HarmonicBond
 
         const Atom& get_atomA() const {return atomA; }
         const Atom& get_atomB() const {return atomB; }
+
+        const bool get_isH() const {return isH;}
     
     private:
         double Bond_force_constant;
@@ -45,5 +47,6 @@ class HarmonicBond
         Atom atomA;
         Atom atomB;
         int type;
+        bool isH;
 };
 #endif //HARMONIBOND_H
