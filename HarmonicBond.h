@@ -1,5 +1,5 @@
-#ifndef HARMONIBOND_H
-#define HARMONIBOND_H
+#ifndef HARMONICBOND_H
+#define HARMONICBOND_H
 
 
 #include "atom.h"
@@ -13,17 +13,17 @@ class HarmonicBond
         Bond_force_constant(Bond_force_constant), 
         Bond_Equil(Bond_Equil), type(0), isH(false) {}
         
-        HarmonicBond(double Bond_force_constant, double Bond_Equil, Atom atomA, Atom atomB, bool isH) : 
+        HarmonicBond(double Bond_force_constant, double Bond_Equil, int atomA_index, int atomB_index, bool isH) : 
         Bond_force_constant(Bond_force_constant), 
         Bond_Equil(Bond_Equil), 
-        atomA(atomA), 
-        atomB(atomB), type(0), isH(isH) {}
+        atomA_index(atomA_index), 
+        atomB_index(atomB_index), type(0), isH(isH) {}
 
-        HarmonicBond(Atom atomA, Atom atomB) : 
+        HarmonicBond(int atomA_index, int atomB_index) : 
         Bond_force_constant(0.0), 
         Bond_Equil(0.0), 
-        atomA(atomA), 
-        atomB(atomB), type(0), isH(false) {}
+        atomA_index(atomA_index), 
+        atomB_index(atomB_index), type(0), isH(false) {}
 
         double return_energy(double distance);
 
@@ -36,17 +36,17 @@ class HarmonicBond
         void set_Bond_equil_length(double equil_length) {Bond_Equil = equil_length; }
         double get_Bond_equil_length() const {return Bond_Equil; }
 
-        const Atom& get_atomA() const {return atomA; }
-        const Atom& get_atomB() const {return atomB; }
+        const int get_atomA_index() const {return atomA_index; }
+        const int get_atomB_index() const {return atomB_index; }
 
         const bool get_isH() const {return isH;}
     
     private:
         double Bond_force_constant;
         double Bond_Equil;
-        Atom atomA;
-        Atom atomB;
+        int atomA_index;
+        int atomB_index;
         int type;
         bool isH;
 };
-#endif //HARMONIBOND_H
+#endif //HARMONICBOND_H

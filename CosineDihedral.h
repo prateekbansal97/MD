@@ -2,7 +2,7 @@
 #define COSINEDIHEDRAL_H
 
 
-#include "atom.h"
+// #include "atom.h"
 
 
 class CosineDihedral
@@ -20,28 +20,28 @@ class CosineDihedral
         isH(false) {}
         
         CosineDihedral(double Dihedral_force_constant, double Dihedral_Phase, double Dihedral_Periodicity, 
-                        Atom atomA, Atom atomB, Atom atomC, Atom atomD, 
+                        int atomA_index, int atomB_index, int atomC_index, int atomD_index, 
                         bool isH, bool improper = false, bool exclude_14 = false) : 
         Dihedral_force_constant(Dihedral_force_constant), 
         Dihedral_Phase(Dihedral_Phase),
         Dihedral_Periodicity(Dihedral_Periodicity),
-        atomA(atomA), 
-        atomB(atomB), 
-        atomC(atomC),
-        atomD(atomD), 
+        atomA_index(atomA_index), 
+        atomB_index(atomB_index), 
+        atomC_index(atomC_index),
+        atomD_index(atomD_index),
         type(0), 
         improper(improper),
         exclude_14(exclude_14),
         isH(isH) {}
 
-        CosineDihedral(Atom atomA, Atom atomB, Atom atomC, Atom atomD, bool improper = false, bool exclude_14 = false) : 
+        CosineDihedral(int atomA_index, int atomB_index, int atomC_index, int atomD_index, bool improper = false, bool exclude_14 = false) : 
         Dihedral_force_constant(0.0), 
         Dihedral_Phase(0.0),
         Dihedral_Periodicity(0.0), 
-        atomA(atomA), 
-        atomB(atomB), 
-        atomC(atomC), 
-        atomD(atomD),
+        atomA_index(atomA_index), 
+        atomB_index(atomB_index), 
+        atomC_index(atomC_index),
+        atomD_index(atomD_index),
         type(0), 
         improper(improper),
         exclude_14(exclude_14),
@@ -61,10 +61,11 @@ class CosineDihedral
         void set_Dihedral_Periodicity(double Periodicity) {Dihedral_Periodicity = Periodicity; }
         double get_Dihedral_Periodicity() const {return Dihedral_Periodicity; }
 
-        const Atom& get_atomA() const {return atomA; }
-        const Atom& get_atomB() const {return atomB; }
-        const Atom& get_atomC() const {return atomC; }
-        const Atom& get_atomD() const {return atomD; }
+        const int get_atomA_index() const {return atomA_index; }
+        const int get_atomB_index() const {return atomB_index; }
+        const int get_atomC_index() const {return atomC_index; }
+        const int get_atomD_index() const {return atomD_index; }
+        
 
         const bool get_isH() const {return isH;}
     
@@ -72,10 +73,10 @@ class CosineDihedral
         double Dihedral_force_constant;
         double Dihedral_Phase;
         double Dihedral_Periodicity;
-        Atom atomA;
-        Atom atomB;
-        Atom atomC;
-        Atom atomD;
+        int atomA_index;
+        int atomB_index;
+        int atomC_index;
+        int atomD_index;
         int type;
         bool isH;
         bool improper;

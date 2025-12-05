@@ -595,9 +595,9 @@ void Topology::process_charmm_urey_bradley_assign()
         int indexB = charmm_urey_bradley_indices_[i+1] - 1;
         int index_CUB_type = charmm_urey_bradley_indices_[i+2] - 1;
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
-        HarmonicUB UB_bond = HarmonicUB(atomA, atomB);
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
+        HarmonicUB UB_bond = HarmonicUB(indexA, indexB);
         UB_bond.set_type(index_CUB_type);
         HarmonicUB_list_.push_back(UB_bond);
     }
@@ -650,8 +650,10 @@ void Topology::print_UB_bonds(int max_print)
     for (size_t i = 0; i < count; i++)
     {
         const HarmonicUB& UB_bond = HarmonicUB_list_[i];
-        const Atom& atomA = UB_bond.get_atomA();
-        const Atom& atomB = UB_bond.get_atomB();
+        const int atomA_index = UB_bond.get_atomA_index();
+        const int atomB_index = UB_bond.get_atomB_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
         std::cout << "UB[" << i << "] "
                   << "type=" << UB_bond.get_type() + 1
                   << " k=" << UB_bond.get_UB_force_constant()
@@ -737,12 +739,12 @@ void Topology::process_charmm_improper_assign()
         int indexD = charmm_improper_indices_[i+3] - 1;
         int index_CI_type = charmm_improper_indices_[i+4] - 1;
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
-        Atom atomC = atom_list_[indexC];
-        Atom atomD = atom_list_[indexD];
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
+        // Atom atomC = atom_list_[indexC];
+        // Atom atomD = atom_list_[indexD];
 
-        HarmonicImproper IMP_bond = HarmonicImproper(atomA, atomB, atomC, atomD);
+        HarmonicImproper IMP_bond = HarmonicImproper(indexA, indexB, indexC, indexD);
         IMP_bond.set_type(index_CI_type);
         HarmonicIMP_list_.push_back(IMP_bond);
     }
@@ -801,10 +803,14 @@ void Topology::print_IMP_bonds(int max_print)
     for (size_t i = 0; i < count; i++)
     {
         const HarmonicImproper& IMP_bond = HarmonicIMP_list_[i];
-        const Atom& atomA = IMP_bond.get_atomA();
-        const Atom& atomB = IMP_bond.get_atomB();
-        const Atom& atomC = IMP_bond.get_atomC();
-        const Atom& atomD = IMP_bond.get_atomD();
+        const int atomA_index = IMP_bond.get_atomA_index();
+        const int atomB_index = IMP_bond.get_atomB_index();
+        const int atomC_index = IMP_bond.get_atomC_index();
+        const int atomD_index = IMP_bond.get_atomD_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
+        Atom& atomC = atom_list_[atomC_index];
+        Atom& atomD = atom_list_[atomC_index];
 
         std::cout << "IMP[" << i << "] "
                   << "type=" << IMP_bond.get_type() + 1
@@ -882,12 +888,13 @@ void Topology::create_bonds_including_H()
             std::cout << "Invalid indices";
         }
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
+
         double force_constant = bond_force_constants_[force_type];
         double equil_length = bond_force_equils_[force_type];
 
-        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, atomA, atomB, true);
+        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, indexA, indexB, true);
         HarmonicBond_list_.push_back(Bond);
     }
 }
@@ -908,8 +915,10 @@ void Topology::print_bonds_without_H(int max_print, int start_point)
     for (size_t i = start_point; i < count + start_point; i++)
     {
         const HarmonicBond& bond = HarmonicBond_list_[i];
-        const Atom& atomA = bond.get_atomA();
-        const Atom& atomB = bond.get_atomB();
+        const int atomA_index = bond.get_atomA_index();
+        const int atomB_index = bond.get_atomB_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
         std::cout << "Bond[" << i << "] "
                   << "type=" << bond.get_type() + 1
                   << " k=" << bond.get_Bond_force_constant()
@@ -944,12 +953,12 @@ void Topology::create_bonds_without_H()
             std::cout << "Invalid indices";
         }
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
         double force_constant = bond_force_constants_[force_type];
         double equil_length = bond_force_equils_[force_type];
 
-        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, atomA, atomB, false);
+        HarmonicBond Bond = HarmonicBond(force_constant, equil_length, indexA, indexB, false);
         HarmonicBond_list_.push_back(Bond);
     }
 }
@@ -970,8 +979,10 @@ void Topology::print_bonds_including_H(int max_print, int start_point)
     for (size_t i = start_point; i < count + start_point; i++)
     {
         const HarmonicBond& bond = HarmonicBond_list_[i];
-        const Atom& atomA = bond.get_atomA();
-        const Atom& atomB = bond.get_atomB();
+        const int atomA_index = bond.get_atomA_index();
+        const int atomB_index = bond.get_atomB_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
         std::cout << "Bond[" << i << "] "
                   << "type=" << bond.get_type() + 1
                   << " k=" << bond.get_Bond_force_constant()
@@ -1007,13 +1018,13 @@ void Topology::create_angles_including_H()
             std::cout << "Invalid indices";
         }
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
-        Atom atomC = atom_list_[indexC];
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
+        // Atom atomC = atom_list_[indexC];
         double force_constant = angle_force_constants_[force_type];
         double equil_angle = angle_force_equils_[force_type];
 
-        HarmonicAngle Angle = HarmonicAngle(force_constant, equil_angle, atomA, atomB, atomC, true);
+        HarmonicAngle Angle = HarmonicAngle(force_constant, equil_angle, indexA, indexB, indexC, true);
         HarmonicAngle_list_.push_back(Angle);
     }
 }
@@ -1034,9 +1045,12 @@ void Topology::print_angles_without_H(int max_print, int start_point)
     for (size_t i = start_point; i < count + start_point; i++)
     {
         const HarmonicAngle& angle = HarmonicAngle_list_[i];
-        const Atom& atomA = angle.get_atomA();
-        const Atom& atomB = angle.get_atomB();
-        const Atom& atomC = angle.get_atomC();
+        const int atomA_index = angle.get_atomA_index();
+        const int atomB_index = angle.get_atomB_index();
+        const int atomC_index = angle.get_atomC_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
+        Atom& atomC = atom_list_[atomC_index];
         std::cout << "Angle[" << i << "] "
                   << "type=" << angle.get_type() + 1
                   << " k=" << angle.get_Angle_force_constant()
@@ -1073,13 +1087,13 @@ void Topology::create_angles_without_H()
             std::cout << "Invalid indices";
         }
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
-        Atom atomC = atom_list_[indexC];
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
+        // Atom atomC = atom_list_[indexC];
         double force_constant = angle_force_constants_[force_type];
         double equil_angle = angle_force_equils_[force_type];
 
-        HarmonicAngle Angle = HarmonicAngle(force_constant, equil_angle, atomA, atomB, atomC, false);
+        HarmonicAngle Angle = HarmonicAngle(force_constant, equil_angle, indexA, indexB, indexC, false);
         HarmonicAngle_list_.push_back(Angle);
     }
 }
@@ -1100,9 +1114,12 @@ void Topology::print_angles_including_H(int max_print, int start_point)
     for (size_t i = start_point; i < count + start_point; i++)
     {
         const HarmonicAngle& angle = HarmonicAngle_list_[i];
-        const Atom& atomA = angle.get_atomA();
-        const Atom& atomB = angle.get_atomB();
-        const Atom& atomC = angle.get_atomC();
+        const int atomA_index = angle.get_atomA_index();
+        const int atomB_index = angle.get_atomB_index();
+        const int atomC_index = angle.get_atomC_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
+        Atom& atomC = atom_list_[atomC_index];
         std::cout << "Angle[" << i << "] "
                   << "type=" << angle.get_type() + 1
                   << " k=" << angle.get_Angle_force_constant()
@@ -1154,16 +1171,16 @@ void Topology::create_dihedrals_including_H()
             std::cout << "Invalid indices";
         }
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
-        Atom atomC = atom_list_[indexC];
-        Atom atomD = atom_list_[indexD];
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
+        // Atom atomC = atom_list_[indexC];
+        // Atom atomD = atom_list_[indexD];
         
         double force_constant = dihedral_force_constants_[force_type];
         double phase = dihedral_phases_[force_type];
         double periodicity = dihedral_periodicities_[force_type];
         
-        CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, atomA, atomB, atomC, atomD, true, improper, exclude_14);
+        CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, indexA, indexB, indexC, indexD, true, improper, exclude_14);
         CosineDihedral_list_.push_back(Dihedral);
     }
 }
@@ -1183,10 +1200,14 @@ void Topology::print_dihedrals_without_H(int max_print, int start_point)
     for (size_t i = start_point; i < count + start_point; i++)
     {
         const CosineDihedral& dihedral = CosineDihedral_list_[i];
-        const Atom& atomA = dihedral.get_atomA();
-        const Atom& atomB = dihedral.get_atomB();
-        const Atom& atomC = dihedral.get_atomC();
-        const Atom& atomD = dihedral.get_atomD();
+        const int atomA_index = dihedral.get_atomA_index();
+        const int atomB_index = dihedral.get_atomB_index();
+        const int atomC_index = dihedral.get_atomC_index();
+        const int atomD_index = dihedral.get_atomD_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
+        Atom& atomC = atom_list_[atomC_index];
+        Atom& atomD = atom_list_[atomC_index];
         std::cout << "Dihedral[" << i << "] "
                   << "type=" << dihedral.get_type() + 1
                   << " k=" << dihedral.get_Dihedral_force_constant()
@@ -1236,16 +1257,16 @@ void Topology::create_dihedrals_without_H()
             std::cout << "Invalid indices";
         }
 
-        Atom atomA = atom_list_[indexA];
-        Atom atomB = atom_list_[indexB];
-        Atom atomC = atom_list_[indexC];
-        Atom atomD = atom_list_[indexD];
+        // Atom atomA = atom_list_[indexA];
+        // Atom atomB = atom_list_[indexB];
+        // Atom atomC = atom_list_[indexC];
+        // Atom atomD = atom_list_[indexD];
 
         double force_constant = dihedral_force_constants_[force_type];
         double phase = dihedral_phases_[force_type];
         double periodicity = dihedral_periodicities_[force_type];
 
-        CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, atomA, atomB, atomC, atomD, false, improper, exclude_14);
+        CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, indexA, indexB, indexC, indexD, false, improper, exclude_14);
         CosineDihedral_list_.push_back(Dihedral);
     }
 }
@@ -1266,10 +1287,14 @@ void Topology::print_dihedrals_including_H(int max_print, int start_point)
     for (size_t i = start_point; i < count + start_point; i++)
     {
         const CosineDihedral& dihedral = CosineDihedral_list_[i];
-		const Atom& atomA = dihedral.get_atomA();
-        const Atom& atomB = dihedral.get_atomB();
-        const Atom& atomC = dihedral.get_atomC();
-        const Atom& atomD = dihedral.get_atomD();
+        const int atomA_index = dihedral.get_atomA_index();
+        const int atomB_index = dihedral.get_atomB_index();
+        const int atomC_index = dihedral.get_atomC_index();
+        const int atomD_index = dihedral.get_atomD_index();
+        Atom& atomA = atom_list_[atomA_index];
+        Atom& atomB = atom_list_[atomB_index];
+        Atom& atomC = atom_list_[atomC_index];
+        Atom& atomD = atom_list_[atomC_index];
         std::cout << "Dihedral[" << i << "] "
                   << "type=" << dihedral.get_type() + 1
                   << " k=" << dihedral.get_Dihedral_force_constant()
