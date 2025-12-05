@@ -31,6 +31,7 @@ public:
     std::string element;
     unsigned long int atom_type_index;
     int nExcluded_Atoms;
+    std::vector<int> excluded_atoms;
     // unsigned long int nonbonded_parm_index;
 };
 
