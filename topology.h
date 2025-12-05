@@ -16,13 +16,13 @@ class Topology
 public:
     Topology() {};
     Topology(const std::vector<Atom>& atoms)
-        : atom_list(atoms) {}
+        : atom_list_(atoms) {}
 
     // Implement a destructor
     
 
     std::vector<Atom> get_atoms() const {
-        return atom_list;
+        return atom_list_;
     }
 
     int read_topology();
@@ -99,11 +99,15 @@ public:
     void create_dihedrals_without_H();
     void print_dihedrals_including_H(int max_print, int start_point);
 
+    void process_excluded_atoms_list(std::string& line);
+    void create_excluded_atoms_list();
+
+
     void assign_hyperparameters();
 
 private:
     std::vector<unsigned long int> pointers_;
-    std::vector<Atom> atom_list;
+    std::vector<Atom> atom_list_;
     std::vector<std::string> residue_labels_;
     
     std::vector<double> bond_force_constants_;
@@ -112,8 +116,8 @@ private:
     std::vector<double> angle_force_constants_;
     std::vector<double> angle_force_equils_;
 
-    std::vector<int> charmm_urey_bradley_indices;
-    std::vector<HarmonicUB> HarmonicUB_list;
+    std::vector<int> charmm_urey_bradley_indices_;
+    std::vector<HarmonicUB> HarmonicUB_list_;
     std::vector<double> charmm_urey_bradley_force_constants_;
     std::vector<double> charmm_urey_bradley_equil_values_;
 
@@ -125,7 +129,7 @@ private:
     std::vector<double> scnb_scale_factors_;
 
     std::vector<int> charmm_improper_indices_;
-    std::vector<HarmonicImproper> HarmonicIMP_list;
+    std::vector<HarmonicImproper> HarmonicIMP_list_;
     std::vector<double> charmm_improper_force_constants_;
     std::vector<double> charmm_improper_phases_;
 
@@ -135,16 +139,18 @@ private:
     std::vector<double> lennard_jones_14_Bcoefs_;
 
     std::vector<int> bonds_including_h_;
-    std::vector<HarmonicBond> HarmonicBond_list;
+    std::vector<HarmonicBond> HarmonicBond_list_;
     std::vector<int> bonds_without_h_;
 
     std::vector<int> angles_including_h_;
-    std::vector<HarmonicAngle> HarmonicAngle_list;
+    std::vector<HarmonicAngle> HarmonicAngle_list_;
     std::vector<int> angles_without_h_;
 
     std::vector<int> dihedrals_including_h_;
-    std::vector<CosineDihedral> CosineDihedral_list;
+    std::vector<CosineDihedral> CosineDihedral_list_;
     std::vector<int> dihedrals_without_h_;
+
+    std::vector<int> excluded_atoms_list_;
 
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;

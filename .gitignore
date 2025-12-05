@@ -1,6 +1,8 @@
 build/
 build-new/
 atom_details.txt
+zip/
+md.tar.gz
 .vscode/
 # Prerequisites
 *.d
