@@ -12,6 +12,7 @@
 #include "CosineDihedral.h"
 #include <iostream>
 #include "CMapGroup.h"
+#include "molecule.h"
 
 class Topology 
 
@@ -119,6 +120,9 @@ public:
 
     void process_solvent_pointers(std::string& line);
     
+    void process_atoms_per_molecule(std::string& line);
+    void create_molecules();
+
     template<typename T, typename... Args>
     void check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args);
 
@@ -183,6 +187,9 @@ private:
     std::vector<double> charmm_cmap_parameter_05;
     std::vector<int> charmm_cmap_index;
     std::vector<CMapGroup> CMapGroup_list_;
+
+    std::vector<int> atoms_per_molecule_;
+    std::vector<Molecule> Molecule_list;
 
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 #include "topology.h"
 #include "harmonicUB.h"
@@ -16,6 +17,7 @@
 #include "HarmonicAngle.h"
 #include "CosineDihedral.h"
 #include "CMapGroup.h"
+#include "molecule.h"
 
 enum class Section {
     None,
@@ -66,6 +68,8 @@ enum class Section {
     Charmm_Cmap_Parameter_04,
     Charmm_Cmap_Parameter_05,
     Charmm_Cmap_Index,
+    Solvent_Pointers,
+    Atoms_per_Molecule,
     // add more as needed
 };
 
@@ -105,7 +109,7 @@ int Topology::read_topology(std::string filename)
 
             else if (check_if_line_starts_with_string(line, "%COMMENT"))
             {
-                std::cout << "[COMMENT] " << extract_header(line) << std::endl;
+                // std::cout << "[COMMENT] " << extract_header(line) << std::endl;
                 continue;
             }
 
@@ -175,6 +179,9 @@ int Topology::read_topology(std::string filename)
                 else if (header == "CHARMM_CMAP_PARAMETER_04") current_section = Section::Charmm_Cmap_Parameter_04;
                 else if (header == "CHARMM_CMAP_PARAMETER_05") current_section = Section::Charmm_Cmap_Parameter_05;
                 else if (header == "CHARMM_CMAP_INDEX") current_section = Section::Charmm_Cmap_Index;
+
+                else if (header == "SOLVENT_POINTERS") current_section = Section::Solvent_Pointers;
+                else if (header == "ATOMS_PER_MOLECULE") current_section = Section::Atoms_per_Molecule;
 
                 else current_section = Section::None;
             }
@@ -246,7 +253,9 @@ int Topology::read_topology(std::string filename)
             else if (current_section == Section::Charmm_Cmap_Parameter_04) process_Charmm_Cmap_parameter_04(line);
             else if (current_section == Section::Charmm_Cmap_Parameter_05) process_Charmm_Cmap_parameter_05(line);
             else if (current_section == Section::Charmm_Cmap_Index) process_Charmm_Cmap_Index(line);
-         
+            else if (current_section == Section::Solvent_Pointers) process_solvent_pointers(line);
+            else if (current_section == Section::Atoms_per_Molecule) process_atoms_per_molecule(line);
+
             else continue;
         }
     }
@@ -263,6 +272,7 @@ int Topology::read_topology(std::string filename)
     create_dihedrals_without_H();
     create_excluded_atoms_list();
     create_Charmm_Cmap_Index_assign();
+    create_molecules();
     // std::cout << "excluded_atoms_list_ length: " << excluded_atoms_list_.size() << std::endl;
     // print_atom_details(200);
     // print_UB_bonds(100);
@@ -1526,14 +1536,16 @@ void Topology::create_Charmm_Cmap_Index_assign()
 {
     for (size_t i = 0; i + 6 < charmm_cmap_index.size(); i = i + 6)
     {
-        int indexA = angles_including_h_[i] - 1;
-        int indexB = angles_including_h_[i+1] - 1;
-        int indexC = angles_including_h_[i+2] - 1;
-        int indexD = angles_including_h_[i+3] - 1;
-        int indexE = angles_including_h_[i+4] - 1;
+        int indexA = charmm_cmap_index[i] - 1;
+        int indexB = charmm_cmap_index[i+1] - 1;
+        int indexC = charmm_cmap_index[i+2] - 1;
+        int indexD = charmm_cmap_index[i+3] - 1;
+        int indexE = charmm_cmap_index[i+4] - 1;
+        check_if_valid_indices("atom_list_Charmm_Cmap_Index_assign", atom_list_, indexA, indexB, indexC, indexD, indexE);
 
-        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB, indexC, indexD, indexE);
-        int parameter_set = angles_including_h_[i+5] - 1;
+        int parameter_set = charmm_cmap_index[i+5] - 1;
+
+        
 
         CMapGroup group = CMapGroup(parameter_set, indexA, indexB, indexC, indexD, indexE);
         CMapGroup_list_.push_back(group);
@@ -1547,4 +1559,50 @@ void Topology::process_solvent_pointers(std::string& line)
     nsolvent_mols_ = std::stoul(entries[1]);
     natoms_per_solvent_ = std::stoul(entries[2]);
 }
+
+void Topology::process_atoms_per_molecule(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+        int index = std::stoi(entries[i]);
+        atoms_per_molecule_.push_back(index);
+    }
+}
+
+void Topology::create_molecules()
+{
+    int start_index = 0;
+    for (size_t i = 0; i < atoms_per_molecule_.size(); i++)
+    {
+        int n_atoms_in_this_molecule = atoms_per_molecule_[i];
+        std::vector<int> atom_indices_for_this_molecule;
+        for (int i = start_index; i < start_index+n_atoms_in_this_molecule; i++)
+        {
+            atom_indices_for_this_molecule.push_back(i);
+        }
+        Molecule mol = Molecule(atom_indices_for_this_molecule);
+        Molecule_list.push_back(mol);
+        start_index += n_atoms_in_this_molecule;
+    } 
+    for (Molecule& mol: Molecule_list)
+    {
+        std::vector<int> atom_list = mol.get_atom_indices();
+        for (size_t i = 0; i < atom_list.size(); ++i)
+        {
+            Atom& atom = atom_list_[atom_list[i]];
+            mol.add_atom_name(atom.name);
+            std::string residue_name = atom.residue_name;
+            unsigned long int residue_number = atom.residue_number;
+            std::string residue_name_number = residue_name + std::to_string(residue_number);
+            bool check_if_exists = mol.check_if_residue_exists(residue_name_number);
+            if (!check_if_exists)
+            {
+                mol.add_residue_name(residue_name_number);
+            }
+        }
+    }
+
+    // Molecule_list[0].print_residue_names();
+}
+
 

@@ -1,0 +1,25 @@
+#include "molecule.h"
+#include <string>
+#include <algorithm>
+#include <iostream>
+
+bool Molecule::check_if_residue_exists(std::string& name)
+{
+    auto it = std::find(residue_names.begin(), residue_names.end(), name);
+    if (it == residue_names.end())
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+void Molecule::print_residue_names()
+{
+    for (std::string& name: residue_names)
+    {
+        std::cout << name << "\n";
+    }
+}
