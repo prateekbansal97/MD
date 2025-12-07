@@ -11,6 +11,7 @@
 #include "HarmonicAngle.h"
 #include "CosineDihedral.h"
 #include <iostream>
+#include "CMapGroup.h"
 
 class Topology 
 
@@ -104,10 +105,26 @@ public:
     void process_excluded_atoms_list(std::string& line);
     void create_excluded_atoms_list();
 
+    void process_amber_atom_type(std::string& line);
+    
+    void process_Charmm_Cmap_Count(std::string& line);
+    void process_Charmm_Cmap_Resolution(std::string& line);
+    void process_Charmm_Cmap_parameter_01(std::string& line);
+    void process_Charmm_Cmap_parameter_02(std::string& line);
+    void process_Charmm_Cmap_parameter_03(std::string& line);
+    void process_Charmm_Cmap_parameter_04(std::string& line);
+    void process_Charmm_Cmap_parameter_05(std::string& line);
+    void process_Charmm_Cmap_Index(std::string& line);
+    void create_Charmm_Cmap_Index_assign();
+
+    void process_solvent_pointers(std::string& line);
+    
     template<typename T, typename... Args>
     void check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args);
 
     void assign_hyperparameters();
+
+    
 
 private:
     std::vector<unsigned long int> pointers_;
@@ -156,10 +173,22 @@ private:
 
     std::vector<int> excluded_atoms_list_;
 
+    std::vector<std::string> amber_atom_type_;
+    
+    std::vector<int> charmm_cmap_resolution_;
+    std::vector<double> charmm_cmap_parameter_01; 
+    std::vector<double> charmm_cmap_parameter_02;
+    std::vector<double> charmm_cmap_parameter_03;
+    std::vector<double> charmm_cmap_parameter_04;
+    std::vector<double> charmm_cmap_parameter_05;
+    std::vector<int> charmm_cmap_index;
+    std::vector<CMapGroup> CMapGroup_list_;
+
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
     int res_num = 0;
     int last_residue_num = 0;
+
 
     // nbmatrix of shape (nTypes_, nTypes_)
     std::vector<std::vector<unsigned long int>> nbmatrix_;
@@ -197,7 +226,11 @@ private:
     unsigned long int mperturbed_torsions_;
     unsigned long int ifbox_;
     unsigned long int nmaxresidue_atoms_;
-
+    unsigned long int nCmap_;
+    unsigned long int nCmap_unique;
+    unsigned long int protein_res_;
+    unsigned long int nsolvent_mols_;
+    unsigned long int natoms_per_solvent_;
 };
 
 template<typename T, typename... Args>
@@ -214,6 +247,7 @@ void Topology::check_if_valid_indices(const std::string& vector_name, const std:
     
     ( (void)check_index(args), ... );
 }
+
 
 
 #endif // TOPOLOGY_H

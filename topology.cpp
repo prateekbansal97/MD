@@ -15,6 +15,7 @@
 #include "HarmonicBond.h"
 #include "HarmonicAngle.h"
 #include "CosineDihedral.h"
+#include "CMapGroup.h"
 
 enum class Section {
     None,
@@ -57,6 +58,14 @@ enum class Section {
     Dihedrals_Inc_Hydrogen,
     Dihedrals_without_Hydrogen,
     Excluded_Atoms_List,
+    Amber_Atom_Type,
+    Charmm_Cmap_Count,
+    Charmm_Cmap_Parameter_01,
+    Charmm_Cmap_Parameter_02,
+    Charmm_Cmap_Parameter_03,
+    Charmm_Cmap_Parameter_04,
+    Charmm_Cmap_Parameter_05,
+    Charmm_Cmap_Index,
     // add more as needed
 };
 
@@ -157,7 +166,16 @@ int Topology::read_topology(std::string filename)
                 else if (header == "DIHEDRALS_WITHOUT_HYDROGEN") current_section = Section::Dihedrals_without_Hydrogen;
                 
                 else if (header == "EXCLUDED_ATOMS_LIST") current_section = Section::Excluded_Atoms_List;
-                
+                else if (header == "AMBER_ATOM_TYPE") current_section = Section::Amber_Atom_Type;
+
+                else if (header == "CHARMM_CMAP_COUNT") current_section = Section::Charmm_Cmap_Count;
+                else if (header == "CHARMM_CMAP_PARAMETER_01") current_section = Section::Charmm_Cmap_Parameter_01;
+                else if (header == "CHARMM_CMAP_PARAMETER_02") current_section = Section::Charmm_Cmap_Parameter_02;
+                else if (header == "CHARMM_CMAP_PARAMETER_03") current_section = Section::Charmm_Cmap_Parameter_03;
+                else if (header == "CHARMM_CMAP_PARAMETER_04") current_section = Section::Charmm_Cmap_Parameter_04;
+                else if (header == "CHARMM_CMAP_PARAMETER_05") current_section = Section::Charmm_Cmap_Parameter_05;
+                else if (header == "CHARMM_CMAP_INDEX") current_section = Section::Charmm_Cmap_Index;
+
                 else current_section = Section::None;
             }
 
@@ -219,6 +237,16 @@ int Topology::read_topology(std::string filename)
             else if (current_section == Section::Dihedrals_without_Hydrogen) process_dihedrals_without_H(line);
 
             else if (current_section == Section::Excluded_Atoms_List) process_excluded_atoms_list(line);
+            else if (current_section == Section::Amber_Atom_Type) process_amber_atom_type(line);
+
+            else if (current_section == Section::Charmm_Cmap_Count) process_Charmm_Cmap_Count(line);
+            else if (current_section == Section::Charmm_Cmap_Parameter_01) process_Charmm_Cmap_parameter_01(line);
+            else if (current_section == Section::Charmm_Cmap_Parameter_02) process_Charmm_Cmap_parameter_02(line);
+            else if (current_section == Section::Charmm_Cmap_Parameter_03) process_Charmm_Cmap_parameter_03(line);
+            else if (current_section == Section::Charmm_Cmap_Parameter_04) process_Charmm_Cmap_parameter_04(line);
+            else if (current_section == Section::Charmm_Cmap_Parameter_05) process_Charmm_Cmap_parameter_05(line);
+            else if (current_section == Section::Charmm_Cmap_Index) process_Charmm_Cmap_Index(line);
+         
             else continue;
         }
     }
@@ -234,6 +262,7 @@ int Topology::read_topology(std::string filename)
     create_dihedrals_including_H();
     create_dihedrals_without_H();
     create_excluded_atoms_list();
+    create_Charmm_Cmap_Index_assign();
     // std::cout << "excluded_atoms_list_ length: " << excluded_atoms_list_.size() << std::endl;
     // print_atom_details(200);
     // print_UB_bonds(100);
@@ -1406,5 +1435,116 @@ void Topology::create_excluded_atoms_list()
         }
         start += excluded;
     }
+}
+
+void Topology::process_amber_atom_type(std::string& line)
+{
+    std::vector<std::string> entries = split_line_fixed_length(line, 4);
+    for (const auto& entry : entries) {
+        amber_atom_type_.push_back(remove_whitespaces_from_string(entry));
+    }
+}
+
+void Topology::process_Charmm_Cmap_Count(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    //%COMMENT Number of CMAP terms, number of unique CMAP parameters
+    nCmap_ = std::stoul(entries[0]);
+    nCmap_unique = std::stoul(entries[1]);
+}
+
+void Topology::process_Charmm_Cmap_Resolution(std::string& line)
+//=CHARMM_CMAP_RESOLUTION
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+        int index = std::stoi(entries[i]);
+        charmm_cmap_resolution_.push_back(index);
+    }
+}
+
+void Topology::process_Charmm_Cmap_parameter_01(std::string& line)
+//CHARMM_CMAP_PARAMETER_01
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+     for (size_t i = 0; i < entries.size(); ++i) {
+        double index = std::stod(entries[i]);
+        charmm_cmap_parameter_01.push_back(index);
+    }
+}
+
+void Topology::process_Charmm_Cmap_parameter_02(std::string& line)
+//CHARMM_CMAP_PARAMETER_02
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+     for (size_t i = 0; i < entries.size(); ++i) {
+        double index = std::stod(entries[i]);
+        charmm_cmap_parameter_02.push_back(index);
+    }
+}
+
+void Topology::process_Charmm_Cmap_parameter_03(std::string& line)
+//CHARMM_CMAP_PARAMETER_03
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+     for (size_t i = 0; i < entries.size(); ++i) {
+        double index = std::stod(entries[i]);
+        charmm_cmap_parameter_03.push_back(index);
+    }
+}
+
+void Topology::process_Charmm_Cmap_parameter_04(std::string& line)
+//CHARMM_CMAP_PARAMETER_04
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+     for (size_t i = 0; i < entries.size(); ++i) {
+        double index = std::stod(entries[i]);
+        charmm_cmap_parameter_04.push_back(index);
+    }
+}
+
+void Topology::process_Charmm_Cmap_parameter_05(std::string& line)
+//CHARMM_CMAP_PARAMETER_05
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+     for (size_t i = 0; i < entries.size(); ++i) {
+        double index = std::stod(entries[i]);
+        charmm_cmap_parameter_05.push_back(index);
+    }
+}
+
+void Topology::process_Charmm_Cmap_Index(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+     for (size_t i = 0; i < entries.size(); ++i) {
+        int index = std::stoi(entries[i]);
+        charmm_cmap_index.push_back(index);
+    }
+}
+
+void Topology::create_Charmm_Cmap_Index_assign()
+{
+    for (size_t i = 0; i + 6 < charmm_cmap_index.size(); i = i + 6)
+    {
+        int indexA = angles_including_h_[i] - 1;
+        int indexB = angles_including_h_[i+1] - 1;
+        int indexC = angles_including_h_[i+2] - 1;
+        int indexD = angles_including_h_[i+3] - 1;
+        int indexE = angles_including_h_[i+4] - 1;
+
+        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB, indexC, indexD, indexE);
+        int parameter_set = angles_including_h_[i+5] - 1;
+
+        CMapGroup group = CMapGroup(parameter_set, indexA, indexB, indexC, indexD, indexE);
+        CMapGroup_list_.push_back(group);
+    }
+}
+
+void Topology::process_solvent_pointers(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    protein_res_ = std::stoul(entries[0]);
+    nsolvent_mols_ = std::stoul(entries[1]);
+    natoms_per_solvent_ = std::stoul(entries[2]);
 }
 
