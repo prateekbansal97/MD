@@ -11,7 +11,9 @@ class HarmonicUB
     public:
         HarmonicUB(double UB_force_constant, double UB_force_equil) : 
         UB_force_constant(UB_force_constant), 
-        UB_force_equil(UB_force_equil), type(0) {}
+        UB_force_equil(UB_force_equil),
+        atomA_index(-1), 
+        atomB_index(-1), type(0) {}
         
         HarmonicUB(double UB_force_constant, double UB_force_equil, int atomA_index, int atomB_index) : 
         UB_force_constant(UB_force_constant), 

@@ -14,7 +14,11 @@ class CosineDihedral
         Dihedral_force_constant(Dihedral_force_constant), 
         Dihedral_Phase(Dihedral_Phase),
         Dihedral_Periodicity(Dihedral_Periodicity), 
-        type(0), 
+        type(0),
+        atomA_index(-1), 
+        atomB_index(-1), 
+        atomC_index(-1),
+        atomD_index(-1), 
         improper(improper),
         exclude_14(exclude_14),
         isH(false) {}

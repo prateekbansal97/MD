@@ -7,8 +7,12 @@ class HarmonicAngle
     public:
         HarmonicAngle(double Angle_force_constant, double Angle_Equil) : 
         Angle_force_constant(Angle_force_constant), 
-        Angle_Equil(Angle_Equil), type(0), isH(false) {}
-        
+        Angle_Equil(Angle_Equil), type(0), 
+        atomA_index(-1), 
+        atomB_index(-1), 
+        atomC_index(-1),
+        isH(false) {}
+
         HarmonicAngle(double Angle_force_constant, double Angle_Equil, int atomA_index, int atomB_index, int atomC_index, bool isH) : 
         Angle_force_constant(Angle_force_constant), 
         Angle_Equil(Angle_Equil), 

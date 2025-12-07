@@ -11,7 +11,11 @@ class HarmonicImproper
     public:
         HarmonicImproper(double IMP_force_constant, double IMP_Phase) : 
         IMP_force_constant(IMP_force_constant), 
-        IMP_Phase(IMP_Phase), type(0) {}
+        IMP_Phase(IMP_Phase), 
+        atomA_index(-1), 
+        atomB_index(-1), 
+        atomC_index(-1),
+        atomD_index(-1), type(0) {}
         
         HarmonicImproper(double IMP_force_constant, double IMP_Phase, int atomA_index, int atomB_index, int atomC_index, int atomD_index) : 
         IMP_force_constant(IMP_force_constant), 

@@ -2,7 +2,7 @@
 #define HARMONICBOND_H
 
 
-#include "atom.h"
+// #include "atom.h"
 
 
 class HarmonicBond
@@ -11,7 +11,10 @@ class HarmonicBond
     public:
         HarmonicBond(double Bond_force_constant, double Bond_Equil) : 
         Bond_force_constant(Bond_force_constant), 
-        Bond_Equil(Bond_Equil), type(0), isH(false) {}
+        Bond_Equil(Bond_Equil), type(0), 
+        atomA_index(-1), 
+        atomB_index(-1), 
+        isH(false) {}
         
         HarmonicBond(double Bond_force_constant, double Bond_Equil, int atomA_index, int atomB_index, bool isH) : 
         Bond_force_constant(Bond_force_constant), 
