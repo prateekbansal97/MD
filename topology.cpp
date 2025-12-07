@@ -70,7 +70,11 @@ enum class Section {
     Charmm_Cmap_Index,
     Solvent_Pointers,
     Atoms_per_Molecule,
-    // add more as needed
+    Box_Dimensions,
+    Radius_Set,
+    Radii,
+    Screen,
+    Ipol
 };
 
 
@@ -181,7 +185,14 @@ int Topology::read_topology(std::string filename)
                 else if (header == "CHARMM_CMAP_INDEX") current_section = Section::Charmm_Cmap_Index;
 
                 else if (header == "SOLVENT_POINTERS") current_section = Section::Solvent_Pointers;
+                
                 else if (header == "ATOMS_PER_MOLECULE") current_section = Section::Atoms_per_Molecule;
+
+                else if (header == "BOX_DIMENSIONS") current_section = Section::Box_Dimensions;
+                else if (header == "RADIUS_SET") current_section = Section::Radius_Set;
+                else if (header == "RADII") current_section = Section::Radii;
+                else if (header == "SCREEN") current_section = Section::Screen;
+                else if (header == "IPOL") current_section = Section::Ipol;
 
                 else current_section = Section::None;
             }
@@ -253,8 +264,16 @@ int Topology::read_topology(std::string filename)
             else if (current_section == Section::Charmm_Cmap_Parameter_04) process_Charmm_Cmap_parameter_04(line);
             else if (current_section == Section::Charmm_Cmap_Parameter_05) process_Charmm_Cmap_parameter_05(line);
             else if (current_section == Section::Charmm_Cmap_Index) process_Charmm_Cmap_Index(line);
+
             else if (current_section == Section::Solvent_Pointers) process_solvent_pointers(line);
+            
             else if (current_section == Section::Atoms_per_Molecule) process_atoms_per_molecule(line);
+
+            else if (current_section == Section::Box_Dimensions) process_box_dimensions(line);
+            else if (current_section == Section::Radius_Set) process_radius_set(line);
+            else if (current_section == Section::Radii) process_radii(line);
+            else if (current_section == Section::Screen) process_screen(line);
+            else if (current_section == Section::Ipol) process_ipol(line);
 
             else continue;
         }
@@ -1605,4 +1624,40 @@ void Topology::create_molecules()
     // Molecule_list[0].print_residue_names();
 }
 
+void Topology::process_box_dimensions(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    box_beta = std::stod(entries[0]);
+    box_x = std::stod(entries[1]);
+    box_y = std::stod(entries[2]);
+    box_z = std::stod(entries[3]);
+}
 
+void Topology::process_radius_set(std::string& line)
+{
+    radius_set = line;
+}
+
+void Topology::process_radii(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+        double radius = std::stod(entries[i]);
+        radii.push_back(radius);
+    }
+}
+
+void Topology::process_screen(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    for (size_t i = 0; i < entries.size(); ++i) {
+        double screenr = std::stod(entries[i]);
+        screen.push_back(screenr);
+    }
+}
+
+void Topology::process_ipol(std::string& line)
+{
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
+    polarizable = std::stoi(entries[0]);
+}

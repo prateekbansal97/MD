@@ -123,6 +123,14 @@ public:
     void process_atoms_per_molecule(std::string& line);
     void create_molecules();
 
+    void process_box_dimensions(std::string& line);
+
+    void process_radius_set(std::string& line); 
+    void process_radii(std::string& line);
+    void process_screen(std::string& line);
+
+    void process_ipol(std::string& line);
+
     template<typename T, typename... Args>
     void check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args);
 
@@ -191,6 +199,9 @@ private:
     std::vector<int> atoms_per_molecule_;
     std::vector<Molecule> Molecule_list;
 
+    std::vector<double> radii;
+    std::vector<double> screen;
+
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
     int res_num = 0;
@@ -205,6 +216,7 @@ private:
 
     unsigned long int nCharmmImpropers_;
     unsigned long int nCharmmImproperTypes_;
+
     // Hyperparameters
     unsigned long int nAtoms_;
     unsigned long int nTypes_;
@@ -238,6 +250,16 @@ private:
     unsigned long int protein_res_;
     unsigned long int nsolvent_mols_;
     unsigned long int natoms_per_solvent_;
+
+    double box_beta;
+    double box_x;
+    double box_y;
+    double box_z;
+
+    std::string radius_set;
+
+    int polarizable;
+
 };
 
 template<typename T, typename... Args>
