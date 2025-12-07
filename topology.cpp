@@ -1,3 +1,4 @@
+#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <fstream>
@@ -65,9 +66,8 @@ std::vector<unsigned long int> Topology::get_pointers()
     return pointers_;
 }
 
-int Topology::read_topology()
+int Topology::read_topology(std::string filename)
 {
-    std::string filename = "/Users/Prateek/Desktop/Coding/MD/CB1_apo_assym.prmtop";
     std::ifstream file(filename);
 
     if (!file) {
@@ -348,24 +348,15 @@ void Topology::process_atom_names_section(std::string& line)
     for (const auto& entry : entries) {
         if (check_if_whitespace_in_string(entry)) {
             Atom atom(remove_whitespaces_from_string(entry));
-            // Use the map in element.h to assign element
-            auto it = element_map.find(atom.name);
-            if (it != element_map.end()) {
-                atom.element = it->second;
-            } else {
-                atom.element = atom.name.substr(0, 1); // Default to first character
-            }
+            auto it = get_element_from_name(atom.name);
+            atom.element = it;
             atom_list_.push_back(atom);
             continue;
         }
         else {
             Atom atom(entry);
-            auto it = element_map.find(atom.name);
-            if (it != element_map.end()) {
-                atom.element = it->second;
-            } else {
-                atom.element = atom.name.substr(0, 1); // Default to first character
-            }
+            auto it = get_element_from_name(atom.name);
+            atom.element = it;
             atom_list_.push_back(atom);
         }
     }
@@ -1164,13 +1155,23 @@ void Topology::create_dihedrals_including_H()
             indexD = std::abs(indexD);
         }
 
+        int total_atoms = atom_list_.size();
+
+        if (indexA > total_atoms || indexB > total_atoms  || indexC > total_atoms || indexD > total_atoms )
+        {
+            std::cerr << "Invalid indices, indices greater than total number of atoms";
+        }
+
+        if (indexA < 0 || indexB < 0  || indexC < 0 || indexD < 0 )
+        {
+            std::cerr << "Invalid indices, less than 0";
+        }
         int force_type = dihedrals_including_h_[i+4] - 1;
         
-        if (force_type < 0)
+        if (force_type < 0 || force_type > dihedral_force_constants_.size() - 1)
         {
             std::cout << "Invalid indices";
         }
-
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
         // Atom atomC = atom_list_[indexC];

@@ -2,6 +2,7 @@
 #define TOPOLOGY_H
 
 #include <vector>
+#include <string>
 #include "atom.h"
 #include "io.h"
 #include "harmonicUB.h"
@@ -25,7 +26,7 @@ public:
         return atom_list_;
     }
 
-    int read_topology();
+    int read_topology(std::string filename);
     std::vector<unsigned long int> get_pointers();
     void print_atom_details(int max_print);
     void print_atom_details_to_file();
