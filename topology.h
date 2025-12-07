@@ -103,6 +103,8 @@ public:
     void process_excluded_atoms_list(std::string& line);
     void create_excluded_atoms_list();
 
+    template<typename T, typename... Args>
+    void check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args);
 
     void assign_hyperparameters();
 
@@ -196,6 +198,21 @@ private:
     unsigned long int nmaxresidue_atoms_;
 
 };
+
+template<typename T, typename... Args>
+void Topology::check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args)
+{    
+    auto check_index = [&](auto index) {
+        if (static_cast<std::size_t>(index) >= vector.size() || static_cast<std::size_t>(index) < 0)
+        {
+            std::cerr << "Invalid index (" << index << ") passed. "
+                     << "for vector " << vector_name 
+                      << "Vector size is " << vector.size() << std::endl;
+        }
+    };
+    
+    ( (void)check_index(args), ... );
+}
 
 
 #endif // TOPOLOGY_H

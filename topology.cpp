@@ -222,7 +222,7 @@ int Topology::read_topology(std::string filename)
             else continue;
         }
     }
-
+    std::cout << "Total number of atoms in the file: " << atom_list_.size() << std::endl;
     process_charmm_urey_bradley_assign();
     process_charmm_urey_bradley_assign_ffparams();
     process_charmm_improper_assign();
@@ -341,6 +341,8 @@ void Topology::assign_hyperparameters()
         std::cerr << "Warning: nTypes_ is zero; nbmatrix_ not initialized." << std::endl;
     }
 }
+
+
 
 void Topology::process_atom_names_section(std::string& line)
 {
@@ -586,6 +588,8 @@ void Topology::process_charmm_urey_bradley_assign()
         int indexB = charmm_urey_bradley_indices_[i+1] - 1;
         int index_CUB_type = charmm_urey_bradley_indices_[i+2] - 1;
 
+
+        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB);
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
         HarmonicUB UB_bond = HarmonicUB(indexA, indexB);
@@ -619,6 +623,8 @@ void Topology::process_charmm_urey_bradley_assign_ffparams()
     for (auto& UB_bond: HarmonicUB_list_)
     {
         int type = UB_bond.get_type();
+        check_if_valid_indices("charmm_urey_bradley_force_constants_", charmm_urey_bradley_force_constants_, type);
+        check_if_valid_indices("charmm_urey_bradley_equil_values_", charmm_urey_bradley_equil_values_, type);
         double force_constant = charmm_urey_bradley_force_constants_[type];
         double equil_value = charmm_urey_bradley_equil_values_[type];
         UB_bond.set_UB_force_constant(force_constant);
@@ -643,8 +649,14 @@ void Topology::print_UB_bonds(int max_print)
         const HarmonicUB& UB_bond = HarmonicUB_list_[i];
         const int atomA_index = UB_bond.get_atomA_index();
         const int atomB_index = UB_bond.get_atomB_index();
+
+        check_if_valid_indices("atomA_index", atom_list_, atomA_index);
+        check_if_valid_indices("atomB_index", atom_list_, atomB_index);
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
+
+
         std::cout << "UB[" << i << "] "
                   << "type=" << UB_bond.get_type() + 1
                   << " k=" << UB_bond.get_UB_force_constant()
@@ -730,6 +742,8 @@ void Topology::process_charmm_improper_assign()
         int indexD = charmm_improper_indices_[i+3] - 1;
         int index_CI_type = charmm_improper_indices_[i+4] - 1;
 
+        check_if_valid_indices("atomA_index", atom_list_, indexA, indexB, indexC, indexD);
+
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
         // Atom atomC = atom_list_[indexC];
@@ -772,8 +786,12 @@ void Topology::process_improper_bradley_assign_ffparams()
     for (HarmonicImproper& IMP_bond: HarmonicIMP_list_)
     {
         int type = IMP_bond.get_type();
+        check_if_valid_indices("charmm_improper_force_constants_", charmm_improper_force_constants_, type);
+        check_if_valid_indices("charmm_improper_phases_", charmm_improper_phases_, type);
+
         double force_constant = charmm_improper_force_constants_[type];
         double phase_value = charmm_improper_phases_[type];
+
         IMP_bond.set_IMP_force_constant(force_constant);
         IMP_bond.set_IMP_phase_value(phase_value);
     }
@@ -798,6 +816,9 @@ void Topology::print_IMP_bonds(int max_print)
         const int atomB_index = IMP_bond.get_atomB_index();
         const int atomC_index = IMP_bond.get_atomC_index();
         const int atomD_index = IMP_bond.get_atomD_index();
+
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index, atomC_index, atomD_index);
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
         Atom& atomC = atom_list_[atomC_index];
@@ -873,6 +894,8 @@ void Topology::create_bonds_including_H()
         int indexB = (bonds_including_h_[i+1])/3;
         int force_type = bonds_including_h_[i+2] - 1;
 
+        check_if_valid_indices("atomA_index", atom_list_, indexA, indexB);
+
         // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
         if (force_type < 0)
         {
@@ -882,6 +905,9 @@ void Topology::create_bonds_including_H()
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
 
+        check_if_valid_indices("bond_force_constants_", bond_force_constants_, force_type);
+        check_if_valid_indices("bond_force_equils_", bond_force_equils_, force_type);
+       
         double force_constant = bond_force_constants_[force_type];
         double equil_length = bond_force_equils_[force_type];
 
@@ -905,11 +931,16 @@ void Topology::print_bonds_without_H(int max_print, int start_point)
 
     for (size_t i = start_point; i < count + start_point; i++)
     {
+        check_if_valid_indices("HarmonicBond_list_", HarmonicBond_list_, i);
         const HarmonicBond& bond = HarmonicBond_list_[i];
         const int atomA_index = bond.get_atomA_index();
         const int atomB_index = bond.get_atomB_index();
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index);
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
+
+
         std::cout << "Bond[" << i << "] "
                   << "type=" << bond.get_type() + 1
                   << " k=" << bond.get_Bond_force_constant()
@@ -938,6 +969,8 @@ void Topology::create_bonds_without_H()
         int indexB = (bonds_without_h_[i+1])/3;
         int force_type = bonds_without_h_[i+2] - 1;
 
+
+        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB);
         // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
         if (force_type < 0)
         {
@@ -946,6 +979,10 @@ void Topology::create_bonds_without_H()
 
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
+
+        check_if_valid_indices("bond_force_constants_", bond_force_constants_, force_type);
+        check_if_valid_indices("bond_force_equils_", bond_force_equils_, force_type);
+
         double force_constant = bond_force_constants_[force_type];
         double equil_length = bond_force_equils_[force_type];
 
@@ -969,11 +1006,15 @@ void Topology::print_bonds_including_H(int max_print, int start_point)
 
     for (size_t i = start_point; i < count + start_point; i++)
     {
+        check_if_valid_indices("HarmonicBond_list_", HarmonicBond_list_, i);
         const HarmonicBond& bond = HarmonicBond_list_[i];
         const int atomA_index = bond.get_atomA_index();
         const int atomB_index = bond.get_atomB_index();
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index);
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
+
         std::cout << "Bond[" << i << "] "
                   << "type=" << bond.get_type() + 1
                   << " k=" << bond.get_Bond_force_constant()
@@ -1003,6 +1044,8 @@ void Topology::create_angles_including_H()
         int indexC = (angles_including_h_[i+2])/3;
         int force_type = angles_including_h_[i+3] - 1;
 
+        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB, indexC);
+
         // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
         if (force_type < 0)
         {
@@ -1012,6 +1055,9 @@ void Topology::create_angles_including_H()
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
         // Atom atomC = atom_list_[indexC];
+
+        check_if_valid_indices("angle_force_constants_", angle_force_constants_, force_type);
+        check_if_valid_indices("angle_force_equils_", angle_force_equils_, force_type);
         double force_constant = angle_force_constants_[force_type];
         double equil_angle = angle_force_equils_[force_type];
 
@@ -1035,10 +1081,14 @@ void Topology::print_angles_without_H(int max_print, int start_point)
 
     for (size_t i = start_point; i < count + start_point; i++)
     {
+        check_if_valid_indices("HarmonicAngle_list_", HarmonicAngle_list_, i);
         const HarmonicAngle& angle = HarmonicAngle_list_[i];
         const int atomA_index = angle.get_atomA_index();
         const int atomB_index = angle.get_atomB_index();
         const int atomC_index = angle.get_atomC_index();
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index, atomC_index);
+
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
         Atom& atomC = atom_list_[atomC_index];
@@ -1071,6 +1121,7 @@ void Topology::create_angles_without_H()
         int indexB = (angles_without_h_[i+1])/3;
         int indexC = (angles_without_h_[i+2])/3;
         int force_type = angles_without_h_[i+3] - 1;
+        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB, indexC);
 
         // std::cout << "index A: " << indexA << " index B: " << indexB << " force_type: " << force_type << std::endl;
         if (force_type < 0)
@@ -1081,6 +1132,8 @@ void Topology::create_angles_without_H()
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
         // Atom atomC = atom_list_[indexC];
+        check_if_valid_indices("angle_force_constants_", angle_force_constants_, force_type);
+        check_if_valid_indices("angle_force_equils_", angle_force_equils_, force_type);
         double force_constant = angle_force_constants_[force_type];
         double equil_angle = angle_force_equils_[force_type];
 
@@ -1104,10 +1157,14 @@ void Topology::print_angles_including_H(int max_print, int start_point)
 
     for (size_t i = start_point; i < count + start_point; i++)
     {
+        check_if_valid_indices("HarmonicAngle_list_", HarmonicAngle_list_, i);
+
         const HarmonicAngle& angle = HarmonicAngle_list_[i];
         const int atomA_index = angle.get_atomA_index();
         const int atomB_index = angle.get_atomB_index();
         const int atomC_index = angle.get_atomC_index();
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index, atomC_index);
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
         Atom& atomC = atom_list_[atomC_index];
@@ -1155,28 +1212,16 @@ void Topology::create_dihedrals_including_H()
             indexD = std::abs(indexD);
         }
 
+        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB, indexC, indexD);
+
         int total_atoms = atom_list_.size();
-
-        if (indexA > total_atoms || indexB > total_atoms  || indexC > total_atoms || indexD > total_atoms )
-        {
-            std::cerr << "Invalid indices, indices greater than total number of atoms";
-        }
-
-        if (indexA < 0 || indexB < 0  || indexC < 0 || indexD < 0 )
-        {
-            std::cerr << "Invalid indices, less than 0";
-        }
         int force_type = dihedrals_including_h_[i+4] - 1;
         
-        if (force_type < 0 || force_type > dihedral_force_constants_.size() - 1)
-        {
-            std::cout << "Invalid indices";
-        }
-        // Atom atomA = atom_list_[indexA];
-        // Atom atomB = atom_list_[indexB];
-        // Atom atomC = atom_list_[indexC];
-        // Atom atomD = atom_list_[indexD];
         
+        check_if_valid_indices("dihedral_force_constants_", dihedral_force_constants_, force_type);
+        check_if_valid_indices("dihedral_phases_", dihedral_phases_, force_type);
+        check_if_valid_indices("dihedral_periodicities_", dihedral_periodicities_, force_type);
+
         double force_constant = dihedral_force_constants_[force_type];
         double phase = dihedral_phases_[force_type];
         double periodicity = dihedral_periodicities_[force_type];
@@ -1200,15 +1245,20 @@ void Topology::print_dihedrals_without_H(int max_print, int start_point)
 
     for (size_t i = start_point; i < count + start_point; i++)
     {
+        check_if_valid_indices("CosineDihedral_list_", CosineDihedral_list_, i);
         const CosineDihedral& dihedral = CosineDihedral_list_[i];
         const int atomA_index = dihedral.get_atomA_index();
         const int atomB_index = dihedral.get_atomB_index();
         const int atomC_index = dihedral.get_atomC_index();
         const int atomD_index = dihedral.get_atomD_index();
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index, atomC_index, atomD_index);
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
         Atom& atomC = atom_list_[atomC_index];
         Atom& atomD = atom_list_[atomC_index];
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index, atomC_index, atomD_index);
+
         std::cout << "Dihedral[" << i << "] "
                   << "type=" << dihedral.get_type() + 1
                   << " k=" << dihedral.get_Dihedral_force_constant()
@@ -1258,10 +1308,16 @@ void Topology::create_dihedrals_without_H()
             std::cout << "Invalid indices";
         }
 
+        check_if_valid_indices("atom_list_", atom_list_, indexA, indexB, indexC, indexD);
+
         // Atom atomA = atom_list_[indexA];
         // Atom atomB = atom_list_[indexB];
         // Atom atomC = atom_list_[indexC];
         // Atom atomD = atom_list_[indexD];
+
+        check_if_valid_indices("dihedral_force_constants_", dihedral_force_constants_, force_type);
+        check_if_valid_indices("dihedral_phases_", dihedral_phases_, force_type);
+        check_if_valid_indices("dihedral_periodicities_", dihedral_periodicities_, force_type);
 
         double force_constant = dihedral_force_constants_[force_type];
         double phase = dihedral_phases_[force_type];
@@ -1287,11 +1343,14 @@ void Topology::print_dihedrals_including_H(int max_print, int start_point)
 
     for (size_t i = start_point; i < count + start_point; i++)
     {
+        check_if_valid_indices("CosineDihedral_list_", CosineDihedral_list_, i);
         const CosineDihedral& dihedral = CosineDihedral_list_[i];
         const int atomA_index = dihedral.get_atomA_index();
         const int atomB_index = dihedral.get_atomB_index();
         const int atomC_index = dihedral.get_atomC_index();
         const int atomD_index = dihedral.get_atomD_index();
+        check_if_valid_indices("atom_list_", atom_list_, atomA_index, atomB_index, atomC_index, atomD_index);
+
         Atom& atomA = atom_list_[atomA_index];
         Atom& atomB = atom_list_[atomB_index];
         Atom& atomC = atom_list_[atomC_index];
