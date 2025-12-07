@@ -53,16 +53,16 @@ class CosineDihedral
 
         double return_energy(double dihedral);
 
-        void set_type(int type_id) { type = type_id; }
+        void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
 
-        void set_Dihedral_force_constant(double force_constant) {Dihedral_force_constant = force_constant; }
+        void set_Dihedral_force_constant(double force_constant) {this->Dihedral_force_constant = force_constant; }
         double get_Dihedral_force_constant() const {return Dihedral_force_constant; }
 
-        void set_Dihedral_phase(double phase) {Dihedral_Phase = phase; }
+        void set_Dihedral_phase(double phase) {this->Dihedral_Phase = phase; }
         double get_Dihedral_phase() const {return Dihedral_Phase; }
 
-        void set_Dihedral_Periodicity(double Periodicity) {Dihedral_Periodicity = Periodicity; }
+        void set_Dihedral_Periodicity(double Periodicity) {this->Dihedral_Periodicity = Periodicity; }
         double get_Dihedral_Periodicity() const {return Dihedral_Periodicity; }
 
         const int get_atomA_index() const {return atomA_index; }

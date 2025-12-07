@@ -29,13 +29,13 @@ class HarmonicUB
 
         double return_energy(double distance);
 
-        void set_type(int type_id) { type = type_id; }
+        void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
 
-        void set_UB_force_constant(double force_constant) {UB_force_constant = force_constant; }
+        void set_UB_force_constant(double force_constant) {this->UB_force_constant = force_constant; }
         double get_UB_force_constant() const {return UB_force_constant; }
 
-        void set_UB_equil_value(double equil_value) {UB_force_equil = equil_value; }
+        void set_UB_equil_value(double equil_value) {this->UB_force_equil = equil_value; }
         double get_UB_equil_value() const {return UB_force_equil; }
 
         const int get_atomA_index() const {return atomA_index; }

@@ -27,13 +27,13 @@ class HarmonicAngle
 
         double return_energy(double angle);
 
-        void set_type(int type_id) { type = type_id; }
+        void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
 
-        void set_Angle_force_constant(double force_constant) {Angle_force_constant = force_constant; }
+        void set_Angle_force_constant(double force_constant) {this->Angle_force_constant = force_constant; }
         double get_Angle_force_constant() const {return Angle_force_constant; }
 
-        void set_Angle_equil_angle(double equil_angle) {Angle_Equil = equil_angle; }
+        void set_Angle_equil_angle(double equil_angle) {this->Angle_Equil = equil_angle; }
         double get_Angle_equil_angle() const {return Angle_Equil; }
 
         const int get_atomA_index() const {return atomA_index; }

@@ -35,13 +35,13 @@ class HarmonicImproper
 
         double return_energy(double distance);
 
-        void set_type(int type_id) { type = type_id; }
+        void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
 
-        void set_IMP_force_constant(double force_constant) {IMP_force_constant = force_constant; }
+        void set_IMP_force_constant(double force_constant) {this->IMP_force_constant = force_constant; }
         double get_IMP_force_constant() const {return IMP_force_constant; }
 
-        void set_IMP_phase_value(double phase_value) {IMP_Phase = phase_value; }
+        void set_IMP_phase_value(double phase_value) {this->IMP_Phase = phase_value; }
         double get_IMP_phase_value() const {return IMP_Phase; }
 
         const int get_atomA_index() const {return atomA_index; }
