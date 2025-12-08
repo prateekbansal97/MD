@@ -29,7 +29,7 @@ public:
         return atom_list_;
     }
 
-    int read_topology(std::string filename);
+    int read_topology(const std::string& filename);
     std::vector<unsigned long int> get_pointers();
     void print_atom_details(int max_print);
     void print_atom_details_to_file();

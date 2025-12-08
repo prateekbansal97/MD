@@ -1,10 +1,10 @@
-#include <atomic>
-#include <chrono>
+//#include <atomic>
+//#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
-#include <map>
+//#include <map>
 #include <vector>
 #include <algorithm>
 
@@ -83,7 +83,7 @@ std::vector<unsigned long int> Topology::get_pointers()
     return pointers_;
 }
 
-int Topology::read_topology(std::string filename)
+int Topology::read_topology(const std::string& filename)
 {
     std::ifstream file(filename);
 
@@ -106,18 +106,7 @@ int Topology::read_topology(std::string filename)
 
         if (check_first_char(line, '%'))
         {
-            if (check_if_line_starts_with_string(line, "%FORMAT"))
-            {
-                continue;
-            }
-
-            else if (check_if_line_starts_with_string(line, "%COMMENT"))
-            {
-                // std::cout << "[COMMENT] " << extract_header(line) << std::endl;
-                continue;
-            }
-
-
+            if (check_if_line_starts_with_string(line, "%FORMAT") || check_if_line_starts_with_string(line, "%COMMENT"))  continue;
             else if (check_if_line_starts_with_string(line, "%FLAG"))
             {
                 std::string header = extract_header(line);
@@ -344,7 +333,7 @@ void Topology::process_pointers_section(std::string& line)
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (const std::string& entry : entries) {
         try {
-            unsigned long int value = static_cast<unsigned long int>(std::stoi(entry));
+            auto value = static_cast<unsigned long int>(std::stoi(entry));
             pointers_.push_back(value);
         } catch (const std::invalid_argument& e) {
             std::cerr << "Invalid number format: " << entry << std::endl;
@@ -451,58 +440,58 @@ void Topology::process_atomic_number_section(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
-    
+
         int atomic_num = std::stoi(entries[i]);
         if (processed_atoms_index < atom_list_.size()) {
             atom_list_[processed_atoms_index].atomic_number = atomic_num;
             processed_atoms_index++;
         } else {
-            std::cerr << "Atomic number index out of range: " << i << std::endl;        
+            std::cerr << "Atomic number index out of range: " << i << std::endl;
         }
     }
 }
 
 void Topology::process_mass_section(std::string& line)
 {
-    std::vector<std::string> entries = split_line_over_empty_spaces(line);  
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
-    
+
         double mass = std::stod(entries[i]);
         if (processed_atoms_index < atom_list_.size()) {
             atom_list_[processed_atoms_index].mass = mass;
             processed_atoms_index++;
         } else {
-            std::cerr << "Mass index out of range: " << i << std::endl;        
+            std::cerr << "Mass index out of range: " << i << std::endl;
         }
     }
 }
 
 void Topology::process_atom_type_index_section(std::string& line)
 {
-    std::vector<std::string> entries = split_line_over_empty_spaces(line);  
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
-    
-        unsigned long int type_index = static_cast<unsigned long int>(std::stoul(entries[i]));
+
+        auto type_index = static_cast<unsigned long int>(std::stoul(entries[i]));
         if (processed_atoms_index < atom_list_.size()) {
             atom_list_[processed_atoms_index].atom_type_index = type_index;
             processed_atoms_index++;
         } else {
-            std::cerr << "Atom type index out of range: " << i << std::endl;        
+            std::cerr << "Atom type index out of range: " << i << std::endl;
         }
     }
 }
 
 void Topology::process_number_excluded_atoms_section(std::string& line)
 {
-    std::vector<std::string> entries = split_line_over_empty_spaces(line);  
+    std::vector<std::string> entries = split_line_over_empty_spaces(line);
     for (size_t i = 0; i < entries.size(); ++i) {
-    
+
         int num_excluded = std::stoi(entries[i]);
         if (processed_atoms_index < atom_list_.size()) {
             atom_list_[processed_atoms_index].nExcluded_Atoms = num_excluded;
             processed_atoms_index++;
         } else {
-            std::cerr << "Number of excluded atoms index out of range: " << i << std::endl;        
+            std::cerr << "Number of excluded atoms index out of range: " << i << std::endl;
         }
     }
 }
@@ -510,8 +499,8 @@ void Topology::process_number_excluded_atoms_section(std::string& line)
 void Topology::process_nonbonded_parm_index_section(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {        
-        unsigned long int nb_parm_index = static_cast<unsigned long int>(std::stoul(entries[i]));
+    for (const auto & entry : entries) {
+        auto nb_parm_index = static_cast<unsigned long int>(std::stoul(entry));
 
         if (nTypes_ == 0) {
             std::cerr << "Nonbonded parm index section encountered but nTypes_ is zero. Skipping." << std::endl;
@@ -520,8 +509,8 @@ void Topology::process_nonbonded_parm_index_section(std::string& line)
 
         int row = static_cast<int>(index_processed / nTypes_);
         int col = static_cast<int>(index_processed % nTypes_);
-        
-        
+
+
         if (row < 0 || col < 0 || static_cast<size_t>(row) >= nbmatrix_.size() || static_cast<size_t>(col) >= nbmatrix_[row].size()) {
             std::cerr << "Index out of bounds for nbmatrix_: (" << row << ", " << col << ") - nbmatrix_ size (" << nbmatrix_.size() << ", " << (nbmatrix_.empty() ? 0 : nbmatrix_[0].size()) << ")" << std::endl;
         } else {
@@ -548,7 +537,7 @@ void Topology::process_residue_pointer_section(std::string& line)
     {
         res_num += 1;
         // int res1 = last_residue_num;
-        unsigned long int res2 = static_cast<unsigned long int>(std::stoul(entries[0]));
+        auto res2 = static_cast<unsigned long int>(std::stoul(entries[0]));
         for (unsigned long int i = last_residue_num - 1; i < res2 - 1; i++)
         {
             atom_list_[i].residue_number = res_num;
@@ -559,8 +548,8 @@ void Topology::process_residue_pointer_section(std::string& line)
     for (size_t i = 0; i < entries.size() - 1; ++i)
     {
 
-        unsigned long int res1 = static_cast<unsigned long int>(std::stoul(entries[i]));
-        unsigned long int res2 = static_cast<unsigned long int>(std::stoul(entries[i+1]));
+        auto res1 = static_cast<unsigned long int>(std::stoul(entries[i]));
+        auto res2 = static_cast<unsigned long int>(std::stoul(entries[i+1]));
 
         if (i == entries.size() - 2)
         {
@@ -569,21 +558,21 @@ void Topology::process_residue_pointer_section(std::string& line)
 
         res_num += 1;
 
-        for (unsigned long int i = res1 - 1; i < res2 - 1; i++)
+        for (unsigned long int j = res1 - 1; j < res2 - 1; j++)
         {
-            atom_list_[i].residue_number = res_num;
-            atom_list_[i].residue_name = residue_labels_[res_num - 1];
+            atom_list_[j].residue_number = res_num;
+            atom_list_[j].residue_name = residue_labels_[res_num - 1];
         }
     }
-}   
+}
 
 void Topology::process_bond_force_constant_section(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
 
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double force_constant = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double force_constant = std::stod(entry);
         bond_force_constants_.push_back(force_constant);
     }
 }
@@ -592,9 +581,9 @@ void Topology::process_bond_equil_section(std::string& line)
 {
         std::vector<std::string> entries = split_line_over_empty_spaces(line);
 
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double force_constant = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double force_constant = std::stod(entry);
         bond_force_equils_.push_back(force_constant);
     }
 }
@@ -603,9 +592,9 @@ void Topology::process_angle_force_constant_section(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
 
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double force_constant = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double force_constant = std::stod(entry);
         angle_force_constants_.push_back(force_constant);
     }
 }
@@ -614,9 +603,9 @@ void Topology::process_angle_equil_section(std::string& line)
 {
         std::vector<std::string> entries = split_line_over_empty_spaces(line);
 
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double force_constant = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double force_constant = std::stod(entry);
         angle_force_equils_.push_back(force_constant);
     }
 }
@@ -632,8 +621,8 @@ void Topology::process_charmm_urey_bradley(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
 
-    for (size_t i = 0; i < entries.size(); ++i) {
-        int index = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+        int index = std::stoi(entry);
         charmm_urey_bradley_indices_.push_back(index);
     }
 }
@@ -659,9 +648,9 @@ void Topology::process_charmm_urey_bradley_assign()
 void Topology::process_charmm_urey_bradley_force_constant(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double force_constant = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double force_constant = std::stod(entry);
         charmm_urey_bradley_force_constants_.push_back(force_constant);
     }
 }
@@ -669,9 +658,9 @@ void Topology::process_charmm_urey_bradley_force_constant(std::string& line)
 void Topology::process_charmm_urey_bradley_equil_value(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double equil_value = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double equil_value = std::stod(entry);
         charmm_urey_bradley_equil_values_.push_back(equil_value);
     }
 }
@@ -728,9 +717,8 @@ void Topology::print_UB_bonds(int max_print)
 void Topology::process_dihedral_force_constant(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double force_constant = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+        double force_constant = std::stod(entry);
         dihedral_force_constants_.push_back(force_constant);
     }
 }
@@ -738,9 +726,9 @@ void Topology::process_dihedral_force_constant(std::string& line)
 void Topology::process_dihedral_periodicity(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double periodicity = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double periodicity = std::stod(entry);
         dihedral_periodicities_.push_back(periodicity);
     }
 }
@@ -748,9 +736,9 @@ void Topology::process_dihedral_periodicity(std::string& line)
 void Topology::process_dihedral_phase(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double phase = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double phase = std::stod(entry);
         dihedral_phases_.push_back(phase);
     }
 }
@@ -758,9 +746,9 @@ void Topology::process_dihedral_phase(std::string& line)
 void Topology::process_scee_scale_factor(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double scee = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double scee = std::stod(entry);
         scee_scale_factors_.push_back(scee);
     }
 }
@@ -768,9 +756,9 @@ void Topology::process_scee_scale_factor(std::string& line)
 void Topology::process_scnb_scale_factor(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double scnb = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double scnb = std::stod(entry);
         scnb_scale_factors_.push_back(scnb);
     }
 }
@@ -784,9 +772,9 @@ void Topology::process_charmm_num_impropers(std::string& line)
 void Topology::process_charmm_impropers(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-        int index = std::stoi(entries[i]);
-        charmm_improper_indices_.push_back(index);   
+    for (const auto & entry : entries) {
+        int index = std::stoi(entry);
+        charmm_improper_indices_.push_back(index);
     }
 }
 
@@ -822,9 +810,9 @@ void Topology::process_charmm_num_impr_types(std::string& line)
 void Topology::process_charmm_improper_force_constant(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double force_constant = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double force_constant = std::stod(entry);
         charmm_improper_force_constants_.push_back(force_constant);
     }
 }
@@ -832,9 +820,9 @@ void Topology::process_charmm_improper_force_constant(std::string& line)
 void Topology::process_charmm_improper_phase(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double phase = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double phase = std::stod(entry);
         charmm_improper_phases_.push_back(phase);
     }
 }
@@ -897,9 +885,9 @@ void Topology::print_IMP_bonds(int max_print)
 void Topology::process_Lennard_Jones_Acoef(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double Acoef = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double Acoef = std::stod(entry);
         lennard_jones_Acoefs_.push_back(Acoef);
     }
 }
@@ -907,9 +895,9 @@ void Topology::process_Lennard_Jones_Acoef(std::string& line)
 void Topology::process_Lennard_Jones_Bcoef(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double Bcoef = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double Bcoef = std::stod(entry);
         lennard_jones_Bcoefs_.push_back(Bcoef);
     }
 }
@@ -917,9 +905,9 @@ void Topology::process_Lennard_Jones_Bcoef(std::string& line)
 void Topology::process_Lennard_Jones_14_Acoef(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double Acoef = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double Acoef = std::stod(entry);
         lennard_jones_14_Acoefs_.push_back(Acoef);
     }
 }
@@ -927,9 +915,9 @@ void Topology::process_Lennard_Jones_14_Acoef(std::string& line)
 void Topology::process_Lennard_Jones_14_Bcoef(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        double Bcoef = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+
+        double Bcoef = std::stod(entry);
         lennard_jones_14_Bcoefs_.push_back(Bcoef);
     }
 }
@@ -937,9 +925,9 @@ void Topology::process_Lennard_Jones_14_Bcoef(std::string& line)
 void Topology::process_bonds_including_H(std::string& line) // BONDS_INC_HYDROGEN
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        int Acoef = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+
+        int Acoef = std::stoi(entry);
         bonds_including_h_.push_back(Acoef);
     }
 }
@@ -965,7 +953,7 @@ void Topology::create_bonds_including_H()
 
         check_if_valid_indices("bond_force_constants_", bond_force_constants_, force_type);
         check_if_valid_indices("bond_force_equils_", bond_force_equils_, force_type);
-       
+
         double force_constant = bond_force_constants_[force_type];
         double equil_length = bond_force_equils_[force_type];
 
@@ -1012,9 +1000,9 @@ void Topology::print_bonds_without_H(int max_print, int start_point)
 void Topology::process_bonds_without_H(std::string& line) // BONDS_WITHOUT_HYDROGEN
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        int Acoef = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+
+        int Acoef = std::stoi(entry);
         bonds_without_h_.push_back(Acoef);
     }
 }
@@ -1086,9 +1074,9 @@ void Topology::print_bonds_including_H(int max_print, int start_point)
 void Topology::process_angles_including_H(std::string& line) // BONDS_INC_HYDROGEN
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        int Acoef = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+
+        int Acoef = std::stoi(entry);
         angles_including_h_.push_back(Acoef);
     }
 }
@@ -1164,9 +1152,9 @@ void Topology::print_angles_without_H(int max_print, int start_point)
 void Topology::process_angles_without_H(std::string& line) // BONDS_WITHOUT_HYDROGEN
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        int Acoef = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+
+        int Acoef = std::stoi(entry);
         angles_without_h_.push_back(Acoef);
     }
 }
@@ -1240,9 +1228,9 @@ void Topology::print_angles_including_H(int max_print, int start_point)
 void Topology::process_dihedrals_including_H(std::string& line) // DIHEDRALS_INC_HYDROGEN
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line, false);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        int Acoef = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+
+        int Acoef = std::stoi(entry);
         dihedrals_including_h_.push_back(Acoef);
     }
 }
@@ -1251,18 +1239,18 @@ void Topology::create_dihedrals_including_H()
 {
     for (size_t i = 0; i + 5 < dihedrals_including_h_.size(); i = i + 5)
     {
-        
+
         bool exclude_14 = false;
         bool improper = false;
         int indexA = (dihedrals_including_h_[i])/3;
         int indexB = (dihedrals_including_h_[i+1])/3;
         int indexC = (dihedrals_including_h_[i+2])/3;
-        
+
         if (indexC < 0)
         {
             exclude_14 = true;
             indexC = std::abs(indexC);
-        } 
+        }
         int indexD = (dihedrals_including_h_[i+3])/3;
         if (indexD < 0)
         {
@@ -1274,8 +1262,8 @@ void Topology::create_dihedrals_including_H()
 
         int total_atoms = atom_list_.size();
         int force_type = dihedrals_including_h_[i+4] - 1;
-        
-        
+
+
         check_if_valid_indices("dihedral_force_constants_", dihedral_force_constants_, force_type);
         check_if_valid_indices("dihedral_phases_", dihedral_phases_, force_type);
         check_if_valid_indices("dihedral_periodicities_", dihedral_periodicities_, force_type);
@@ -1283,7 +1271,7 @@ void Topology::create_dihedrals_including_H()
         double force_constant = dihedral_force_constants_[force_type];
         double phase = dihedral_phases_[force_type];
         double periodicity = dihedral_periodicities_[force_type];
-        
+
         CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, indexA, indexB, indexC, indexD, true, improper, exclude_14);
         CosineDihedral_list_.push_back(Dihedral);
     }
@@ -1332,9 +1320,9 @@ void Topology::print_dihedrals_without_H(int max_print, int start_point)
 void Topology::process_dihedrals_without_H(std::string& line) // BONDS_WITHOUT_HYDROGEN
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-    
-        int Acoef = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+
+        int Acoef = std::stoi(entry);
         dihedrals_without_h_.push_back(Acoef);
     }
 }
@@ -1352,7 +1340,7 @@ void Topology::create_dihedrals_without_H()
         {
             exclude_14 = true;
             indexC = std::abs(indexC);
-        } 
+        }
         int indexD = (dihedrals_without_h_[i+3])/3;
         if (indexD < 0)
         {
@@ -1428,8 +1416,8 @@ void Topology::print_dihedrals_including_H(int max_print, int start_point)
 void Topology::process_excluded_atoms_list(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-        int excluded = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+        int excluded = std::stoi(entry);
         excluded_atoms_list_.push_back(excluded);
     }
 }
@@ -1437,10 +1425,10 @@ void Topology::process_excluded_atoms_list(std::string& line)
 void Topology::create_excluded_atoms_list()
 {
     size_t start = 0;
-    
+
     // Safety check: Ensure the list is large enough
     // This prevents a crash if the file is truncated
-    size_t total_expected = excluded_atoms_list_.size(); 
+    size_t total_expected = excluded_atoms_list_.size();
 
     for (auto& atom: atom_list_)
     {
@@ -1449,14 +1437,14 @@ void Topology::create_excluded_atoms_list()
         // Bounds check
         if (start + excluded > total_expected) {
             std::cerr << "Error: Excluded atoms list is shorter than expected!" << std::endl;
-            break; 
+            break;
         }
 
         for (size_t p = start; p < start + excluded; p++)
         {
             int amber_index = excluded_atoms_list_[p];
 
-            // AMBER index 0 is a placeholder/null. 
+            // AMBER index 0 is a placeholder/null.
             // If we find 0, we shouldn't add -1 to the list.
             if (amber_index > 0) {
                 atom.excluded_atoms.push_back(amber_index - 1);
@@ -1486,8 +1474,8 @@ void Topology::process_Charmm_Cmap_Resolution(std::string& line)
 //=CHARMM_CMAP_RESOLUTION
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-        int index = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+        int index = std::stoi(entry);
         charmm_cmap_resolution_.push_back(index);
     }
 }
@@ -1496,8 +1484,8 @@ void Topology::process_Charmm_Cmap_parameter_01(std::string& line)
 //CHARMM_CMAP_PARAMETER_01
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-     for (size_t i = 0; i < entries.size(); ++i) {
-        double index = std::stod(entries[i]);
+     for (const auto & entry : entries) {
+        double index = std::stod(entry);
         charmm_cmap_parameter_01.push_back(index);
     }
 }
@@ -1506,8 +1494,8 @@ void Topology::process_Charmm_Cmap_parameter_02(std::string& line)
 //CHARMM_CMAP_PARAMETER_02
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-     for (size_t i = 0; i < entries.size(); ++i) {
-        double index = std::stod(entries[i]);
+     for (const auto & entry : entries) {
+        double index = std::stod(entry);
         charmm_cmap_parameter_02.push_back(index);
     }
 }
@@ -1516,8 +1504,8 @@ void Topology::process_Charmm_Cmap_parameter_03(std::string& line)
 //CHARMM_CMAP_PARAMETER_03
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-     for (size_t i = 0; i < entries.size(); ++i) {
-        double index = std::stod(entries[i]);
+     for (const auto & entry : entries) {
+        double index = std::stod(entry);
         charmm_cmap_parameter_03.push_back(index);
     }
 }
@@ -1526,8 +1514,8 @@ void Topology::process_Charmm_Cmap_parameter_04(std::string& line)
 //CHARMM_CMAP_PARAMETER_04
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-     for (size_t i = 0; i < entries.size(); ++i) {
-        double index = std::stod(entries[i]);
+     for (const auto & entry : entries) {
+        double index = std::stod(entry);
         charmm_cmap_parameter_04.push_back(index);
     }
 }
@@ -1536,8 +1524,8 @@ void Topology::process_Charmm_Cmap_parameter_05(std::string& line)
 //CHARMM_CMAP_PARAMETER_05
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-     for (size_t i = 0; i < entries.size(); ++i) {
-        double index = std::stod(entries[i]);
+     for (const auto & entry : entries) {
+        double index = std::stod(entry);
         charmm_cmap_parameter_05.push_back(index);
     }
 }
@@ -1545,8 +1533,8 @@ void Topology::process_Charmm_Cmap_parameter_05(std::string& line)
 void Topology::process_Charmm_Cmap_Index(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-     for (size_t i = 0; i < entries.size(); ++i) {
-        int index = std::stoi(entries[i]);
+     for (const auto & entry : entries) {
+        int index = std::stoi(entry);
         charmm_cmap_index.push_back(index);
     }
 }
@@ -1564,7 +1552,7 @@ void Topology::create_Charmm_Cmap_Index_assign()
 
         int parameter_set = charmm_cmap_index[i+5] - 1;
 
-        
+
 
         CMapGroup group = CMapGroup(parameter_set, indexA, indexB, indexC, indexD, indexE);
         CMapGroup_list_.push_back(group);
@@ -1582,8 +1570,8 @@ void Topology::process_solvent_pointers(std::string& line)
 void Topology::process_atoms_per_molecule(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-        int index = std::stoi(entries[i]);
+    for (const auto & entry : entries) {
+        int index = std::stoi(entry);
         atoms_per_molecule_.push_back(index);
     }
 }
@@ -1602,7 +1590,7 @@ void Topology::create_molecules()
         Molecule mol = Molecule(atom_indices_for_this_molecule);
         Molecule_list.push_back(mol);
         start_index += n_atoms_in_this_molecule;
-    } 
+    }
     for (Molecule& mol: Molecule_list)
     {
         std::vector<int> atom_list = mol.get_atom_indices();
@@ -1621,7 +1609,7 @@ void Topology::create_molecules()
         }
     }
 
-    // Molecule_list[0].print_residue_names();
+//     Molecule_list[0].print_residue_names();
 }
 
 void Topology::process_box_dimensions(std::string& line)
@@ -1641,8 +1629,8 @@ void Topology::process_radius_set(std::string& line)
 void Topology::process_radii(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-        double radius = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+        double radius = std::stod(entry);
         radii.push_back(radius);
     }
 }
@@ -1650,8 +1638,8 @@ void Topology::process_radii(std::string& line)
 void Topology::process_screen(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
-    for (size_t i = 0; i < entries.size(); ++i) {
-        double screenr = std::stod(entries[i]);
+    for (const auto & entry : entries) {
+        double screenr = std::stod(entry);
         screen.push_back(screenr);
     }
 }
