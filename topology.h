@@ -30,9 +30,12 @@ public:
     }
 
     int read_topology(const std::string& filename);
-    std::vector<unsigned long int> get_pointers();
-    void print_atom_details(int max_print);
-    void print_atom_details_to_file();
+
+    [[maybe_unused]] std::vector<unsigned long int> get_pointers();
+
+    [[maybe_unused]] void print_atom_details(int max_print);
+
+    [[maybe_unused]] void print_atom_details_to_file();
     
     void process_pointers_section(std::string& line);
     void process_atom_names_section(std::string& line);
@@ -86,14 +89,17 @@ public:
     void print_bonds_without_H(int max_print, int start_point);
     void process_bonds_without_H(std::string& line);
     void create_bonds_without_H();
-    void print_bonds_including_H(int max_print, int start_point);
+
+    [[maybe_unused]] void print_bonds_including_H(int max_print, int start_point);
 
     void process_angles_including_H(std::string& line);// ANGLES_INC_HYDROGEN
     void create_angles_including_H();
-    void print_angles_without_H(int max_print, int start_point);
+
+    [[maybe_unused]] void print_angles_without_H(int max_print, int start_point);
     void process_angles_without_H(std::string& line);
     void create_angles_without_H();
-    void print_angles_including_H(int max_print, int start_point);
+
+    [[maybe_unused]] void print_angles_including_H(int max_print, int start_point);
 
 
     void process_dihedrals_including_H(std::string& line);// DIHEDRALS_INC_HYDROGEN

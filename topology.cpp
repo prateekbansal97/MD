@@ -62,6 +62,7 @@ enum class Section {
     Excluded_Atoms_List,
     Amber_Atom_Type,
     Charmm_Cmap_Count,
+    Charmm_Cmap_Resolution,
     Charmm_Cmap_Parameter_01,
     Charmm_Cmap_Parameter_02,
     Charmm_Cmap_Parameter_03,
@@ -78,7 +79,7 @@ enum class Section {
 };
 
 
-std::vector<unsigned long int> Topology::get_pointers() 
+[[maybe_unused]] std::vector<unsigned long int> Topology::get_pointers()
 {
     return pointers_;
 }
@@ -166,6 +167,7 @@ int Topology::read_topology(const std::string& filename)
                 else if (header == "AMBER_ATOM_TYPE") current_section = Section::Amber_Atom_Type;
 
                 else if (header == "CHARMM_CMAP_COUNT") current_section = Section::Charmm_Cmap_Count;
+                else if (header == "CHARMM_CMAP_RESOLUTION") current_section = Section::Charmm_Cmap_Resolution;
                 else if (header == "CHARMM_CMAP_PARAMETER_01") current_section = Section::Charmm_Cmap_Parameter_01;
                 else if (header == "CHARMM_CMAP_PARAMETER_02") current_section = Section::Charmm_Cmap_Parameter_02;
                 else if (header == "CHARMM_CMAP_PARAMETER_03") current_section = Section::Charmm_Cmap_Parameter_03;
@@ -233,6 +235,8 @@ int Topology::read_topology(const std::string& filename)
 
             else if (current_section == Section::Lennard_Jones_Acoef) process_Lennard_Jones_Acoef(line);
             else if (current_section == Section::Lennard_Jones_Bcoef) process_Lennard_Jones_Bcoef(line);
+            else if (current_section == Section::Lennard_Jones_14_Acoef) process_Lennard_Jones_14_Acoef(line);
+            else if (current_section == Section::Lennard_Jones_14_Bcoef) process_Lennard_Jones_14_Bcoef(line);
 
             else if (current_section == Section::Bonds_Inc_Hydrogen) process_bonds_including_H(line);
             else if (current_section == Section::Bonds_without_Hydrogen) process_bonds_without_H(line);
@@ -247,6 +251,7 @@ int Topology::read_topology(const std::string& filename)
             else if (current_section == Section::Amber_Atom_Type) process_amber_atom_type(line);
 
             else if (current_section == Section::Charmm_Cmap_Count) process_Charmm_Cmap_Count(line);
+            else if (current_section == Section::Charmm_Cmap_Resolution) process_Charmm_Cmap_Resolution(line);
             else if (current_section == Section::Charmm_Cmap_Parameter_01) process_Charmm_Cmap_parameter_01(line);
             else if (current_section == Section::Charmm_Cmap_Parameter_02) process_Charmm_Cmap_parameter_02(line);
             else if (current_section == Section::Charmm_Cmap_Parameter_03) process_Charmm_Cmap_parameter_03(line);
@@ -293,7 +298,7 @@ int Topology::read_topology(const std::string& filename)
     return 0;
 }
 
-void Topology::print_atom_details(int max_print)
+[[maybe_unused]] void Topology::print_atom_details(int max_print)
 {
     int printed = 0;
     for (const auto& atom : atom_list_) {
@@ -314,7 +319,7 @@ void Topology::print_atom_details(int max_print)
     }
 }
 
-void Topology::print_atom_details_to_file()
+[[maybe_unused]] void Topology::print_atom_details_to_file()
 {
     // Optional: Implement writing atom details to a file if needed
     std::ofstream outfile("/Users/Prateek/Desktop/Coding/MD/atom_details.txt");
@@ -679,7 +684,7 @@ void Topology::process_charmm_urey_bradley_assign_ffparams()
     }
 }
 
-void Topology::print_UB_bonds(int max_print)
+[[maybe_unused]] void Topology::print_UB_bonds(int max_print)
 {
     if (HarmonicUB_list_.empty()) {
         std::cout << "No Urey-Bradley bonds parsed." << std::endl;
@@ -843,7 +848,7 @@ void Topology::process_improper_bradley_assign_ffparams()
     }
 }
 
-void Topology::print_IMP_bonds(int max_print)
+[[maybe_unused]] void Topology::print_IMP_bonds(int max_print)
 {
     if (HarmonicIMP_list_.empty()) {
         std::cout << "No Improper torsions parsed." << std::endl;
@@ -962,7 +967,7 @@ void Topology::create_bonds_including_H()
     }
 }
 
-void Topology::print_bonds_without_H(int max_print, int start_point)
+[[maybe_unused]] void Topology::print_bonds_without_H(int max_print, int start_point)
 {
     if (HarmonicBond_list_.empty()) {
         std::cout << "No bonds parsed." << std::endl;
@@ -1037,7 +1042,7 @@ void Topology::create_bonds_without_H()
     }
 }
 
-void Topology::print_bonds_including_H(int max_print, int start_point)
+[[maybe_unused]] void Topology::print_bonds_including_H(int max_print, int start_point)
 {
     if (HarmonicBond_list_.empty()) {
         std::cout << "No bonds parsed." << std::endl;
@@ -1112,7 +1117,7 @@ void Topology::create_angles_including_H()
     }
 }
 
-void Topology::print_angles_without_H(int max_print, int start_point)
+[[maybe_unused]] void Topology::print_angles_without_H(int max_print, int start_point)
 {
     if (HarmonicAngle_list_.empty()) {
         std::cout << "No angles parsed." << std::endl;
@@ -1188,7 +1193,7 @@ void Topology::create_angles_without_H()
     }
 }
 
-void Topology::print_angles_including_H(int max_print, int start_point)
+[[maybe_unused]] void Topology::print_angles_including_H(int max_print, int start_point)
 {
     if (HarmonicAngle_list_.empty()) {
         std::cout << "No angles parsed." << std::endl;
@@ -1277,7 +1282,7 @@ void Topology::create_dihedrals_including_H()
     }
 }
 
-void Topology::print_dihedrals_without_H(int max_print, int start_point)
+[[maybe_unused]] void Topology::print_dihedrals_without_H(int max_print, int start_point)
 {
     if (CosineDihedral_list_.empty()) {
         std::cout << "No dihedrals parsed." << std::endl;
@@ -1374,7 +1379,7 @@ void Topology::create_dihedrals_without_H()
     }
 }
 
-void Topology::print_dihedrals_including_H(int max_print, int start_point)
+[[maybe_unused]] void Topology::print_dihedrals_including_H(int max_print, int start_point)
 {
     if (CosineDihedral_list_.empty()) {
         std::cout << "No dihedrals parsed." << std::endl;
@@ -1579,9 +1584,8 @@ void Topology::process_atoms_per_molecule(std::string& line)
 void Topology::create_molecules()
 {
     int start_index = 0;
-    for (size_t i = 0; i < atoms_per_molecule_.size(); i++)
+    for (int n_atoms_in_this_molecule : atoms_per_molecule_)
     {
-        int n_atoms_in_this_molecule = atoms_per_molecule_[i];
         std::vector<int> atom_indices_for_this_molecule;
         for (int i = start_index; i < start_index+n_atoms_in_this_molecule; i++)
         {
@@ -1594,9 +1598,9 @@ void Topology::create_molecules()
     for (Molecule& mol: Molecule_list)
     {
         std::vector<int> atom_list = mol.get_atom_indices();
-        for (size_t i = 0; i < atom_list.size(); ++i)
+        for (int i : atom_list)
         {
-            Atom& atom = atom_list_[atom_list[i]];
+            Atom& atom = atom_list_[i];
             mol.add_atom_name(atom.name);
             std::string residue_name = atom.residue_name;
             unsigned long int residue_number = atom.residue_number;
