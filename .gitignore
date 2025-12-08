@@ -6,6 +6,7 @@ md.tar.gz
 cmake-build-debug/
 cmake-build-release/
 .vscode/
+.idea/
 # Prerequisites
 *.d
 
