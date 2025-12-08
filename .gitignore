@@ -3,6 +3,8 @@ build-new/
 atom_details.txt
 zip/
 md.tar.gz
+cmake-build-debug/
+cmake-build-release/
 .vscode/
 # Prerequisites
 *.d
