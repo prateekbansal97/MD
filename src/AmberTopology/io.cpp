@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
-#include "io.h"
+#include "../../include/AmberTopology/io.h"
 
 bool check_first_char(const std::string& line, char target)
  {

@@ -1,23 +1,20 @@
-//#include <atomic>
-//#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
-//#include <map>
 #include <vector>
 #include <algorithm>
 
-#include "topology.h"
-#include "harmonicUB.h"
-#include "atom.h"
-#include "io.h"
-#include "element.h"
-#include "HarmonicBond.h"
-#include "HarmonicAngle.h"
-#include "CosineDihedral.h"
-#include "CMapGroup.h"
-#include "molecule.h"
+#include "../../include/AmberTopology/topology.h"
+#include "../../include/AmberTopology/harmonicUB.h"
+#include "../../include/AmberTopology/atom.h"
+#include "../../include/AmberTopology/io.h"
+#include "../../include/AmberTopology/element.h"
+#include "../../include/AmberTopology/HarmonicBond.h"
+#include "../../include/AmberTopology/HarmonicAngle.h"
+#include "../../include/AmberTopology/CosineDihedral.h"
+#include "../../include/AmberTopology/CMapGroup.h"
+#include "../../include/AmberTopology/molecule.h"
 
 enum class Section {
     None,
@@ -95,7 +92,7 @@ int Topology::read_topology_coordinates(const std::string& parmtop_path, const s
     else
     {
         std::cout << "Coordinates not supplied. Coordinates are presumed to be 0. \n";
-        coordinates.assign(atom_list_.size(), std::vector<double>(3, 0.0));
+        coordinates.assign(atom_list_.size()*3, 0.0);
     }
 }
 
@@ -1673,41 +1670,53 @@ int Topology::read_coords(std::ifstream& coordfile) {
     if (!std::getline(coordfile, line)) return 1; // Return files less than 2 lines in length.
 
     const std::size_t natoms = atom_list_.size();
+    std::vector<double> box_dims;
+    coordinates.assign(atom_list_.size()*3, 0.0);
 
-    std::vector<double> line_coords;
-    line_coords.reserve(natoms * 3 + 6);
-
+    int coord_processed = 0;
     while (std::getline(coordfile, line)) {
         if (check_if_line_empty(line)) continue;
         std::vector<std::string> entries = split_line_over_empty_spaces(line);
-        for (const std::string& entry : entries) {
-            line_coords.push_back(std::stod(entry));
+        for (const std::string &entry: entries) {
+            if (coord_processed < 3 * natoms) {
+                coordinates[coord_processed] = (std::stod(entry));
+                coord_processed++;
+            }
+            else
+            {
+                box_dims.push_back(std::stod(entry));
+            }
         }
     }
 
-    const std::size_t needed = natoms * 3 + 6;
-    if (line_coords.size() < needed)
+    const int needed = natoms * 3;
+
+    if (coord_processed < needed)
     {
-        std::cerr << "Number of coordinates + box dimenstions dont match the number of coordinates found in file. \n"
-        << " Number of atoms in topology: " << natoms << "Number of coordinates found: " << (line_coords.size() - 6)/3;
+        std::cerr << "Number of coordinates + box dimensions dont match the number of coordinates found in file. \n"
+        << " Number of atoms in topology: " << natoms << "Number of coordinates found: " << (coordinates.size())/3;
         return 1; // Return files that
     }
 
-    coordinates.assign(natoms, std::vector<double>(3, 0.0));
-    for (std::size_t a = 0; a < natoms; ++a) {
-        coordinates[a][0] = line_coords[3 * a + 0];
-        coordinates[a][1] = line_coords[3 * a + 1];
-        coordinates[a][2] = line_coords[3 * a + 2];
+    if (box_dims.size() < 6)
+    {
+        std::cout << "Warning: Box dimensions not found in coordinate file. Assuming non-periodic.\n";
+        box_x = 0.0; box_y = 0.0; box_z = 0.0;
+        box_alpha = 90.0; box_beta = 90.0; box_gamma = 90.0; // 90 degrees is standard default
+        return 0;
     }
 
+
     // Last six values are box dimensions
-    box_x = line_coords[line_coords.size() - 6];
-    box_y = line_coords[line_coords.size() - 5];
-    box_z = line_coords[line_coords.size() - 4];
-    box_alpha = line_coords[line_coords.size() - 3];
-    box_beta = line_coords[line_coords.size() - 2];
-    box_gamma = line_coords[line_coords.size() - 1];
-//    std::cout << "box: " << box_x << " " << box_y << " " << box_z << "\n" << box_alpha << " " << box_beta << " " << box_gamma << "\n";
-//    std::cout << coordinates[0][0] << " " << coordinates[0][1] << " " << coordinates[0][2];
+    box_x = box_dims[0];
+    box_y = box_dims[1];
+    box_z = box_dims[2];
+    box_alpha = box_dims[3];
+    box_beta = box_dims[4];
+    box_gamma = box_dims[5];
+
+
+    std::cout << "box: " << box_x << " " << box_y << " " << box_z << "\n" << box_alpha << " " << box_beta << " " << box_gamma << "\n";
+    std::cout << coordinates[0] << " " << coordinates[1] << " " << coordinates[2];
     return 0;
 }

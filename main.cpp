@@ -2,9 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "atom.h"
-#include "io.h"
-#include "topology.h"
+#include "include/AmberTopology/atom.h"
+#include "include/AmberTopology/io.h"
+#include "include/AmberTopology/topology.h"
 
 int main(int argc, char* argv[])
 {

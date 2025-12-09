@@ -1,6 +1,6 @@
 
-#include "atom.h"
-#include "harmonicUB.h"
+#include "../../include/AmberTopology/atom.h"
+#include "../../include/AmberTopology/harmonicUB.h"
 
 double HarmonicUB::return_energy(double distance)
 {

@@ -1,5 +1,5 @@
-#include "atom.h"
-#include "CosineDihedral.h"
+#include "../../include/AmberTopology/atom.h"
+#include "../../include/AmberTopology/CosineDihedral.h"
 #include <cmath>
 
 double CosineDihedral::return_energy(double angle)

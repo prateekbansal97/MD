@@ -209,7 +209,7 @@ private:
     std::vector<double> radii;
     std::vector<double> screen;
 
-    std::vector<std::vector<double>> coordinates;
+    std::vector<double> coordinates;
 
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;

@@ -1,4 +1,4 @@
-#include "element.h"
+#include "../../include/AmberTopology/element.h"
 #include <string>
 
 std::map<std::string, std::string> element_map = {{"H19A", "H"},
