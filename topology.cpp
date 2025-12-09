@@ -84,15 +84,32 @@ enum class Section {
     return pointers_;
 }
 
-int Topology::read_topology(const std::string& parmtop_path, const std::string& coords_path)
+int Topology::read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path)
 {
     std::ifstream parmtop = open_file(parmtop_path);
+    read_topology(parmtop);
+    if (!coords_path.empty()) {
+        std::ifstream coords = open_file(coords_path);
+        int result = read_coords(coords);
+    }
+    else
+    {
+        std::cout << "Coordinates not supplied. Coordinates are presumed to be 0. \n";
+        coordinates.assign(atom_list_.size(), std::vector<double>(3, 0.0));
+    }
+}
 
-//    std::ifstream coords = open_file(coords_path);
-
+int Topology::read_topology(std::ifstream& parmtop)
+{
     std::string line;
-    Section current_section = Section::None;
+    std::getline(parmtop, line);
+    if (!check_if_line_starts_with_string(line, "%VERSION"))
+    {
+        std::cerr << "Invalid File Format. File does not start with %VERSION.";
+        return 1;
+    }
 
+    Section current_section = Section::None;
     while (std::getline(parmtop, line)) {
 
 
@@ -291,17 +308,6 @@ int Topology::read_topology(const std::string& parmtop_path, const std::string& 
     // print_dihedrals_without_H(100, 0);
     
     parmtop.close();
-
-    if (!coords_path.empty()) {
-        std::ifstream coords = open_file(coords_path);
-        int result = read_coords(coords);
-        // read coords...
-    }
-    else
-    {
-        std::cout << "Coordinates not supplied. Coordinates are presumed to be 0. \n";
-        coordinates.assign(atom_list_.size(), std::vector<double>(3, 0.0));
-    }
     return 0;
 }
 

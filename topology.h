@@ -28,8 +28,8 @@ public:
     [[nodiscard]] std::vector<Atom> get_atoms() const {
         return atom_list_;
     }
-
-    int read_topology(const std::string& parmtop_path, const std::string& coords_path = "");
+    int read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
+    int read_topology(std::ifstream& parmtop);
 
     [[maybe_unused]] std::vector<unsigned long int> get_pointers();
 
