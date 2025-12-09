@@ -19,23 +19,23 @@ class Topology
 {
 public:
     Topology() {};
-    Topology(const std::vector<Atom>& atoms)
+    explicit Topology(const std::vector<Atom>& atoms)
         : atom_list_(atoms) {}
 
     // Implement a destructor
     
 
-    std::vector<Atom> get_atoms() const {
+    [[nodiscard]] std::vector<Atom> get_atoms() const {
         return atom_list_;
     }
 
-    int read_topology(const std::string& filename);
+    int read_topology(const std::string& parmtop_path, const std::string& coords_path = "");
 
     [[maybe_unused]] std::vector<unsigned long int> get_pointers();
 
-    [[maybe_unused]] void print_atom_details(int max_print);
+    [[maybe_unused]] [[maybe_unused]] void print_atom_details(int max_print);
 
-    [[maybe_unused]] void print_atom_details_to_file();
+    [[maybe_unused]] [[maybe_unused]] void print_atom_details_to_file();
     
     void process_pointers_section(std::string& line);
     void process_atom_names_section(std::string& line);
@@ -61,7 +61,7 @@ public:
     void process_charmm_urey_bradley_force_constant(std::string& line);
     void process_charmm_urey_bradley_equil_value(std::string& line);
     void process_charmm_urey_bradley_assign_ffparams();
-    void print_UB_bonds(int max_print);
+    [[maybe_unused]] void print_UB_bonds(int max_print);
 
     void process_dihedral_force_constant(std::string& line);
     void process_dihedral_periodicity(std::string& line);
@@ -77,7 +77,7 @@ public:
     void process_charmm_improper_force_constant(std::string& line);
     void process_charmm_improper_phase(std::string& line);
     void process_improper_bradley_assign_ffparams(); 
-    void print_IMP_bonds(int max_print);
+    [[maybe_unused]] void print_IMP_bonds(int max_print);
 
     void process_Lennard_Jones_Acoef(std::string& line);
     void process_Lennard_Jones_Bcoef(std::string& line);
@@ -86,28 +86,28 @@ public:
 
     void process_bonds_including_H(std::string& line);// BONDS_INC_HYDROGEN
     void create_bonds_including_H();
-    void print_bonds_without_H(int max_print, int start_point);
+    [[maybe_unused]] void print_bonds_without_H(int max_print, int start_point);
     void process_bonds_without_H(std::string& line);
     void create_bonds_without_H();
 
-    [[maybe_unused]] void print_bonds_including_H(int max_print, int start_point);
+    [[maybe_unused]] [[maybe_unused]] void print_bonds_including_H(int max_print, int start_point);
 
     void process_angles_including_H(std::string& line);// ANGLES_INC_HYDROGEN
     void create_angles_including_H();
 
-    [[maybe_unused]] void print_angles_without_H(int max_print, int start_point);
+    [[maybe_unused]] [[maybe_unused]] void print_angles_without_H(int max_print, int start_point);
     void process_angles_without_H(std::string& line);
     void create_angles_without_H();
 
-    [[maybe_unused]] void print_angles_including_H(int max_print, int start_point);
+    [[maybe_unused]] [[maybe_unused]] void print_angles_including_H(int max_print, int start_point);
 
 
     void process_dihedrals_including_H(std::string& line);// DIHEDRALS_INC_HYDROGEN
     void create_dihedrals_including_H();
-    void print_dihedrals_without_H(int max_print, int start_point);
+    [[maybe_unused]] void print_dihedrals_without_H(int max_print, int start_point);
     void process_dihedrals_without_H(std::string& line);
     void create_dihedrals_without_H();
-    void print_dihedrals_including_H(int max_print, int start_point);
+    [[maybe_unused]] void print_dihedrals_including_H(int max_print, int start_point);
 
     void process_excluded_atoms_list(std::string& line);
     void create_excluded_atoms_list();
@@ -137,6 +137,7 @@ public:
 
     void process_ipol(std::string& line);
 
+    int read_coords(std::ifstream& coordfile);
     template<typename T, typename... Args>
     void check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args);
 
@@ -208,6 +209,8 @@ private:
     std::vector<double> radii;
     std::vector<double> screen;
 
+    std::vector<std::vector<double>> coordinates;
+
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
     int res_num = 0;
@@ -258,6 +261,8 @@ private:
     unsigned long int natoms_per_solvent_;
 
     double box_beta;
+    double box_alpha;
+    double box_gamma;
     double box_x;
     double box_y;
     double box_z;

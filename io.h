@@ -1,11 +1,12 @@
 
 // #include <iostream>
-// #include <fstream>
+
 
 #ifndef IO_H
 #define IO_H
 #include <string>
 #include <vector>
+#include <fstream>
 
 
 
@@ -13,6 +14,7 @@ bool check_first_char(const std::string& line, char target);
 bool check_if_line_starts_with_string(const std::string& line, const std::string& target);
 bool check_if_line_empty(const std::string& line);
 bool check_if_whitespace_in_string(const std::string& line);
+std::ifstream open_file(const std::string& path, std::ios::openmode mode = std::ios::in);
 
 std::vector<std::string> split_line_fixed_length(const std::string& line, size_t field_length);
 std::string remove_whitespaces_from_string(const std::string& str);

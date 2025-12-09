@@ -84,20 +84,16 @@ enum class Section {
     return pointers_;
 }
 
-int Topology::read_topology(const std::string& filename)
+int Topology::read_topology(const std::string& parmtop_path, const std::string& coords_path)
 {
-    std::ifstream file(filename);
+    std::ifstream parmtop = open_file(parmtop_path);
 
-    if (!file) {
-        std::cerr << "Error opening file: " << filename << std::endl;
-        return 1;
-    }
-
+//    std::ifstream coords = open_file(coords_path);
 
     std::string line;
     Section current_section = Section::None;
 
-    while (std::getline(file, line)) {
+    while (std::getline(parmtop, line)) {
 
 
         if (check_if_line_empty(line)) {
@@ -294,7 +290,18 @@ int Topology::read_topology(const std::string& filename)
     // print_atom_details_to_file();
     // print_dihedrals_without_H(100, 0);
     
-    file.close();
+    parmtop.close();
+
+    if (!coords_path.empty()) {
+        std::ifstream coords = open_file(coords_path);
+        int result = read_coords(coords);
+        // read coords...
+    }
+    else
+    {
+        std::cout << "Coordinates not supplied. Coordinates are presumed to be 0. \n";
+        coordinates.assign(atom_list_.size(), std::vector<double>(3, 0.0));
+    }
     return 0;
 }
 
@@ -1265,7 +1272,7 @@ void Topology::create_dihedrals_including_H()
 
         check_if_valid_indices("atom_list_", atom_list_, indexA, indexB, indexC, indexD);
 
-        int total_atoms = atom_list_.size();
+//        size_t total_atoms = atom_list_.size();
         int force_type = dihedrals_including_h_[i+4] - 1;
 
 
@@ -1652,4 +1659,49 @@ void Topology::process_ipol(std::string& line)
 {
     std::vector<std::string> entries = split_line_over_empty_spaces(line);
     polarizable = std::stoi(entries[0]);
+}
+
+int Topology::read_coords(std::ifstream& coordfile) {
+    std::string line;
+    if (!std::getline(coordfile, line)) return 1;
+    if (!std::getline(coordfile, line)) return 1; // Return files less than 2 lines in length.
+
+    const std::size_t natoms = atom_list_.size();
+
+    std::vector<double> line_coords;
+    line_coords.reserve(natoms * 3 + 6);
+
+    while (std::getline(coordfile, line)) {
+        if (check_if_line_empty(line)) continue;
+        std::vector<std::string> entries = split_line_over_empty_spaces(line);
+        for (const std::string& entry : entries) {
+            line_coords.push_back(std::stod(entry));
+        }
+    }
+
+    const std::size_t needed = natoms * 3 + 6;
+    if (line_coords.size() < needed)
+    {
+        std::cerr << "Number of coordinates + box dimenstions dont match the number of coordinates found in file. \n"
+        << " Number of atoms in topology: " << natoms << "Number of coordinates found: " << (line_coords.size() - 6)/3;
+        return 1; // Return files that
+    }
+
+    coordinates.assign(natoms, std::vector<double>(3, 0.0));
+    for (std::size_t a = 0; a < natoms; ++a) {
+        coordinates[a][0] = line_coords[3 * a + 0];
+        coordinates[a][1] = line_coords[3 * a + 1];
+        coordinates[a][2] = line_coords[3 * a + 2];
+    }
+
+    // Last six values are box dimensions
+    box_x = line_coords[line_coords.size() - 6];
+    box_y = line_coords[line_coords.size() - 5];
+    box_z = line_coords[line_coords.size() - 4];
+    box_alpha = line_coords[line_coords.size() - 3];
+    box_beta = line_coords[line_coords.size() - 2];
+    box_gamma = line_coords[line_coords.size() - 1];
+//    std::cout << "box: " << box_x << " " << box_y << " " << box_z << "\n" << box_alpha << " " << box_beta << " " << box_gamma << "\n";
+//    std::cout << coordinates[0][0] << " " << coordinates[0][1] << " " << coordinates[0][2];
+    return 0;
 }

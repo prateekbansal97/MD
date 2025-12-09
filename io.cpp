@@ -1,11 +1,13 @@
 
 #include <string>
+#include <cstdlib>
 #include <vector>
 #include <cctype>
 #include <algorithm>
 #include <numeric> 
 #include <stdexcept>
 #include <iostream>
+#include <fstream>
 #include "io.h"
 
 bool check_first_char(const std::string& line, char target)
@@ -28,8 +30,6 @@ bool check_if_line_starts_with_string(const std::string& line, const std::string
 }
 
 
-
-
 bool check_if_line_empty(const std::string& line)
 {
     // Returns true if the line is empty or contains only whitespace
@@ -37,6 +37,17 @@ bool check_if_line_empty(const std::string& line)
                        [](unsigned char ch) {
                            return std::isspace(static_cast<unsigned char>(ch)) != 0;
                        });
+}
+
+
+std::ifstream open_file(const std::string& path, std::ios::openmode mode)
+{
+    std::ifstream f(path, mode);
+    if (!f) {
+        std::cerr << "Error opening file: " << path << "\n";
+        std::exit(1); // or exit(EXIT_FAILURE)
+    }
+    return f; // moved out
 }
 
 std::string extract_header(const std::string& line)
