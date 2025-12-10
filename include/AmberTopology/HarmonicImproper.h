@@ -34,6 +34,8 @@ class HarmonicImproper
         atomD_index(atomD_index), type(0) {}
 
         double return_energy(double distance);
+        void set_energy(double energy) {this->energy = energy;}
+
 
         void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
@@ -61,5 +63,6 @@ class HarmonicImproper
         int atomD_index;
         int type;
         double dihedral;
+        double energy;
 };
 #endif //HARMONIIMPROPER_H

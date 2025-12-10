@@ -29,6 +29,7 @@ class HarmonicBond
         atomB_index(atomB_index), type(0), isH(false) {}
 
         double return_energy(double distance);
+        void set_energy(double energy) { this->energy = energy;}
 
         void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
@@ -55,5 +56,6 @@ class HarmonicBond
         int type;
         bool isH;
         double distance;
+        double energy;
 };
 #endif //HARMONICBOND_H

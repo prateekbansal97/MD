@@ -38,6 +38,24 @@ public:
     std::vector<HarmonicUB>& get_harmonic_UBs() { return HarmonicUB_list_; }
     std::vector<HarmonicImproper>& get_harmonic_impropers() { return HarmonicIMP_list_; }
     std::vector<CMapGroup>& get_cmaps() { return CMapGroup_list_; }
+    const std::vector<int>& get_charmm_cmap_resolutions() const { return charmm_cmap_resolution_; }
+    const std::vector<double>& get_cmap_grid_data(int set_index) const
+    {
+        switch (set_index) {
+            case 1:
+                return charmm_cmap_parameter_01;
+            case 2:
+                return charmm_cmap_parameter_02;
+            case 3:
+                return charmm_cmap_parameter_03;
+            case 4:
+                return charmm_cmap_parameter_04;
+            case 5:
+                return charmm_cmap_parameter_05;
+            default:
+                throw std::out_of_range("CMAP set index must be between 1 and 5. Received: " + std::to_string(set_index));
+        }
+    }
 
     int read_topology(std::ifstream& parmtop);
 

@@ -28,6 +28,7 @@ class HarmonicUB
         atomB_index(atomB_index), type(0) {}
 
         double return_energy(double distance);
+        void set_energy(double energy) {this->energy = energy;}
 
         void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
@@ -50,5 +51,6 @@ class HarmonicUB
         int atomB_index;
         int type;
         double distance;
+        double energy;
 };
 #endif //HARMONICUB_H

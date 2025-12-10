@@ -1567,11 +1567,11 @@ void Topology::create_Charmm_Cmap_Index_assign()
         int indexE = charmm_cmap_index[i+4] - 1;
         check_if_valid_indices("atom_list_Charmm_Cmap_Index_assign", atom_list_, indexA, indexB, indexC, indexD, indexE);
 
-        int parameter_set = charmm_cmap_index[i+5] - 1;
-
+        int parameter_set = charmm_cmap_index[i+5];
 
 
         CMapGroup group = CMapGroup(parameter_set, indexA, indexB, indexC, indexD, indexE);
+//        group.set_parameter_set(parameter_set);
         CMapGroup_list_.push_back(group);
     }
 }

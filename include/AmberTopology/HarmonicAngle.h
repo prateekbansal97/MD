@@ -26,6 +26,7 @@ class HarmonicAngle
         atomB_index(atomB_index), atomC_index(atomC_index), type(0), isH(false) {}
 
         double return_energy(double angle);
+        void set_energy(double energy) {this->energy = energy;}
 
         void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
@@ -54,6 +55,7 @@ class HarmonicAngle
         int type;
         bool isH;
         double angle;
+        double energy;
 
 };
 #endif //HARMONICANGLE_H

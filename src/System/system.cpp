@@ -9,6 +9,8 @@
 
 void System::init() {
     const std::vector<double>& coordinates = topology.get_coordinates();
+
+    double bond_energies = 0;
     for (auto& bond: topology.get_harmonic_bonds())
     {
         int atomAIndex = bond.get_atomA_index();
@@ -17,8 +19,12 @@ void System::init() {
         const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
         double dist = distance(x1, y1, z1, x2, y2, z2);
         bond.set_distance(dist);
-    }
 
+        double energy = bond.return_energy(dist);
+        bond.set_energy(energy);
+        bond_energies += energy;
+    }
+    double angle_energy = 0;
     for (auto& ang: topology.get_harmonic_angles())
     {
         int atomAIndex = ang.get_atomA_index();
@@ -29,8 +35,13 @@ void System::init() {
         const double x3 = coordinates[3*atomCIndex], y3 = coordinates[3*atomCIndex + 1], z3 = coordinates[3*atomCIndex + 2];
         double angle_m = angle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
         ang.set_angle(angle_m);
+
+        double energy = ang.return_energy(angle_m);
+        ang.set_energy(energy);
+        angle_energy += energy;
     }
 
+    double dihedral_energy = 0;
     for (auto& dih: topology.get_cosine_dihedrals())
     {
         int atomAIndex = dih.get_atomA_index();
@@ -43,8 +54,12 @@ void System::init() {
         const double x4 = coordinates[3*atomDIndex], y4 = coordinates[3*atomDIndex + 1], z4 = coordinates[3*atomDIndex + 2];
         double angle_m = dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
         dih.set_cosine_dihedral(angle_m);
+        double energy = dih.return_energy(angle_m);
+        dih.set_energy(energy);
+        dihedral_energy += energy;
     }
 
+    double urey_bradley_energy = 0;
     for (auto& ub : topology.get_harmonic_UBs())
     {
         int a1 = ub.get_atomA_index();
@@ -56,9 +71,13 @@ void System::init() {
         );
 
          ub.set_distance_value(dist);
+         double energy = ub.return_energy(dist);
+         ub.set_energy(energy);
+         urey_bradley_energy += energy;
 //         std::cout << "UB Distance: " << dist << "\n";
     }
 
+    double improper_energy = 0;
     for (auto& imp : topology.get_harmonic_impropers())
     {
         int a1 = imp.get_atomA_index();
@@ -75,11 +94,15 @@ void System::init() {
 
         // Assuming you added a 'current_angle' member or setter to HarmonicImproper
          imp.set_imp_dihedral(angle_m);
+         double energy = imp.return_energy(angle_m);
+         imp.set_energy(energy);
+         improper_energy += energy;
 
         // Debug print (Optional)
 //         std::cout << "Improper Angle: " << angle_m*180/M_PI << "\n";
     }
 
+    double cmap_energy = 0.0;
     for (auto& cmap : topology.get_cmaps())
     {
         int a1 = cmap.get_atomA_index();
@@ -104,11 +127,23 @@ void System::init() {
                 coordinates[3*a5], coordinates[3*a5+1], coordinates[3*a5+2]
         );
 
-        cmap.set_angles(phi, psi);
+        int set_index = cmap.get_parameter_set();
+        const std::vector<int>& resolutions = topology.get_charmm_cmap_resolutions();
+        int resolution = resolutions[set_index - 1];
+        const std::vector<double>& full_grid = topology.get_cmap_grid_data(set_index);
 
+
+        // Pass the OFFSET and the FULL GRID to your return_energy function
+        double energy = cmap.return_energy(phi, psi, full_grid, resolution);
+
+        cmap.set_angles(phi, psi);
+        cmap.set_energy(energy);
+        cmap_energy += energy;
         // Debug
 //         std::cout << "CMAP Angles: " << phi*180/M_PI << ", " << psi*180/M_PI << "\n";
     }
+    std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
+    " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << cmap_energy << "\n";
 }
 
 double System::distance(double x1, double y1, double z1, double x2, double y2, double z2)

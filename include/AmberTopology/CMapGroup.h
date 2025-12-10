@@ -1,6 +1,7 @@
 #ifndef CMapGroup_H
 #define CMapGroup_H
 
+#include <vector>
 
 class CMapGroup
 {
@@ -13,11 +14,12 @@ class CMapGroup
         atomC_index(atomC_index),
         atomD_index(atomD_index),
         atomE_index(atomE_index),
-        parameter_set(parameter_set) {}
+        parameter_set(parameter_set),
+        phi(0.0), psi(0.0), energy(0.0) {}
 
 
-
-        // double return_energy(double dihedral);
+        double return_energy(double phi, double psi, const std::vector<double>& grid, int resolution);
+        void set_energy(double energy) {this->energy = energy;}
 
         void set_parameter_set(int set) { this->parameter_set = set; }
         const int get_parameter_set() const { return parameter_set; }
@@ -47,5 +49,6 @@ class CMapGroup
         int atomE_index;
         double phi;
         double psi;
+        double energy;
 };
 #endif //CMapGroup_H

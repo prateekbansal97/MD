@@ -52,6 +52,7 @@ class CosineDihedral
         isH(false) {}
 
         double return_energy(double dihedral);
+        void set_energy(double energy) {this->energy = energy;}
 
         void set_type(int type_id) { this->type = type_id; }
         int get_type() const { return type; }
@@ -88,5 +89,6 @@ class CosineDihedral
         bool improper;
         bool exclude_14;
         double dihedral;
+        double energy;
 };
 #endif //COSINEDIHEDRAL_H
