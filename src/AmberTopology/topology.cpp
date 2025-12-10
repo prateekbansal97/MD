@@ -81,19 +81,21 @@ enum class Section {
     return pointers_;
 }
 
-int Topology::read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path)
+Topology Topology::read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path)
 {
+    Topology topology;
     std::ifstream parmtop = open_file(parmtop_path);
-    read_topology(parmtop);
+    topology.read_topology(parmtop);
     if (!coords_path.empty()) {
         std::ifstream coords = open_file(coords_path);
-        int result = read_coords(coords);
+        int result = topology.read_coords(coords);
     }
     else
     {
         std::cout << "Coordinates not supplied. Coordinates are presumed to be 0. \n";
-        coordinates.assign(atom_list_.size()*3, 0.0);
+        topology.coordinates.assign(topology.atom_list_.size()*3, 0.0);
     }
+    return topology;
 }
 
 int Topology::read_topology(std::ifstream& parmtop)

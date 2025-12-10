@@ -44,6 +44,9 @@ class HarmonicImproper
         void set_IMP_phase_value(double phase_value) {this->IMP_Phase = phase_value; }
         double get_IMP_phase_value() const {return IMP_Phase; }
 
+        void set_imp_dihedral(double dihedral) {this->dihedral = dihedral;}
+        double get_imp_dihedral() {return this->dihedral;}
+
         const int get_atomA_index() const {return atomA_index; }
         const int get_atomB_index() const {return atomB_index; }
         const int get_atomC_index() const {return atomC_index; }
@@ -57,5 +60,6 @@ class HarmonicImproper
         int atomC_index;
         int atomD_index;
         int type;
+        double dihedral;
 };
 #endif //HARMONIIMPROPER_H

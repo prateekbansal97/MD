@@ -38,6 +38,8 @@ class HarmonicUB
         void set_UB_equil_value(double equil_value) {this->UB_force_equil = equil_value; }
         double get_UB_equil_value() const {return UB_force_equil; }
 
+        void set_distance_value(double distance) {this->distance = distance;}
+
         const int get_atomA_index() const {return atomA_index; }
         const int get_atomB_index() const {return atomB_index; }
     
@@ -47,5 +49,6 @@ class HarmonicUB
         int atomA_index;
         int atomB_index;
         int type;
+        double distance;
 };
 #endif //HARMONICUB_H

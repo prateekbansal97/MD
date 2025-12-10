@@ -65,6 +65,8 @@ class CosineDihedral
         void set_Dihedral_Periodicity(double Periodicity) {this->Dihedral_Periodicity = Periodicity; }
         double get_Dihedral_Periodicity() const {return Dihedral_Periodicity; }
 
+        void set_cosine_dihedral(double dihedral) {this->dihedral = dihedral;}
+
         const int get_atomA_index() const {return atomA_index; }
         const int get_atomB_index() const {return atomB_index; }
         const int get_atomC_index() const {return atomC_index; }
@@ -85,5 +87,6 @@ class CosineDihedral
         bool isH;
         bool improper;
         bool exclude_14;
+        double dihedral;
 };
 #endif //COSINEDIHEDRAL_H

@@ -22,6 +22,15 @@ class CMapGroup
         void set_parameter_set(int set) { this->parameter_set = set; }
         const int get_parameter_set() const { return parameter_set; }
 
+
+        void set_angles(double phi, double psi) {
+            this->phi = phi;
+            this->psi = psi;
+        }
+
+        double get_angle1() const { return phi; }
+        double get_angle2() const { return psi; }
+
         const int get_atomA_index() const {return atomA_index; }
         const int get_atomB_index() const {return atomB_index; }
         const int get_atomC_index() const {return atomC_index; }
@@ -36,5 +45,7 @@ class CMapGroup
         int atomC_index;
         int atomD_index;
         int atomE_index;
+        double phi;
+        double psi;
 };
 #endif //CMapGroup_H

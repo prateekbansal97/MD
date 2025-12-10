@@ -39,11 +39,14 @@ class HarmonicBond
         void set_Bond_equil_length(double equil_length) {this->Bond_Equil = equil_length; }
         double get_Bond_equil_length() const {return Bond_Equil; }
 
+        void set_distance(double distance) {this->distance = distance;}
+
         const int get_atomA_index() const {return atomA_index; }
         const int get_atomB_index() const {return atomB_index; }
 
         const bool get_isH() const {return isH;}
-    
+
+
     private:
         double Bond_force_constant;
         double Bond_Equil;
@@ -51,5 +54,6 @@ class HarmonicBond
         int atomB_index;
         int type;
         bool isH;
+        double distance;
 };
 #endif //HARMONICBOND_H

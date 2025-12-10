@@ -36,12 +36,15 @@ class HarmonicAngle
         void set_Angle_equil_angle(double equil_angle) {this->Angle_Equil = equil_angle; }
         double get_Angle_equil_angle() const {return Angle_Equil; }
 
+        void set_angle(double angle) { this->angle = angle;}
+
         const int get_atomA_index() const {return atomA_index; }
         const int get_atomB_index() const {return atomB_index; }
         const int get_atomC_index() const {return atomC_index; }
 
         const bool get_isH() const {return isH;}
-    
+
+
     private:
         double Angle_force_constant;
         double Angle_Equil;
@@ -50,5 +53,7 @@ class HarmonicAngle
         int atomC_index;
         int type;
         bool isH;
+        double angle;
+
 };
 #endif //HARMONICANGLE_H

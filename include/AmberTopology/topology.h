@@ -28,7 +28,17 @@ public:
     [[nodiscard]] std::vector<Atom> get_atoms() const {
         return atom_list_;
     }
-    int read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
+    static Topology read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
+
+
+    std::vector<double>& get_coordinates() { return coordinates;}
+    std::vector<HarmonicBond>& get_harmonic_bonds() {return HarmonicBond_list_;}
+    std::vector<HarmonicAngle>& get_harmonic_angles() {return HarmonicAngle_list_;}
+    std::vector<CosineDihedral>& get_cosine_dihedrals() {return CosineDihedral_list_;}
+    std::vector<HarmonicUB>& get_harmonic_UBs() { return HarmonicUB_list_; }
+    std::vector<HarmonicImproper>& get_harmonic_impropers() { return HarmonicIMP_list_; }
+    std::vector<CMapGroup>& get_cmaps() { return CMapGroup_list_; }
+
     int read_topology(std::ifstream& parmtop);
 
     [[maybe_unused]] std::vector<unsigned long int> get_pointers();
@@ -36,7 +46,7 @@ public:
     [[maybe_unused]] [[maybe_unused]] void print_atom_details(int max_print);
 
     [[maybe_unused]] [[maybe_unused]] void print_atom_details_to_file();
-    
+    std::vector<Atom> atom_list_;
     void process_pointers_section(std::string& line);
     void process_atom_names_section(std::string& line);
     void process_charge_section(std::string& line);
@@ -147,7 +157,7 @@ public:
 
 private:
     std::vector<unsigned long int> pointers_;
-    std::vector<Atom> atom_list_;
+
     std::vector<std::string> residue_labels_;
     
     std::vector<double> bond_force_constants_;
