@@ -28,6 +28,9 @@ public:
     [[nodiscard]] std::vector<Atom> get_atoms() const {
         return atom_list_;
     }
+
+    const unsigned long int get_nAtoms() {return nAtoms_;}
+
     static Topology read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
 
 
