@@ -30,6 +30,7 @@ public:
     }
 
     // This is the function your L-BFGS solver will call repeatedly
+    void calculate_forces();
     void calculate_forces_bonds();
     void calculate_forces_UBbonds();
     void calculate_forces_angles();
