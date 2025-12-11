@@ -219,3 +219,237 @@ double System::dihedral(double x1, double y1, double z1, double x2, double y2, d
     const double y = val*magb1;
     return std::atan2(y, x);
 }
+
+void System::calculate_forces_bonds() {
+    clear_forces(); // Reset gradients to 0
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    for (auto& bond: topology.get_harmonic_bonds())
+    {
+        int atomAIndex = bond.get_atomA_index();
+        int atomBIndex = bond.get_atomB_index();
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+        const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+        const double dx1 = x1 - x2;
+        const double dy1 = y1 - y2;
+        const double dz1 = z1 - z2;
+
+        const double r = std::sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1);
+
+        const double k = bond.get_Bond_force_constant();
+        const double r0 = bond.get_Bond_equil_length();
+
+        if (r < 1e-12) continue;
+
+        const double famag = -2 * k * (r - r0);
+        const double fax = famag*dx1/r;
+        const double fay = famag*dy1/r;
+        const double faz = famag*dz1/r;
+
+        forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
+        forces[3*atomBIndex] -= fax; forces[3*atomBIndex+1] -= fay; forces[3*atomBIndex+2] -= faz;
+    }
+}
+
+void System::calculate_forces_UBbonds() {
+    clear_forces(); // Reset gradients to 0
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    for (auto& bond: topology.get_harmonic_UBs())
+    {
+        int atomAIndex = bond.get_atomA_index();
+        int atomBIndex = bond.get_atomB_index();
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+        const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+        const double dx1 = x1 - x2;
+        const double dy1 = y1 - y2;
+        const double dz1 = z1 - z2;
+
+        const double r = std::sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1);
+
+        const double k = bond.get_UB_force_constant();
+        const double r0 = bond.get_UB_equil_value();
+
+        if (r < 1e-12) return;
+
+        const double famag = -2 * k * (r - r0);
+        const double fax = famag*dx1/r;
+        const double fay = famag*dy1/r;
+        const double faz = famag*dz1/r;
+
+        forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
+        forces[3*atomBIndex] -= -fax; forces[3*atomBIndex+1] -= -fay; forces[3*atomBIndex+2] -= -faz;
+    }
+}
+
+void System::calculate_forces_angles() {
+//    clear_forces(); // Reset gradients to 0
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    for (auto& ang: topology.get_harmonic_angles())
+    {
+        int atomAIndex = ang.get_atomA_index();
+        int atomBIndex = ang.get_atomB_index();
+        int atomCIndex = ang.get_atomC_index();
+
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+        const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+        const double x3 = coordinates[3*atomCIndex], y3 = coordinates[3*atomCIndex + 1], z3 = coordinates[3*atomCIndex + 2];
+
+        // ba
+        const double ba_x = x1 - x2;
+        const double ba_y = y1 - y2;
+        const double ba_z = z1 - z2;
+
+        // bc
+        const double bc_x = x3 - x2;
+        const double bc_y = y3 - y2;
+        const double bc_z = z3 - z2;
+
+        const double mod_ab_sq = ba_x*ba_x + ba_y*ba_y + ba_z*ba_z;
+        const double mod_ab = std::sqrt(mod_ab_sq);
+
+        if (mod_ab < 1e-12) continue;
+
+        // pa = norm(ba x (ba x bc))
+        //    = norm ((ba.bc)ba - (modba*modba)bc)
+
+        const double dot_ba_bc = ba_x*bc_x + ba_y*bc_y + ba_z*bc_z;
+        double pa_x = dot_ba_bc*ba_x - mod_ab_sq*bc_x;
+        double pa_y = dot_ba_bc*ba_y - mod_ab_sq*bc_y;
+        double pa_z = dot_ba_bc*ba_z - mod_ab_sq*bc_z;
+
+        const double mod_pa = std::sqrt(pa_x*pa_x + pa_y*pa_y + pa_z*pa_z);
+        if (mod_pa < 1e-12) continue;
+        pa_x /= mod_pa;
+        pa_y /= mod_pa;
+        pa_z /= mod_pa;
+
+        const double mod_bc_sq = bc_x*bc_x + bc_y*bc_y + bc_z*bc_z;
+        const double mod_bc = std::sqrt(mod_bc_sq);
+
+        if (mod_bc < 1e-12) continue;
+
+        // pc = norm(cb x (ba x bc))
+        //    = norm ((bc.ba)bc -(modbc*modbc)ba)
+
+        double pc_x = dot_ba_bc*bc_x - mod_bc_sq*ba_x;
+        double pc_y = dot_ba_bc*bc_y - mod_bc_sq*ba_y;
+        double pc_z = dot_ba_bc*bc_z - mod_bc_sq*ba_z;
+
+        const double mod_pc = std::sqrt(pc_x*pc_x + pc_y*pc_y + pc_z*pc_z);
+        if (mod_pc < 1e-12) continue;
+        pc_x /= mod_pc;
+        pc_y /= mod_pc;
+        pc_z /= mod_pc;
+
+
+        const double k = ang.get_Angle_force_constant();
+        const double theta0 = ang.get_Angle_equil_angle();
+        double theta = angle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
+
+        const double fmag = -2 * k * (theta - theta0);
+        const double fax = fmag/mod_ab*pa_x;
+        const double fay = fmag/mod_ab*pa_y;
+        const double faz = fmag/mod_ab*pa_z;
+
+        const double fcx = fmag/mod_bc*pc_x;
+        const double fcy = fmag/mod_bc*pc_y;
+        const double fcz = fmag/mod_bc*pc_z;
+
+        forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
+        forces[3*atomCIndex] += fcx; forces[3*atomCIndex+1] += fcy; forces[3*atomCIndex+2] += fcz;
+        forces[3*atomBIndex] += -fax-fcx; forces[3*atomBIndex+1] += -fay-fcy; forces[3*atomBIndex+2] += -faz-fcz;
+
+    }
+}
+
+void System::calculate_forces_cosinedihedrals() {
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    for (auto& dih: topology.get_cosine_dihedrals()) {
+        int atomAIndex = dih.get_atomA_index();
+        int atomBIndex = dih.get_atomB_index();
+        int atomCIndex = dih.get_atomC_index();
+        int atomDIndex = dih.get_atomD_index();
+
+        const double x1 = coordinates[3 * atomAIndex], y1 = coordinates[3 * atomAIndex + 1], z1 = coordinates[
+                3 * atomAIndex + 2];
+        const double x2 = coordinates[3 * atomBIndex], y2 = coordinates[3 * atomBIndex + 1], z2 = coordinates[
+                3 * atomBIndex + 2];
+        const double x3 = coordinates[3 * atomCIndex], y3 = coordinates[3 * atomCIndex + 1], z3 = coordinates[
+                3 * atomCIndex + 2];
+        const double x4 = coordinates[3 * atomDIndex], y4 = coordinates[3 * atomDIndex + 1], z4 = coordinates[
+                3 * atomDIndex + 2];
+
+        // ba
+        const double ba_x = x1 - x2;
+        const double ba_y = y1 - y2;
+        const double ba_z = z1 - z2;
+
+        // cb
+        const double cb_x = x2 - x3;
+        const double cb_y = y2 - y3;
+        const double cb_z = z2 - z3;
+
+        // dc
+        const double dc_x = x3 - x4;
+        const double dc_y = y3 - y4;
+        const double dc_z = z3 - z4;
+
+
+        const double k = dih.get_Dihedral_force_constant();
+        const double n = dih.get_Dihedral_Periodicity();
+        const double delta = dih.get_Dihedral_phase();
+        double phi = dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+        const double tau = k * n * std::sin(n * phi - delta);
+
+        // m = ba x cb
+        const double m_x = ba_y*cb_z - ba_z*cb_y;
+        const double m_y = ba_z*cb_x - ba_x*cb_z;
+        const double m_z = ba_x*cb_y - ba_y*cb_x;
+
+        // n = cb x dc
+
+        const double n_x = cb_y*dc_z - cb_z*dc_y;
+        const double n_y = cb_z*dc_x - cb_x*dc_z;
+        const double n_z = cb_x*dc_y - cb_y*dc_x;
+
+        const double mod_m_sq = m_x*m_x + m_y*m_y + m_z*m_z;
+        if (mod_m_sq < 1e-24) continue;
+
+        const double mod_n_sq = n_x*n_x + n_y*n_y + n_z*n_z;
+        if (mod_n_sq < 1e-24) continue;
+
+        const double mod_bc_sq = cb_x*cb_x + cb_y*cb_y + cb_z*cb_z;
+        if (mod_bc_sq < 1e-24) continue;
+
+        const double mod_bc = std::sqrt(mod_bc_sq);
+
+        const double dot_ba_cb = ba_x*cb_x + ba_y*cb_y + ba_z*cb_z;
+        const double dot_dc_cb = dc_x*cb_x + dc_y*cb_y + dc_z*cb_z;
+
+        const double fax = tau*mod_bc/mod_m_sq*m_x;
+        const double fay = tau*mod_bc/mod_m_sq*m_y;
+        const double faz = tau*mod_bc/mod_m_sq*m_z;
+
+        const double fdx = -tau*mod_bc/mod_n_sq*n_x;
+        const double fdy = -tau*mod_bc/mod_n_sq*n_y;
+        const double fdz = -tau*mod_bc/mod_n_sq*n_z;
+
+        const double fbx = (dot_ba_cb/mod_bc_sq - 1)*fax - dot_dc_cb/mod_bc_sq*fdx;
+        const double fby = (dot_ba_cb/mod_bc_sq - 1)*fay - dot_dc_cb/mod_bc_sq*fdy;
+        const double fbz = (dot_ba_cb/mod_bc_sq - 1)*faz - dot_dc_cb/mod_bc_sq*fdz;
+
+        const double fcx = (dot_dc_cb/mod_bc_sq - 1)*fdx - dot_ba_cb/mod_bc_sq*fax;
+        const double fcy = (dot_dc_cb/mod_bc_sq - 1)*fdy - dot_ba_cb/mod_bc_sq*fay;
+        const double fcz = (dot_dc_cb/mod_bc_sq - 1)*fdz - dot_ba_cb/mod_bc_sq*faz;
+
+        forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
+        forces[3*atomBIndex] += fbx; forces[3*atomBIndex+1] += fby; forces[3*atomBIndex+2] += fbz;
+        forces[3*atomCIndex] += fcx; forces[3*atomCIndex+1] += fcy; forces[3*atomCIndex+2] += fcz;
+        forces[3*atomDIndex] += fdx; forces[3*atomDIndex+1] += fdy; forces[3*atomDIndex+2] += fdz;
+    }
+}
