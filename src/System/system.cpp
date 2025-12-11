@@ -144,6 +144,12 @@ void System::init() {
     }
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
     " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << cmap_energy << "\n";
+
+    calculate_forces();
+    std::cout << "Calculated Forces! \n";
+    std::cout << forces[0] << " " << forces[1] << " " << forces[2] << "\n";
+    std::cout << forces[3] << " " << forces[4] << " " << forces[5] << "\n";
+    std::cout << forces[6] << " " << forces[7] << " " << forces[8] << "\n";
 }
 
 double System::distance(double x1, double y1, double z1, double x2, double y2, double z2)
@@ -220,8 +226,16 @@ double System::dihedral(double x1, double y1, double z1, double x2, double y2, d
     return std::atan2(y, x);
 }
 
+void System::calculate_forces()
+{
+    clear_forces();
+    calculate_forces_bonds();
+    calculate_forces_UBbonds();
+    calculate_forces_angles();
+    calculate_forces_cosinedihedrals();
+}
+
 void System::calculate_forces_bonds() {
-    clear_forces(); // Reset gradients to 0
     const std::vector<double>& coordinates = topology.get_coordinates();
 
     for (auto& bond: topology.get_harmonic_bonds())
@@ -453,3 +467,4 @@ void System::calculate_forces_cosinedihedrals() {
         forces[3*atomDIndex] += fdx; forces[3*atomDIndex+1] += fdy; forces[3*atomDIndex+2] += fdz;
     }
 }
+
