@@ -22,5 +22,6 @@ int main(int argc, char* argv[])
     System sys = System(top);
 
     sys.init();
+//    sys.minimize();
     return 0;
 }

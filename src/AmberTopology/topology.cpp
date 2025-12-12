@@ -297,6 +297,7 @@ int Topology::read_topology(std::ifstream& parmtop)
     create_dihedrals_without_H();
     create_excluded_atoms_list();
     create_Charmm_Cmap_Index_assign();
+    create_Cmap_Coefficient_Matrix_bicubic_spline();
     create_molecules();
     // std::cout << "excluded_atoms_list_ length: " << excluded_atoms_list_.size() << std::endl;
     // print_atom_details(200);
@@ -1721,4 +1722,82 @@ int Topology::read_coords(std::ifstream& coordfile) {
     std::cout << "box: " << box_x << " " << box_y << " " << box_z << "\n" << box_alpha << " " << box_beta << " " << box_gamma << "\n";
     std::cout << coordinates[0] << " " << coordinates[1] << " " << coordinates[2];
     return 0;
+}
+
+
+
+void Topology::create_Cmap_Coefficient_Matrix_bicubic_spline()
+{
+//    std::vector<std::vector<int>> coeff_matrix(16, std::vector<int>(16, 0));
+    static const double coeff_matrix[16][16] =
+            {{0,   0,   0,   0,   0,  16,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
+             {0,   0,   0,   0,  -8,   0,   8,   0,   0,   0,   0,   0,   0,   0,   0,   0},
+             {0,   0,   0,   0,  16, -40,  32,  -8,   0,   0,   0,   0,   0,   0,   0,   0},
+             {0,   0,   0,   0,  -8,  24, -24,   8,   0,   0,   0,   0,   0,   0,   0,   0},
+             {0,  -8,   0,   0,   0,   0,   0,   0,   0,   8,   0,   0,   0,   0,   0,   0},
+             {0,  -4,   0,   0,  -4,   4,   0,   0,   0,   0,   4,   0,   0,   0,   0,   0},
+             {0,  32, -20,   0,   8,  -4,  -4,   0,   0, -24,  16,  -4,   0,   0,   0,   0},
+             {0, -20,  12,   0,  -4,   0,   4,   0,   0,  16, -12,   4,   0,   0,   0,   0},
+             {0,  16,   0,   0,   0, -40,   0,   0,   0,  32,   0,   0,   0,  -8,   0,   0},
+             {0,   8,   0,   0,  32,  -4, -24,   0, -20,  -4,   0,   0,   0,   0,  -4,   0},
+             {0, -64,  40,   0, -64,  96, -68,  24,  40, -68, -16, -16,   0,  24, -16,   0},
+             {0,  40, -24,   0,  32, -52,  52, -24, -20,  40,  16,  16,   0, -16,  12,   0},
+             {0,  -8,   0,   0,   0,  24,   0,   0,   0, -24,   0,   0,   0,   8,   0,   4},
+             {0,  -4,   0,   0, -20,   0,  16,   0,  12,   4, -12,   0,   0,   0,   4,  -4},
+             {0,  32, -20,   0,  40, -52,  40, -16, -24,  52, -52,  12,   0, -24,  16,  -4},
+             {0, -20,  12,   0, -20,  28, -32,  16,  12, -32,  40, -12,   0,  16, -12,   4}};
+
+    coeff_matrix_24x24.clear();
+    coeff_matrix_24x24.reserve(5*24*24*16);
+
+    for (int cmap_no = 0; cmap_no < 5; cmap_no++)
+    {
+        int resolution = get_charmm_cmap_resolutions()[cmap_no];
+        std::vector<double> grid = get_cmap_grid_data(cmap_no + 1);
+
+
+        for (int row_grid = 0; row_grid < resolution; row_grid++)
+        {
+            for (int col_grid = 0; col_grid < resolution; col_grid++)
+            {
+                int sixteen_indices[16][2] = {
+                        {row_grid-1, col_grid-1}, {row_grid, col_grid-1}, {row_grid+1, col_grid-1}, {row_grid+2, col_grid-1},
+                        {row_grid-1, col_grid},   {row_grid, col_grid},   {row_grid+1, col_grid},   {row_grid+2, col_grid},
+                        {row_grid-1, col_grid+1}, {row_grid, col_grid+1}, {row_grid+1, col_grid+1}, {row_grid+2, col_grid+1},
+                        {row_grid-1, col_grid+2}, {row_grid, col_grid+2}, {row_grid+1, col_grid+2}, {row_grid+2, col_grid+2}
+                };
+
+                for (int index = 0; index < 16; index++)
+                {
+                    int index_x = sixteen_indices[index][0];
+                    if (index_x < 0)  sixteen_indices[index][0] += resolution;
+                    else if (index_x >= resolution) sixteen_indices[index][0] -= resolution;
+
+                    int index_y = sixteen_indices[index][1];
+                    if (index_y < 0) sixteen_indices[index][1] += resolution;
+                    else if (index_y >= resolution) sixteen_indices[index][1] -= resolution;
+                }
+
+
+                std::vector<double> sixteen_energies(16, 0.0);
+                int ct = 0;
+                for (auto& index: sixteen_indices)
+                {
+                    int index_x = index[0];
+                    int index_y = index[1];
+                    sixteen_energies[ct] = grid[index_x*resolution + index_y];
+                    ct++;
+                }
+
+                std::vector<double> coeffs(16, 0.0);
+                for (int row = 0; row < 16; ++row) {
+                    // Iterate through each column (element) in the row
+                    for (int col = 0; col < 16; ++col) {
+                        coeffs[row] += coeff_matrix[row][col] * sixteen_energies[col] / 16;
+                    }
+                }
+                coeff_matrix_24x24.insert(coeff_matrix_24x24.end(), coeffs.begin(), coeffs.end());
+            }
+        }
+    }
 }

@@ -35,6 +35,8 @@ public:
     void calculate_forces_UBbonds();
     void calculate_forces_angles();
     void calculate_forces_cosinedihedrals();
+    void calculate_forces_harmonicImpropers();
+    void calculate_forces_cmap();
 
 private:
     Topology topology;

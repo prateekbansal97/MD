@@ -60,6 +60,7 @@ public:
         }
     }
 
+
     int read_topology(std::ifstream& parmtop);
 
     [[maybe_unused]] std::vector<unsigned long int> get_pointers();
@@ -154,6 +155,8 @@ public:
     void process_Charmm_Cmap_parameter_05(std::string& line);
     void process_Charmm_Cmap_Index(std::string& line);
     void create_Charmm_Cmap_Index_assign();
+    void create_Cmap_Coefficient_Matrix_bicubic_spline();
+    std::vector<double>& get_Cmap_Coefficient_Matrix_bicubic_spline() {return coeff_matrix_24x24;}
 
     void process_solvent_pointers(std::string& line);
     
@@ -232,6 +235,7 @@ private:
     std::vector<double> charmm_cmap_parameter_04;
     std::vector<double> charmm_cmap_parameter_05;
     std::vector<int> charmm_cmap_index;
+    std::vector<double> coeff_matrix_24x24;
     std::vector<CMapGroup> CMapGroup_list_;
 
     std::vector<int> atoms_per_molecule_;

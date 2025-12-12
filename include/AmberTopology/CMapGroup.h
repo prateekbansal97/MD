@@ -2,7 +2,7 @@
 #define CMapGroup_H
 
 #include <vector>
-
+#include <utility>
 class CMapGroup
 {
 
@@ -18,7 +18,12 @@ class CMapGroup
         phi(0.0), psi(0.0), energy(0.0) {}
 
 
-        double return_energy(double phi, double psi, const std::vector<double>& grid, int resolution);
+        double return_energy_linear(double phi, double psi, const std::vector<double>& grid, int resolution);
+        std::pair<double, double> return_gradient_linear(double phi, double psi, const std::vector<double>& grid, int resolution);
+
+        double return_energy_bicubic(double phi, double psi, int resolution, std::vector<double>& coeffs, const std::vector<double>& grid_energies);
+        std::pair<double, double> return_gradient_bicubic(double phi, double psi, int resolution, std::vector<double>& coeffs, const std::vector<double>& grid_energies);
+
         void set_energy(double energy) {this->energy = energy;}
 
         void set_parameter_set(int set) { this->parameter_set = set; }
