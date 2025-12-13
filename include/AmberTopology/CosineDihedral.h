@@ -75,6 +75,9 @@ class CosineDihedral
         
 
         const bool get_isH() const {return isH;}
+
+        const bool get_improper() const {return improper;}
+        const bool get_exclude_14() const {return exclude_14;}
     
     private:
         double Dihedral_force_constant;

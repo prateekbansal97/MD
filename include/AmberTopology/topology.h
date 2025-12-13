@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <string>
+#include <unordered_set>
+
 #include "atom.h"
 #include "io.h"
 #include "harmonicUB.h"
@@ -25,7 +27,7 @@ public:
     // Implement a destructor
     
 
-    [[nodiscard]] std::vector<Atom> get_atoms() const {
+    [[nodiscard]] std::vector<Atom>& get_atoms() {
         return atom_list_;
     }
 
@@ -33,6 +35,7 @@ public:
 
     static Topology read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
 
+    size_t get_num_atoms() { return atom_list_.size(); }
 
     std::vector<double>& get_coordinates() { return coordinates;}
     std::vector<HarmonicBond>& get_harmonic_bonds() {return HarmonicBond_list_;}
@@ -59,6 +62,12 @@ public:
                 throw std::out_of_range("CMAP set index must be between 1 and 5. Received: " + std::to_string(set_index));
         }
     }
+
+    std::vector<std::vector<unsigned long int>>& get_nb_matrix() { return nbmatrix_;}
+    std::vector<double>& get_lennard_jones_Acoefs_() { return lennard_jones_Acoefs_; }
+    std::vector<double>& get_lennard_jones_Bcoefs_() { return lennard_jones_Bcoefs_; }
+    std::vector<double>& get_lennard_jones_14_Acoefs_() { return lennard_jones_14_Acoefs_; }
+    std::vector<double>& get_lennard_jones_14_Bcoefs_() { return lennard_jones_14_Bcoefs_; }
 
 
     int read_topology(std::ifstream& parmtop);
@@ -171,6 +180,10 @@ public:
 
     void process_ipol(std::string& line);
 
+    void build_lj14_pairlist();
+    bool is_14_pair(int i, int j) const;
+
+
     int read_coords(std::ifstream& coordfile);
     template<typename T, typename... Args>
     void check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args);
@@ -245,6 +258,8 @@ private:
     std::vector<double> screen;
 
     std::vector<double> coordinates;
+    std::unordered_set<uint64_t> lj14_pairs_;
+
 
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;

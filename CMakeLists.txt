@@ -38,6 +38,8 @@ add_library(amber_topology
         src/AmberTopology/CosineDihedral.cpp
         src/AmberTopology/CMapGroup.cpp
         src/AmberTopology/molecule.cpp
+        src/AmberTopology/LennardJones.cpp
+        include/AmberTopology/LennardJones.h
 )
 
 target_include_directories(amber_topology PUBLIC ${CMAKE_SOURCE_DIR}/include)

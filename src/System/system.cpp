@@ -3,6 +3,8 @@
 //
 #include "../../include/AmberTopology/topology.h"
 #include "../../include/System/System.h"
+#include "../../include/AmberTopology/LennardJones.h"
+#include "../../include/AmberTopology/atom.h"
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -64,6 +66,7 @@ void System::init() {
     {
         int a1 = ub.get_atomA_index();
         int a2 = ub.get_atomB_index();
+
 
         double dist = distance(
                 coordinates[3*a1], coordinates[3*a1+1], coordinates[3*a1+2],
@@ -141,8 +144,66 @@ void System::init() {
         cmap_energy += energy;
 
     }
+
+    double LJ_energy = 0;
+    std::vector<Atom>& atom_list = topology.get_atoms();
+    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+    {
+        Atom& atomA = atom_list[atomAIndex];
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        {
+            Atom& atomB = atom_list[atomBIndex];
+
+            // if atomBindex is in atomAindex.excluded_atoms then continue
+            // if (std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex))) continue;
+            // if (std::binary_search(atomB.excluded_atoms.begin(), atomB.excluded_atoms.end(), static_cast<int>(atomAIndex))) continue;
+            //
+            // bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex),static_cast<int>(atomBIndex));
+
+            bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+
+            bool excluded =
+                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
+
+            if (excluded && !is14) continue;
+
+            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+            const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+            // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
+            const double dx = x1 - x2;
+            const double dy = y1 - y2;
+            const double dz = z1 - z2;
+            double r2 = dx*dx + dy*dy + dz*dz;
+
+            if (r2 < 1e-12) continue;
+
+            int ti = static_cast<int>(topology.atom_list_[atomAIndex].atom_type_index) - 1;
+            int tj = static_cast<int>(topology.atom_list_[atomBIndex].atom_type_index) - 1;
+
+            std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
+            unsigned long nb = nbmatrix[ti][tj];
+            if (nb == 0) continue;
+
+            double Aij = 0, Bij = 0;
+            size_t p = static_cast<size_t>(nb - 1);
+
+            if (!is14) {
+                Aij = topology.get_lennard_jones_Acoefs_()[p];
+                Bij = topology.get_lennard_jones_Bcoefs_()[p];
+            } else {
+                Aij = topology.get_lennard_jones_14_Acoefs_()[p];
+                Bij = topology.get_lennard_jones_14_Bcoefs_()[p];
+            }
+
+            double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
+            LJ_energy += energy;
+        }
+    }
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
-    " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << cmap_energy << "\n";
+    " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << cmap_energy << "\n"
+    << "VDW: " << LJ_energy << "\n";
 
     calculate_forces();
     std::cout << "Calculated Forces! \n";

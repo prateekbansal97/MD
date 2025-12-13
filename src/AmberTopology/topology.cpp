@@ -178,14 +178,14 @@ int Topology::read_topology(std::ifstream& parmtop)
                 else if (header == "EXCLUDED_ATOMS_LIST") current_section = Section::Excluded_Atoms_List;
                 else if (header == "AMBER_ATOM_TYPE") current_section = Section::Amber_Atom_Type;
 
-                else if (header == "CHARMM_CMAP_COUNT") current_section = Section::Charmm_Cmap_Count;
-                else if (header == "CHARMM_CMAP_RESOLUTION") current_section = Section::Charmm_Cmap_Resolution;
-                else if (header == "CHARMM_CMAP_PARAMETER_01") current_section = Section::Charmm_Cmap_Parameter_01;
-                else if (header == "CHARMM_CMAP_PARAMETER_02") current_section = Section::Charmm_Cmap_Parameter_02;
-                else if (header == "CHARMM_CMAP_PARAMETER_03") current_section = Section::Charmm_Cmap_Parameter_03;
-                else if (header == "CHARMM_CMAP_PARAMETER_04") current_section = Section::Charmm_Cmap_Parameter_04;
-                else if (header == "CHARMM_CMAP_PARAMETER_05") current_section = Section::Charmm_Cmap_Parameter_05;
-                else if (header == "CHARMM_CMAP_INDEX") current_section = Section::Charmm_Cmap_Index;
+                else if ((header == "CHARMM_CMAP_COUNT") || (header == "CMAP_COUNT")) current_section = Section::Charmm_Cmap_Count;
+                else if ((header == "CHARMM_CMAP_RESOLUTION") || (header == "CMAP_RESOLUTION")) current_section = Section::Charmm_Cmap_Resolution;
+                else if ((header == "CHARMM_CMAP_PARAMETER_01") || (header == "CMAP_PARAMETER_01")) current_section = Section::Charmm_Cmap_Parameter_01;
+                else if ((header == "CHARMM_CMAP_PARAMETER_02") || (header == "CMAP_PARAMETER_02")) current_section = Section::Charmm_Cmap_Parameter_02;
+                else if ((header == "CHARMM_CMAP_PARAMETER_03") || (header == "CMAP_PARAMETER_03")) current_section = Section::Charmm_Cmap_Parameter_03;
+                else if ((header == "CHARMM_CMAP_PARAMETER_04") || (header == "CMAP_PARAMETER_04")) current_section = Section::Charmm_Cmap_Parameter_04;
+                else if ((header == "CHARMM_CMAP_PARAMETER_05") || (header == "CMAP_PARAMETER_05")) current_section = Section::Charmm_Cmap_Parameter_05;
+                else if ((header == "CHARMM_CMAP_INDEX") || (header == "CMAP_INDEX")) current_section = Section::Charmm_Cmap_Index;
 
                 else if (header == "SOLVENT_POINTERS") current_section = Section::Solvent_Pointers;
                 
@@ -284,7 +284,6 @@ int Topology::read_topology(std::ifstream& parmtop)
             else continue;
         }
     }
-    std::cout << "Total number of atoms in the file: " << atom_list_.size() << std::endl;
     process_charmm_urey_bradley_assign();
     process_charmm_urey_bradley_assign_ffparams();
     process_charmm_improper_assign();
@@ -298,6 +297,7 @@ int Topology::read_topology(std::ifstream& parmtop)
     create_excluded_atoms_list();
     create_Charmm_Cmap_Index_assign();
     create_Cmap_Coefficient_Matrix_bicubic_spline();
+    build_lj14_pairlist();
     create_molecules();
     // std::cout << "excluded_atoms_list_ length: " << excluded_atoms_list_.size() << std::endl;
     // print_atom_details(200);
@@ -1469,6 +1469,10 @@ void Topology::create_excluded_atoms_list()
             }
         }
         start += excluded;
+
+        std::sort(atom.excluded_atoms.begin(), atom.excluded_atoms.end());
+        atom.excluded_atoms.erase(std::unique(atom.excluded_atoms.begin(), atom.excluded_atoms.end()),
+                                      atom.excluded_atoms.end());
     }
 }
 
@@ -1800,4 +1804,28 @@ void Topology::create_Cmap_Coefficient_Matrix_bicubic_spline()
             }
         }
     }
+}
+
+static inline uint64_t pair_key(int a, int b) {
+    if (a > b) std::swap(a, b);
+    return (static_cast<uint64_t>(static_cast<uint32_t>(a)) << 32) | static_cast<uint32_t>(b);
+}
+
+
+void Topology::build_lj14_pairlist() {
+    lj14_pairs_.clear();
+    lj14_pairs_.reserve(CosineDihedral_list_.size());
+
+    for (const auto& dih : CosineDihedral_list_) {
+        if (dih.get_improper()) continue;      // optional: usually skip impropers for 1-4
+        if (dih.get_exclude_14()) continue;       // AMBER says "no 1-4 for this one"
+
+        const int a = dih.get_atomA_index();
+        const int d = dih.get_atomD_index();
+        lj14_pairs_.insert(pair_key(a, d));
+    }
+}
+
+bool Topology::is_14_pair(const int i, const int j) const {
+    return lj14_pairs_.find(pair_key(i, j)) != lj14_pairs_.end();
 }
