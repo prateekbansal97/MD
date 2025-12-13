@@ -9,10 +9,36 @@
 #include <cmath>
 #include <algorithm>
 
-void System::init() {
+void System::init()
+{
+    calculate_energies();
+    std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
+    " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << CMAP_energy << "\n"
+    << "VDW: " << LJ_energy << "\n";
+
+    calculate_forces();
+    std::cout << "Calculated Forces! \n";
+    std::cout << forces[0] << " " << forces[1] << " " << forces[2] << "\n";
+    std::cout << forces[3] << " " << forces[4] << " " << forces[5] << "\n";
+    std::cout << forces[6] << " " << forces[7] << " " << forces[8] << "\n";
+}
+
+void System::calculate_energies()
+{
+    calculate_bond_energy();
+    calculate_angle_energy();
+    calculate_dihedral_energy();
+    calculate_UB_energy();
+    calculate_improper_energy();
+    calculate_CMAP_energy();
+    calculate_LJ_energy();
+}
+
+void System::calculate_bond_energy()
+{
     const std::vector<double>& coordinates = topology.get_coordinates();
 
-    double bond_energies = 0;
+    bond_energies = 0;
     for (auto& bond: topology.get_harmonic_bonds())
     {
         int atomAIndex = bond.get_atomA_index();
@@ -26,7 +52,12 @@ void System::init() {
         bond.set_energy(energy);
         bond_energies += energy;
     }
-    double angle_energy = 0;
+}
+
+void System::calculate_angle_energy()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+    angle_energy = 0;
     for (auto& ang: topology.get_harmonic_angles())
     {
         int atomAIndex = ang.get_atomA_index();
@@ -42,8 +73,13 @@ void System::init() {
         ang.set_energy(energy);
         angle_energy += energy;
     }
+}
 
-    double dihedral_energy = 0;
+void System::calculate_dihedral_energy()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    dihedral_energy = 0;
     for (auto& dih: topology.get_cosine_dihedrals())
     {
         int atomAIndex = dih.get_atomA_index();
@@ -60,8 +96,13 @@ void System::init() {
         dih.set_energy(energy);
         dihedral_energy += energy;
     }
+}
 
-    double urey_bradley_energy = 0;
+void System::calculate_UB_energy()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    urey_bradley_energy = 0;
     for (auto& ub : topology.get_harmonic_UBs())
     {
         int a1 = ub.get_atomA_index();
@@ -73,14 +114,18 @@ void System::init() {
                 coordinates[3*a2], coordinates[3*a2+1], coordinates[3*a2+2]
         );
 
-         ub.set_distance_value(dist);
-         double energy = ub.return_energy(dist);
-         ub.set_energy(energy);
-         urey_bradley_energy += energy;
-//         std::cout << "UB Distance: " << dist << "\n";
+        ub.set_distance_value(dist);
+        double energy = ub.return_energy(dist);
+        ub.set_energy(energy);
+        urey_bradley_energy += energy;
     }
+}
 
-    double improper_energy = 0;
+void System::calculate_improper_energy()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    improper_energy = 0;
     for (auto& imp : topology.get_harmonic_impropers())
     {
         int a1 = imp.get_atomA_index();
@@ -96,16 +141,18 @@ void System::init() {
         );
 
         // Assuming you added a 'current_angle' member or setter to HarmonicImproper
-         imp.set_imp_dihedral(angle_m);
-         double energy = imp.return_energy(angle_m);
-         imp.set_energy(energy);
-         improper_energy += energy;
-
-        // Debug print (Optional)
-//         std::cout << "Improper Angle: " << angle_m*180/M_PI << "\n";
+        imp.set_imp_dihedral(angle_m);
+        double energy = imp.return_energy(angle_m);
+        imp.set_energy(energy);
+        improper_energy += energy;
     }
+}
 
-    double cmap_energy = 0.0;
+void System::calculate_CMAP_energy()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    CMAP_energy = 0.0;
     for (auto& cmap : topology.get_cmaps())
     {
         int a1 = cmap.get_atomA_index();
@@ -141,11 +188,15 @@ void System::init() {
 
         cmap.set_angles(phi, psi);
         cmap.set_energy(energy);
-        cmap_energy += energy;
-
+        CMAP_energy += energy;
     }
+}
 
-    double LJ_energy = 0;
+void System::calculate_LJ_energy()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    LJ_energy = 0;
     std::vector<Atom>& atom_list = topology.get_atoms();
     for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
     {
@@ -176,8 +227,8 @@ void System::init() {
             int ti = static_cast<int>(topology.atom_list_[atomAIndex].atom_type_index) - 1;
             int tj = static_cast<int>(topology.atom_list_[atomBIndex].atom_type_index) - 1;
 
-            std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
-            unsigned long nb = nbmatrix[ti][tj];
+            const std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
+            const unsigned long nb = nbmatrix[ti][tj];
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
@@ -195,15 +246,6 @@ void System::init() {
             LJ_energy += energy;
         }
     }
-    std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
-    " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << cmap_energy << "\n"
-    << "VDW: " << LJ_energy << "\n";
-
-    calculate_forces();
-    std::cout << "Calculated Forces! \n";
-    std::cout << forces[0] << " " << forces[1] << " " << forces[2] << "\n";
-    std::cout << forces[3] << " " << forces[4] << " " << forces[5] << "\n";
-    std::cout << forces[6] << " " << forces[7] << " " << forces[8] << "\n";
 }
 
 double System::distance(double x1, double y1, double z1, double x2, double y2, double z2)
@@ -797,7 +839,7 @@ void System::calculate_forces_LJ()
             int tj = static_cast<int>(topology.atom_list_[atomBIndex].atom_type_index) - 1;
 
             const std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
-            unsigned long nb = nbmatrix[ti][tj];
+            const unsigned long nb = nbmatrix[ti][tj];
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
@@ -826,4 +868,6 @@ void System::calculate_forces_LJ()
         }
     }
 }
+
+
 

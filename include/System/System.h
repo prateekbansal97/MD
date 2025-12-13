@@ -29,6 +29,17 @@ public:
         std::fill(forces.begin(), forces.end(), 0.0);
     }
 
+    void calculate_energies();
+    void calculate_bond_energy();
+    void calculate_angle_energy();
+    void calculate_dihedral_energy();
+    void calculate_improper_energy();
+    void calculate_UB_energy();
+    void calculate_CMAP_energy();
+    void calculate_LJ_energy();
+    void calculate_EE_energy();
+
+
     // This is the function your L-BFGS solver will call repeatedly
     void calculate_forces();
     void calculate_forces_bonds();
@@ -38,11 +49,18 @@ public:
     void calculate_forces_harmonicImpropers();
     void calculate_forces_cmap();
     void calculate_forces_LJ();
-
+    void calculate_forces_EE();
 
 private:
     Topology topology;
     std::vector<double> forces;
+    double bond_energies = 0.0;
+    double angle_energy = 0.0;
+    double dihedral_energy = 0.0;
+    double urey_bradley_energy = 0.0;
+    double improper_energy = 0.0;
+    double CMAP_energy = 0.0;
+    double LJ_energy = 0.0;
 };
 
 #endif //MD_SYSTEM_H
