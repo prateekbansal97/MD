@@ -154,12 +154,6 @@ void System::init() {
         {
             Atom& atomB = atom_list[atomBIndex];
 
-            // if atomBindex is in atomAindex.excluded_atoms then continue
-            // if (std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex))) continue;
-            // if (std::binary_search(atomB.excluded_atoms.begin(), atomB.excluded_atoms.end(), static_cast<int>(atomAIndex))) continue;
-            //
-            // bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex),static_cast<int>(atomBIndex));
-
             bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
             bool excluded =
@@ -295,6 +289,7 @@ void System::calculate_forces()
     calculate_forces_cosinedihedrals();
     calculate_forces_harmonicImpropers();
     calculate_forces_cmap();
+    calculate_forces_LJ();
 }
 
 void System::calculate_forces_bonds() {
@@ -329,7 +324,7 @@ void System::calculate_forces_bonds() {
 }
 
 void System::calculate_forces_UBbonds() {
-    clear_forces(); // Reset gradients to 0
+    // clear_forces(); // Reset gradients to 0
     const std::vector<double>& coordinates = topology.get_coordinates();
 
     for (auto& bond: topology.get_harmonic_UBs())
@@ -348,7 +343,7 @@ void System::calculate_forces_UBbonds() {
         const double k = bond.get_UB_force_constant();
         const double r0 = bond.get_UB_equil_value();
 
-        if (r < 1e-12) return;
+        if (r < 1e-12) continue;
 
         const double famag = -2 * k * (r - r0);
         const double fax = famag*dx1/r;
@@ -356,7 +351,7 @@ void System::calculate_forces_UBbonds() {
         const double faz = famag*dz1/r;
 
         forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
-        forces[3*atomBIndex] -= -fax; forces[3*atomBIndex+1] -= -fay; forces[3*atomBIndex+2] -= -faz;
+        forces[3*atomBIndex] += -fax; forces[3*atomBIndex+1] += -fay; forces[3*atomBIndex+2] += -faz;
     }
 }
 
@@ -626,7 +621,6 @@ void System::calculate_forces_cmap()
     const std::vector<double>& coordinates = topology.get_coordinates();
     for (auto& cmap : topology.get_cmaps()) {
 
-
         int atomAIndex = cmap.get_atomA_index();
         int atomBIndex = cmap.get_atomB_index();
         int atomCIndex = cmap.get_atomC_index();
@@ -768,3 +762,68 @@ void System::calculate_forces_cmap()
         forces[3*atomEIndex] += fex_psi; forces[3*atomEIndex+1] += fey_psi; forces[3*atomEIndex+2] += fez_psi;
     }
 }
+
+void System::calculate_forces_LJ()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+    std::vector<Atom>& atom_list = topology.get_atoms();
+    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+    {
+        Atom& atomA = atom_list[atomAIndex];
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        {
+            Atom& atomB = atom_list[atomBIndex];
+
+            bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+
+            bool excluded =
+                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
+
+            if (excluded && !is14) continue;
+
+            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+            const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+            // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
+            const double dx = x1 - x2;
+            const double dy = y1 - y2;
+            const double dz = z1 - z2;
+            double r2 = dx*dx + dy*dy + dz*dz;
+
+            if (r2 < 1e-12) continue;
+
+            int ti = static_cast<int>(topology.atom_list_[atomAIndex].atom_type_index) - 1;
+            int tj = static_cast<int>(topology.atom_list_[atomBIndex].atom_type_index) - 1;
+
+            const std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
+            unsigned long nb = nbmatrix[ti][tj];
+            if (nb == 0) continue;
+
+            double Aij = 0, Bij = 0;
+            auto p = static_cast<size_t>(nb - 1);
+
+            if (!is14) {
+                Aij = topology.get_lennard_jones_Acoefs_()[p];
+                Bij = topology.get_lennard_jones_Bcoefs_()[p];
+            } else {
+                Aij = topology.get_lennard_jones_14_Acoefs_()[p];
+                Bij = topology.get_lennard_jones_14_Bcoefs_()[p];
+            }
+
+            double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
+            const double fax = gradient * dx;
+            const double fay = gradient * dy;
+            const double faz = gradient * dz;
+
+            const double fbx = -fax;
+            const double fby = -fay;
+            const double fbz = -faz;
+
+            forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
+            forces[3*atomBIndex] += fbx; forces[3*atomBIndex+1] += fby; forces[3*atomBIndex+2] += fbz;
+
+        }
+    }
+}
+

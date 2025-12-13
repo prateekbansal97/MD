@@ -37,6 +37,8 @@ public:
     void calculate_forces_cosinedihedrals();
     void calculate_forces_harmonicImpropers();
     void calculate_forces_cmap();
+    void calculate_forces_LJ();
+
 
 private:
     Topology topology;
