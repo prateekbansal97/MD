@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "atom.h"
 #include "io.h"
@@ -182,6 +183,7 @@ public:
 
     void build_lj14_pairlist();
     bool is_14_pair(int i, int j) const;
+    double get_scee_scale_for_pair(const int i, const int j) const;
 
 
     int read_coords(std::ifstream& coordfile);
@@ -259,6 +261,7 @@ private:
 
     std::vector<double> coordinates;
     std::unordered_set<uint64_t> lj14_pairs_;
+    std::unordered_map<uint64_t, double> scee14_scale_map_;
 
 
     unsigned long int processed_atoms_index = 0;

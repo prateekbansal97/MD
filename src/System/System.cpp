@@ -11,12 +11,14 @@
 #include <cmath>
 #include <algorithm>
 
+#include "AmberTopology/CoulombicEE.h"
+
 void System::init()
 {
     calculate_energies();
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
     " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << CMAP_energy << "\n"
-    << "VDW: " << LJ_energy << "\n";
+    << "VDW: " << LJ_energy << "\n" << "EE: " << EE_energy << "\n";
 
     calculate_forces();
     std::cout << "Calculated Forces! \n";
@@ -34,6 +36,7 @@ void System::calculate_energies()
     calculate_improper_energy();
     calculate_CMAP_energy();
     calculate_LJ_energy();
+    calculate_EE_energy();
 }
 
 void System::calculate_bond_energy()
@@ -250,9 +253,51 @@ void System::calculate_LJ_energy()
     }
 }
 
+void System::calculate_EE_energy()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
 
+    EE_energy = 0;
+    std::vector<Atom>& atom_list = topology.get_atoms();
+    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+    {
+        Atom& atomA = atom_list[atomAIndex];
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        {
+            Atom& atomB = atom_list[atomBIndex];
+            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+
+            const bool excluded =
+                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
+
+            if (excluded && !is14) continue;
+
+            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+            const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+
+
+            // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
+            const double dx = x1 - x2;
+            const double dy = y1 - y2;
+            const double dz = z1 - z2;
+            double r2 = dx*dx + dy*dy + dz*dz;
+            double r = std::sqrt(r2);
+            if (r2 < 1e-12) continue;
+
+            double scale = 1.0;
+            if (is14) scale = topology.get_scee_scale_for_pair(atomAIndex, atomBIndex);
+
+            double energy = (1/scale) * CoulombicEE::CalculateEnergy(r, atomA.partial_charge, atomB.partial_charge, 1);
+
+            EE_energy += energy;
+        }
+    }
+}
 
 void System::calculate_forces()
+
 {
     clear_forces();
     calculate_forces_bonds();
@@ -262,6 +307,7 @@ void System::calculate_forces()
     calculate_forces_harmonicImpropers();
     calculate_forces_cmap();
     calculate_forces_LJ();
+    calculate_forces_EE();
 }
 
 void System::calculate_forces_bonds() {
@@ -784,6 +830,55 @@ void System::calculate_forces_LJ()
             }
 
             double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
+            const double fax = gradient * dx;
+            const double fay = gradient * dy;
+            const double faz = gradient * dz;
+
+            const double fbx = -fax;
+            const double fby = -fay;
+            const double fbz = -faz;
+
+            forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
+            forces[3*atomBIndex] += fbx; forces[3*atomBIndex+1] += fby; forces[3*atomBIndex+2] += fbz;
+        }
+    }
+}
+
+void System::calculate_forces_EE()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+    std::vector<Atom>& atom_list = topology.get_atoms();
+    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+    {
+        Atom& atomA = atom_list[atomAIndex];
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        {
+            Atom& atomB = atom_list[atomBIndex];
+
+            bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+
+            bool excluded =
+                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
+
+            if (excluded && !is14) continue;
+
+            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+            const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+            // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
+            const double dx = x1 - x2;
+            const double dy = y1 - y2;
+            const double dz = z1 - z2;
+            double r2 = dx*dx + dy*dy + dz*dz;
+            double r = std::sqrt(r2);
+
+            if (r2 < 1e-12) continue;
+
+            double scale = 1.0;
+            if (is14) scale = topology.get_scee_scale_for_pair(atomAIndex, atomBIndex);
+
+            double gradient = (1/scale) * CoulombicEE::CalculateGradient(r, atomA.partial_charge, atomB.partial_charge, 1);
             const double fax = gradient * dx;
             const double fay = gradient * dy;
             const double faz = gradient * dz;

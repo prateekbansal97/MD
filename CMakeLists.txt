@@ -40,6 +40,8 @@ add_library(amber_topology
         src/AmberTopology/molecule.cpp
         src/AmberTopology/LennardJones.cpp
         include/AmberTopology/LennardJones.h
+        include/AmberTopology/CoulombicEE.h
+        src/AmberTopology/CoulombicEE.cpp
 )
 
 target_include_directories(amber_topology PUBLIC ${CMAKE_SOURCE_DIR}/include)

@@ -1291,6 +1291,7 @@ void Topology::create_dihedrals_including_H()
         double periodicity = dihedral_periodicities_[force_type];
 
         CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, indexA, indexB, indexC, indexD, true, improper, exclude_14);
+        Dihedral.set_type(force_type);
         CosineDihedral_list_.push_back(Dihedral);
     }
 }
@@ -1388,6 +1389,7 @@ void Topology::create_dihedrals_without_H()
         double periodicity = dihedral_periodicities_[force_type];
 
         CosineDihedral Dihedral = CosineDihedral(force_constant, phase, periodicity, indexA, indexB, indexC, indexD, false, improper, exclude_14);
+        Dihedral.set_type(force_type);
         CosineDihedral_list_.push_back(Dihedral);
     }
 }
@@ -1816,6 +1818,9 @@ void Topology::build_lj14_pairlist() {
     lj14_pairs_.clear();
     lj14_pairs_.reserve(CosineDihedral_list_.size());
 
+    scee14_scale_map_.clear();
+    scee14_scale_map_.reserve(CosineDihedral_list_.size());
+
     for (const auto& dih : CosineDihedral_list_) {
         if (dih.get_improper()) continue;      // optional: usually skip impropers for 1-4
         if (dih.get_exclude_14()) continue;       // AMBER says "no 1-4 for this one"
@@ -1823,9 +1828,36 @@ void Topology::build_lj14_pairlist() {
         const int a = dih.get_atomA_index();
         const int d = dih.get_atomD_index();
         lj14_pairs_.insert(pair_key(a, d));
+
+        const int t = dih.get_type();   // <-- rename to whatever you actually have
+        double scale = 1.0;
+
+        if (!scee_scale_factors_.empty() && t >= 0 && static_cast<size_t>(t) < scee_scale_factors_.size()) {
+            scale = scee_scale_factors_[static_cast<size_t>(t)];
+        }
+
+        const uint64_t key = pair_key(a, d);
+        auto it = scee14_scale_map_.find(key);
+        if (it == scee14_scale_map_.end()) {
+            scee14_scale_map_.emplace(key, scale);
+        } else
+        {
+            // If multiple dihedrals generate the same 1-4 pair:
+            // keep it only if consistent; otherwise prefer the *smaller* scaling (more conservative)
+            const double prev = it->second;
+            if (std::abs(prev - scale) > 1e-12) {
+                it->second = std::max(prev, scale);
+            }
+        }
     }
 }
 
 bool Topology::is_14_pair(const int i, const int j) const {
     return lj14_pairs_.find(pair_key(i, j)) != lj14_pairs_.end();
+}
+
+double Topology::get_scee_scale_for_pair(const int i, const int j) const {
+    const auto it = scee14_scale_map_.find(pair_key(i, j));
+    if (it == scee14_scale_map_.end()) return 1.0;   // default: unscaled
+    return it->second;
 }

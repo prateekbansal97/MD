@@ -15,11 +15,6 @@ public:
 
 
     void init();
-    // double distance(double x1, double y1, double z1, double x2, double y2, double z2);
-    // double angle(double x1, double y1, double z1, double x2, double y2, double z2,  double x3, double y3, double z3);
-    // double dihedral(double x1, double y1, double z1, double x2, double y2, double z2,
-    //                 double x3, double y3, double z3, double x4, double y4, double z4);
-
     void init_forces() {
         forces.assign(3 * topology.get_nAtoms(), 0.0);
     }
@@ -61,6 +56,7 @@ private:
     double improper_energy = 0.0;
     double CMAP_energy = 0.0;
     double LJ_energy = 0.0;
+    double EE_energy = 0.0;
 };
 
 #endif //MD_SYSTEM_H
