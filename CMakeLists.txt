@@ -48,6 +48,8 @@ target_compile_features(amber_topology PUBLIC cxx_std_17)
 # ---- System library (your integrator/forces orchestration) ----
 add_library(md_system
         src/System/system.cpp
+        src/System/metrics.cpp
+        include/System/Metrics.h
 )
 target_include_directories(md_system PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(md_system PUBLIC amber_topology)

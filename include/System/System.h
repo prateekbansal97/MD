@@ -15,10 +15,10 @@ public:
 
 
     void init();
-    double distance(double x1, double y1, double z1, double x2, double y2, double z2);
-    double angle(double x1, double y1, double z1, double x2, double y2, double z2,  double x3, double y3, double z3);
-    double dihedral(double x1, double y1, double z1, double x2, double y2, double z2,
-                    double x3, double y3, double z3, double x4, double y4, double z4);
+    // double distance(double x1, double y1, double z1, double x2, double y2, double z2);
+    // double angle(double x1, double y1, double z1, double x2, double y2, double z2,  double x3, double y3, double z3);
+    // double dihedral(double x1, double y1, double z1, double x2, double y2, double z2,
+    //                 double x3, double y3, double z3, double x4, double y4, double z4);
 
     void init_forces() {
         forces.assign(3 * topology.get_nAtoms(), 0.0);
