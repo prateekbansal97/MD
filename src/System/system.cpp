@@ -139,8 +139,7 @@ void System::init() {
         cmap.set_angles(phi, psi);
         cmap.set_energy(energy);
         cmap_energy += energy;
-        // Debug
-//         std::cout << "CMAP Angles: " << phi*180/M_PI << ", " << psi*180/M_PI << "\n";
+
     }
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
     " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << cmap_energy << "\n";
