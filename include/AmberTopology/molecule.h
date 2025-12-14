@@ -8,24 +8,23 @@
 class Molecule 
 {
 public:
-    Molecule(std::vector<int> atom_indices):
+    explicit Molecule(const std::vector<int>& atom_indices):
     atom_indices(atom_indices),
-    molecule_name(""),
     nResidues(0) 
     {
         nAtoms = atom_indices.size();
     }
 
-    void set_molecule_name(std::string& name) {this->molecule_name = name;}
+    void set_molecule_name(const std::string& name) {this->molecule_name = name;}
     std::string get_molecule_name() {return molecule_name;}
 
-    void add_atom_name(std::string& name) {atom_names.push_back(name);}
-    void add_residue_name(std::string& name) {residue_names.push_back(name);}
+    void add_atom_name(const std::string& name) {atom_names.push_back(name);}
+    void add_residue_name(const std::string& name) {residue_names.push_back(name);}
 
     
     std::vector<int> get_atom_indices() {return atom_indices;}
 
-    bool check_if_residue_exists(std::string& name);
+    bool check_if_residue_exists(const std::string& name);
     void print_residue_names();
 
 private:

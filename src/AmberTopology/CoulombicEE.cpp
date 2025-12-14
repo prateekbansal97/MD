@@ -6,13 +6,13 @@
 
 #include "../../include/AmberTopology/CoulombicEE.h"
 
-double CoulombicEE::CalculateEnergy(double r, double chargeA, double chargeB, double epsilon)
+double CoulombicEE::CalculateEnergy(const double r, const double chargeA, const double chargeB, const double epsilon)
 {
     return ((chargeA * chargeB) / (r*epsilon)) * 18.2206899283247L * 18.2206899283247L;
 }
 
-double CoulombicEE::CalculateGradient(double r, double chargeA, double chargeB, double epsilon)
+double CoulombicEE::CalculateGradient(const double r, const double chargeA, const double chargeB, const double epsilon)
 {
-    double r3 = r * r * r;
+    const double r3 = r * r * r;
     return -((chargeA * chargeB) / (r3*epsilon)) * 18.2206899283247L * 18.2206899283247L;
 }

@@ -446,11 +446,10 @@ std::map<std::string, std::string> element_map = {{"H19A", "H"},
 {"H16Y", "H"},
 {"CY", "C"}};
 
-std::string get_element_from_name(std::string name)
+std::string get_element_from_name(const std::string& name)
 {
     std::string element;
-    auto it = element_map.find(name);
-    if (it != element_map.end()) {
+    if (const auto it = element_map.find(name); it != element_map.end()) {
         element = it->second;
     } else {
         element = name.substr(0, 1); // Default to first character

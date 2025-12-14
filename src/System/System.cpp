@@ -46,14 +46,14 @@ void System::calculate_bond_energy()
     bond_energies = 0;
     for (auto& bond: topology.get_harmonic_bonds())
     {
-        int atomAIndex = bond.get_atomA_index();
-        int atomBIndex = bond.get_atomB_index();
+        const int atomAIndex = bond.get_atomA_index();
+        const int atomBIndex = bond.get_atomB_index();
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
-        double dist = Metrics::distance(x1, y1, z1, x2, y2, z2);
+        const double dist = Metrics::distance(x1, y1, z1, x2, y2, z2);
         bond.set_distance(dist);
 
-        double energy = bond.return_energy(dist);
+        const double energy = bond.return_energy(dist);
         bond.set_energy(energy);
         bond_energies += energy;
     }
@@ -65,16 +65,16 @@ void System::calculate_angle_energy()
     angle_energy = 0;
     for (auto& ang: topology.get_harmonic_angles())
     {
-        int atomAIndex = ang.get_atomA_index();
-        int atomBIndex = ang.get_atomB_index();
-        int atomCIndex = ang.get_atomC_index();
+        const int atomAIndex = ang.get_atomA_index();
+        const int atomBIndex = ang.get_atomB_index();
+        const int atomCIndex = ang.get_atomC_index();
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
         const double x3 = coordinates[3*atomCIndex], y3 = coordinates[3*atomCIndex + 1], z3 = coordinates[3*atomCIndex + 2];
-        double angle_m = Metrics::angle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
+        const double angle_m = Metrics::angle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
         ang.set_angle(angle_m);
 
-        double energy = ang.return_energy(angle_m);
+        const double energy = ang.return_energy(angle_m);
         ang.set_energy(energy);
         angle_energy += energy;
     }
@@ -87,17 +87,17 @@ void System::calculate_dihedral_energy()
     dihedral_energy = 0;
     for (auto& dih: topology.get_cosine_dihedrals())
     {
-        int atomAIndex = dih.get_atomA_index();
-        int atomBIndex = dih.get_atomB_index();
-        int atomCIndex = dih.get_atomC_index();
-        int atomDIndex = dih.get_atomD_index();
+        const int atomAIndex = dih.get_atomA_index();
+        const int atomBIndex = dih.get_atomB_index();
+        const int atomCIndex = dih.get_atomC_index();
+        const int atomDIndex = dih.get_atomD_index();
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
         const double x3 = coordinates[3*atomCIndex], y3 = coordinates[3*atomCIndex + 1], z3 = coordinates[3*atomCIndex + 2];
         const double x4 = coordinates[3*atomDIndex], y4 = coordinates[3*atomDIndex + 1], z4 = coordinates[3*atomDIndex + 2];
-        double angle_m = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+        const double angle_m = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
         dih.set_cosine_dihedral(angle_m);
-        double energy = dih.return_energy(angle_m);
+        const double energy = dih.return_energy(angle_m);
         dih.set_energy(energy);
         dihedral_energy += energy;
     }
@@ -110,17 +110,17 @@ void System::calculate_UB_energy()
     urey_bradley_energy = 0;
     for (auto& ub : topology.get_harmonic_UBs())
     {
-        int a1 = ub.get_atomA_index();
-        int a2 = ub.get_atomB_index();
+        const int a1 = ub.get_atomA_index();
+        const int a2 = ub.get_atomB_index();
 
 
-        double dist = Metrics::distance(
+        const double dist = Metrics::distance(
                 coordinates[3*a1], coordinates[3*a1+1], coordinates[3*a1+2],
                 coordinates[3*a2], coordinates[3*a2+1], coordinates[3*a2+2]
         );
 
         ub.set_distance_value(dist);
-        double energy = ub.return_energy(dist);
+        const double energy = ub.return_energy(dist);
         ub.set_energy(energy);
         urey_bradley_energy += energy;
     }
@@ -133,12 +133,12 @@ void System::calculate_improper_energy()
     improper_energy = 0;
     for (auto& imp : topology.get_harmonic_impropers())
     {
-        int a1 = imp.get_atomA_index();
-        int a2 = imp.get_atomB_index();
-        int a3 = imp.get_atomC_index();
-        int a4 = imp.get_atomD_index();
+        const int a1 = imp.get_atomA_index();
+        const int a2 = imp.get_atomB_index();
+        const int a3 = imp.get_atomC_index();
+        const int a4 = imp.get_atomD_index();
 
-        double angle_m = Metrics::dihedral(
+        const double angle_m = Metrics::dihedral(
                 coordinates[3*a1], coordinates[3*a1+1], coordinates[3*a1+2],
                 coordinates[3*a2], coordinates[3*a2+1], coordinates[3*a2+2],
                 coordinates[3*a3], coordinates[3*a3+1], coordinates[3*a3+2],
@@ -147,7 +147,7 @@ void System::calculate_improper_energy()
 
         // Assuming you added a 'current_angle' member or setter to HarmonicImproper
         imp.set_imp_dihedral(angle_m);
-        double energy = imp.return_energy(angle_m);
+        const double energy = imp.return_energy(angle_m);
         imp.set_energy(energy);
         improper_energy += energy;
     }
@@ -160,14 +160,14 @@ void System::calculate_CMAP_energy()
     CMAP_energy = 0.0;
     for (auto& cmap : topology.get_cmaps())
     {
-        int a1 = cmap.get_atomA_index();
-        int a2 = cmap.get_atomB_index();
-        int a3 = cmap.get_atomC_index();
-        int a4 = cmap.get_atomD_index();
-        int a5 = cmap.get_atomE_index();
+        const int a1 = cmap.get_atomA_index();
+        const int a2 = cmap.get_atomB_index();
+        const int a3 = cmap.get_atomC_index();
+        const int a4 = cmap.get_atomD_index();
+        const int a5 = cmap.get_atomE_index();
 
         // Calculate First Torsion (A-B-C-D)
-        double phi = Metrics::dihedral(
+        const double phi = Metrics::dihedral(
                 coordinates[3*a1], coordinates[3*a1+1], coordinates[3*a1+2],
                 coordinates[3*a2], coordinates[3*a2+1], coordinates[3*a2+2],
                 coordinates[3*a3], coordinates[3*a3+1], coordinates[3*a3+2],
@@ -175,21 +175,21 @@ void System::calculate_CMAP_energy()
         );
 
         // Calculate Second Torsion (B-C-D-E)
-        double psi = Metrics::dihedral(
+        const double psi = Metrics::dihedral(
                 coordinates[3*a2], coordinates[3*a2+1], coordinates[3*a2+2],
                 coordinates[3*a3], coordinates[3*a3+1], coordinates[3*a3+2],
                 coordinates[3*a4], coordinates[3*a4+1], coordinates[3*a4+2],
                 coordinates[3*a5], coordinates[3*a5+1], coordinates[3*a5+2]
         );
 
-        int set_index = cmap.get_parameter_set();
+        const int set_index = cmap.get_parameter_set();
         const std::vector<int>& resolutions = topology.get_charmm_cmap_resolutions();
-        int resolution = resolutions[set_index - 1];
+        const int resolution = resolutions[set_index - 1];
         const std::vector<double>& full_grid = topology.get_cmap_grid_data(set_index);
 
 
         // Pass the OFFSET and the FULL GRID to your return_energy function
-        double energy = cmap.return_energy_bicubic(phi, psi, resolution, topology.get_Cmap_Coefficient_Matrix_bicubic_spline(), full_grid);
+        const double energy = cmap.return_energy_bicubic(phi, psi, resolution, topology.get_Cmap_Coefficient_Matrix_bicubic_spline(), full_grid);
 
         cmap.set_angles(phi, psi);
         cmap.set_energy(energy);
@@ -208,12 +208,12 @@ void System::calculate_LJ_energy()
         Atom& atomA = atom_list[atomAIndex];
         for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
         {
-            Atom& atomB = atom_list[atomBIndex];
+            // Atom& atomB = atom_list[atomBIndex];
 
-            bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
-            bool excluded =
-                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+            const bool excluded =
+                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
             // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
 
             if (excluded && !is14) continue;
@@ -225,19 +225,19 @@ void System::calculate_LJ_energy()
             const double dx = x1 - x2;
             const double dy = y1 - y2;
             const double dz = z1 - z2;
-            double r2 = dx*dx + dy*dy + dz*dz;
+            const double r2 = dx*dx + dy*dy + dz*dz;
 
             if (r2 < 1e-12) continue;
 
-            int ti = static_cast<int>(topology.atom_list_[atomAIndex].atom_type_index) - 1;
-            int tj = static_cast<int>(topology.atom_list_[atomBIndex].atom_type_index) - 1;
+            const int ti = static_cast<int>(topology.atom_list_[atomAIndex].get_atom_type_index()) - 1;
+            const int tj = static_cast<int>(topology.atom_list_[atomBIndex].get_atom_type_index()) - 1;
 
             const std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
             const unsigned long nb = nbmatrix[ti][tj];
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
-            size_t p = static_cast<size_t>(nb - 1);
+            const auto p = static_cast<size_t>(nb - 1);
 
             if (!is14) {
                 Aij = topology.get_lennard_jones_Acoefs_()[p];
@@ -247,7 +247,7 @@ void System::calculate_LJ_energy()
                 Bij = topology.get_lennard_jones_14_Bcoefs_()[p];
             }
 
-            double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
+            const double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
             LJ_energy += energy;
         }
     }
@@ -268,7 +268,7 @@ void System::calculate_EE_energy()
             const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
             const bool excluded =
-                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
             // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
 
             if (excluded && !is14) continue;
@@ -282,14 +282,14 @@ void System::calculate_EE_energy()
             const double dx = x1 - x2;
             const double dy = y1 - y2;
             const double dz = z1 - z2;
-            double r2 = dx*dx + dy*dy + dz*dz;
-            double r = std::sqrt(r2);
+            const double r2 = dx*dx + dy*dy + dz*dz;
+            const double r = std::sqrt(r2);
             if (r2 < 1e-12) continue;
 
             double scale = 1.0;
-            if (is14) scale = topology.get_scee_scale_for_pair(atomAIndex, atomBIndex);
+            if (is14) scale = topology.get_scee_scale_for_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
-            double energy = (1/scale) * CoulombicEE::CalculateEnergy(r, atomA.partial_charge, atomB.partial_charge, 1);
+            const double energy = (1/scale) * CoulombicEE::CalculateEnergy(r, atomA.get_partial_charge(), atomB.get_partial_charge(), 1);
 
             EE_energy += energy;
         }
@@ -315,8 +315,8 @@ void System::calculate_forces_bonds() {
 
     for (auto& bond: topology.get_harmonic_bonds())
     {
-        int atomAIndex = bond.get_atomA_index();
-        int atomBIndex = bond.get_atomB_index();
+        const int atomAIndex = bond.get_atomA_index();
+        const int atomBIndex = bond.get_atomB_index();
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
@@ -347,8 +347,8 @@ void System::calculate_forces_UBbonds() {
 
     for (auto& bond: topology.get_harmonic_UBs())
     {
-        int atomAIndex = bond.get_atomA_index();
-        int atomBIndex = bond.get_atomB_index();
+        const int atomAIndex = bond.get_atomA_index();
+        const int atomBIndex = bond.get_atomB_index();
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
@@ -379,9 +379,9 @@ void System::calculate_forces_angles() {
 
     for (auto& ang: topology.get_harmonic_angles())
     {
-        int atomAIndex = ang.get_atomA_index();
-        int atomBIndex = ang.get_atomB_index();
-        int atomCIndex = ang.get_atomC_index();
+        const int atomAIndex = ang.get_atomA_index();
+        const int atomBIndex = ang.get_atomB_index();
+        const int atomCIndex = ang.get_atomC_index();
 
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
@@ -437,7 +437,7 @@ void System::calculate_forces_angles() {
 
         const double k = ang.get_Angle_force_constant();
         const double theta0 = ang.get_Angle_equil_angle();
-        double theta = Metrics::angle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
+        const double theta = Metrics::angle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
 
         const double fmag = -2 * k * (theta - theta0);
         const double fax = fmag/mod_ab*pa_x;
@@ -459,10 +459,10 @@ void System::calculate_forces_cosinedihedrals() {
     const std::vector<double>& coordinates = topology.get_coordinates();
 
     for (auto& dih: topology.get_cosine_dihedrals()) {
-        int atomAIndex = dih.get_atomA_index();
-        int atomBIndex = dih.get_atomB_index();
-        int atomCIndex = dih.get_atomC_index();
-        int atomDIndex = dih.get_atomD_index();
+        const int atomAIndex = dih.get_atomA_index();
+        const int atomBIndex = dih.get_atomB_index();
+        const int atomCIndex = dih.get_atomC_index();
+        const int atomDIndex = dih.get_atomD_index();
 
         const double x1 = coordinates[3 * atomAIndex], y1 = coordinates[3 * atomAIndex + 1], z1 = coordinates[
                 3 * atomAIndex + 2];
@@ -492,7 +492,7 @@ void System::calculate_forces_cosinedihedrals() {
         const double k = dih.get_Dihedral_force_constant();
         const double n = dih.get_Dihedral_Periodicity();
         const double delta = dih.get_Dihedral_phase();
-        double phi = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+        const double phi = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
         const double tau = k * n * std::sin(n * phi - delta);
 
         // m = ba x cb
@@ -547,10 +547,10 @@ void System::calculate_forces_harmonicImpropers() {
     const std::vector<double>& coordinates = topology.get_coordinates();
 
     for (auto& dih: topology.get_harmonic_impropers()) {
-        int atomAIndex = dih.get_atomA_index();
-        int atomBIndex = dih.get_atomB_index();
-        int atomCIndex = dih.get_atomC_index();
-        int atomDIndex = dih.get_atomD_index();
+        const int atomAIndex = dih.get_atomA_index();
+        const int atomBIndex = dih.get_atomB_index();
+        const int atomCIndex = dih.get_atomC_index();
+        const int atomDIndex = dih.get_atomD_index();
 
         const double x1 = coordinates[3 * atomAIndex], y1 = coordinates[3 * atomAIndex + 1], z1 = coordinates[
                 3 * atomAIndex + 2];
@@ -579,7 +579,7 @@ void System::calculate_forces_harmonicImpropers() {
 
         const double k = dih.get_IMP_force_constant();
         const double psi0 = dih.get_IMP_phase_value();
-        double psi = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+        const double psi = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
 
         double delta = psi - psi0;
         while (delta <= -M_PI) delta += 2.0 * M_PI;
@@ -639,11 +639,11 @@ void System::calculate_forces_cmap()
     const std::vector<double>& coordinates = topology.get_coordinates();
     for (auto& cmap : topology.get_cmaps()) {
 
-        int atomAIndex = cmap.get_atomA_index();
-        int atomBIndex = cmap.get_atomB_index();
-        int atomCIndex = cmap.get_atomC_index();
-        int atomDIndex = cmap.get_atomD_index();
-        int atomEIndex = cmap.get_atomE_index();
+        const int atomAIndex = cmap.get_atomA_index();
+        const int atomBIndex = cmap.get_atomB_index();
+        const int atomCIndex = cmap.get_atomC_index();
+        const int atomDIndex = cmap.get_atomD_index();
+        const int atomEIndex = cmap.get_atomE_index();
 
         const double x1 = coordinates[3 * atomAIndex], y1 = coordinates[3 * atomAIndex + 1], z1 = coordinates[
                 3 * atomAIndex + 2];
@@ -657,18 +657,18 @@ void System::calculate_forces_cmap()
                 3 * atomEIndex + 2];
 
 
-        double phi = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
-        double psi = Metrics::dihedral(x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5);
+        const double phi = Metrics::dihedral(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+        const double psi = Metrics::dihedral(x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5);
 
         // Calculate slopes (gradients)
-        int set_index = cmap.get_parameter_set();
+        const int set_index = cmap.get_parameter_set();
         const std::vector<int>& resolutions = topology.get_charmm_cmap_resolutions();
-        int resolution = resolutions[set_index - 1];
+        const int resolution = resolutions[set_index - 1];
         const std::vector<double>& full_grid = topology.get_cmap_grid_data(set_index);
 
-        std::pair<double, double> grads = cmap.return_gradient_bicubic(phi, psi, resolution, topology.get_Cmap_Coefficient_Matrix_bicubic_spline(), full_grid);
-        double dEdPhi = grads.first;
-        double dEdPsi = grads.second;
+        auto [fst, snd] = cmap.return_gradient_bicubic(phi, psi, resolution, topology.get_Cmap_Coefficient_Matrix_bicubic_spline(), full_grid);
+        const double dEdPhi = fst;
+        const double dEdPsi = snd;
 
 
 
@@ -790,12 +790,12 @@ void System::calculate_forces_LJ()
         Atom& atomA = atom_list[atomAIndex];
         for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
         {
-            Atom& atomB = atom_list[atomBIndex];
+            // Atom& atomB = atom_list[atomBIndex];
 
-            bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
-            bool excluded =
-                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+            const bool excluded =
+                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
             // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
 
             if (excluded && !is14) continue;
@@ -807,19 +807,19 @@ void System::calculate_forces_LJ()
             const double dx = x1 - x2;
             const double dy = y1 - y2;
             const double dz = z1 - z2;
-            double r2 = dx*dx + dy*dy + dz*dz;
+            const double r2 = dx*dx + dy*dy + dz*dz;
 
             if (r2 < 1e-12) continue;
 
-            int ti = static_cast<int>(topology.atom_list_[atomAIndex].atom_type_index) - 1;
-            int tj = static_cast<int>(topology.atom_list_[atomBIndex].atom_type_index) - 1;
+            const int ti = static_cast<int>(topology.atom_list_[atomAIndex].get_atom_type_index()) - 1;
+            const int tj = static_cast<int>(topology.atom_list_[atomBIndex].get_atom_type_index()) - 1;
 
             const std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
             const unsigned long nb = nbmatrix[ti][tj];
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
-            auto p = static_cast<size_t>(nb - 1);
+            const auto p = static_cast<size_t>(nb - 1);
 
             if (!is14) {
                 Aij = topology.get_lennard_jones_Acoefs_()[p];
@@ -829,7 +829,7 @@ void System::calculate_forces_LJ()
                 Bij = topology.get_lennard_jones_14_Bcoefs_()[p];
             }
 
-            double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
+            const double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
             const double fax = gradient * dx;
             const double fay = gradient * dy;
             const double faz = gradient * dz;
@@ -855,10 +855,10 @@ void System::calculate_forces_EE()
         {
             Atom& atomB = atom_list[atomBIndex];
 
-            bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
-            bool excluded =
-                std::binary_search(atomA.excluded_atoms.begin(), atomA.excluded_atoms.end(), static_cast<int>(atomBIndex));
+            const bool excluded =
+                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
             // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
 
             if (excluded && !is14) continue;
@@ -870,15 +870,15 @@ void System::calculate_forces_EE()
             const double dx = x1 - x2;
             const double dy = y1 - y2;
             const double dz = z1 - z2;
-            double r2 = dx*dx + dy*dy + dz*dz;
-            double r = std::sqrt(r2);
+            const double r2 = dx*dx + dy*dy + dz*dz;
+            const double r = std::sqrt(r2);
 
             if (r2 < 1e-12) continue;
 
             double scale = 1.0;
-            if (is14) scale = topology.get_scee_scale_for_pair(atomAIndex, atomBIndex);
+            if (is14) scale = topology.get_scee_scale_for_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
-            double gradient = (1/scale) * CoulombicEE::CalculateGradient(r, atomA.partial_charge, atomB.partial_charge, 1);
+            const double gradient = (1/scale) * CoulombicEE::CalculateGradient(r, atomA.get_partial_charge(), atomB.get_partial_charge(), 1);
             const double fax = gradient * dx;
             const double fay = gradient * dy;
             const double faz = gradient * dz;

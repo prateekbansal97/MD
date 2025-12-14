@@ -3,9 +3,9 @@
 //
 
 #include "../../include/AmberTopology/LennardJones.h"
-#include <cmath>
+// #include <cmath>
 
-double LennardJones::CalculateEnergy(double r2, double Aij, double Bij)
+double LennardJones::CalculateEnergy(const double r2, const double Aij, const double Bij)
 {
     const double inv_r2  = 1.0 / r2;
     const double inv_r6  = inv_r2 * inv_r2 * inv_r2;
@@ -13,7 +13,7 @@ double LennardJones::CalculateEnergy(double r2, double Aij, double Bij)
     return Aij * inv_r12 - Bij * inv_r6;
 }
 
-double LennardJones::CalculateGradient(double r2, double Aij, double Bij)
+double LennardJones::CalculateGradient(const double r2, const double Aij, const double Bij)
 {
     const double inv_r2  = 1.0 / r2;                // 1/r^2
     const double inv_r4  = inv_r2 * inv_r2;         // 1/r^4

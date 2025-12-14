@@ -1,9 +1,9 @@
 
-#include "../../include/AmberTopology/atom.h"
+// #include "../../include/AmberTopology/atom.h"
 #include "../../include/AmberTopology/HarmonicBond.h"
 
-double HarmonicBond::return_energy(double distance)
+double HarmonicBond::return_energy(const double distance_) const
 {
-    double force = Bond_force_constant*(distance - Bond_Equil)*(distance - Bond_Equil);
+    const double force = Bond_force_constant*(distance_ - Bond_Equil)*(distance_ - Bond_Equil);
     return force;
 }

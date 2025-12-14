@@ -1,10 +1,10 @@
 
-#include "../../include/AmberTopology/atom.h"
+// #include "../../include/AmberTopology/atom.h"
 #include "../../include/AmberTopology/harmonicUB.h"
 
-double HarmonicUB::return_energy(double distance)
+double HarmonicUB::return_energy(const double distance_) const
 {
-    double force = UB_force_constant*(distance - UB_force_equil)*(distance - UB_force_equil);
+    const double force = UB_force_constant*(distance_ - UB_force_equil)*(distance_ - UB_force_equil);
     return force;
 }
 

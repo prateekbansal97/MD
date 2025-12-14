@@ -5,12 +5,15 @@
 #ifndef MD_SYSTEM_H
 #define MD_SYSTEM_H
 
+#include <utility>
+
 #include "../../include/AmberTopology/topology.h"
 
 class System
 {
 public:
-    System(Topology topology): topology(topology) {init_forces();}
+    explicit System(Topology  topology): topology(std::move(topology)) {init_forces();}
+
     Topology& get_topology() { return topology;}
 
 

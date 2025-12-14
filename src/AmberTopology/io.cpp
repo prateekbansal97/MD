@@ -2,7 +2,7 @@
 #include <string>
 #include <cstdlib>
 #include <vector>
-#include <cctype>
+// #include <cctype>
 #include <algorithm>
 #include <numeric> 
 #include <stdexcept>
@@ -10,7 +10,7 @@
 #include <fstream>
 #include "../../include/AmberTopology/io.h"
 
-bool check_first_char(const std::string& line, char target)
+bool check_first_char(const std::string& line, const char target)
  {
 
     // Returns true if the first character of line matches target
@@ -34,13 +34,13 @@ bool check_if_line_empty(const std::string& line)
 {
     // Returns true if the line is empty or contains only whitespace
     return std::all_of(line.begin(), line.end(),
-                       [](unsigned char ch) {
+                       [](const unsigned char ch) {
                            return std::isspace(static_cast<unsigned char>(ch)) != 0;
                        });
 }
 
 
-std::ifstream open_file(const std::string& path, std::ios::openmode mode)
+std::ifstream open_file(const std::string& path, const std::ios::openmode mode)
 {
     std::ifstream f(path, mode);
     if (!f) {
@@ -55,23 +55,23 @@ std::string extract_header(const std::string& line)
     // The header is going to be the string after the first '%' and after the first space
     // For example, the line "%FLAG POINTERS" would return "POINTERS"
     // the % will always be the first character of the line
-    size_t first_space = line.find(' ');
+    const size_t first_space = line.find(' ');
     if (first_space == std::string::npos) {
         return "";
     }
-    size_t end = line.find('\n');
+    const size_t end = line.find('\n');
     return line.substr(first_space + 1, end); // Exclude the '%' character
 }
 
 bool check_if_whitespace_in_string(const std::string& line)
 {
     return std::any_of(line.begin(), line.end(),
-                       [](unsigned char ch) {
+                       [](const unsigned char ch) {
                            return std::isspace(static_cast<unsigned char>(ch)) != 0;
                        });
 }
 
-std::vector<std::string> split_line_fixed_length(const std::string& line, size_t field_length)
+std::vector<std::string> split_line_fixed_length(const std::string& line, const size_t field_length)
 {
     std::vector<std::string> tokens;
     for (size_t i = 0; i < line.length(); i += field_length) {
@@ -84,7 +84,7 @@ std::string remove_whitespaces_from_string(const std::string& str)
 {
     std::string result;
     std::copy_if(str.begin(), str.end(), std::back_inserter(result),
-                 [](unsigned char ch) { return !std::isspace(ch); });
+                 [](const unsigned char ch) { return !std::isspace(ch); });
     return result;
 }
 
@@ -104,7 +104,7 @@ std::vector<std::string> split_line_on_delimiter(const std::string& line, std::s
     return tokens;
 }
 
-std::vector<std::string> split_line_over_empty_spaces(const std::string& line, bool check_if_negative)
+std::vector<std::string> split_line_over_empty_spaces(const std::string& line, const bool check_if_negative)
 {
     // Split line over empty spaces of any length. 
     std::vector<std::string> tokens;
@@ -135,26 +135,37 @@ std::vector<std::string> split_line_over_empty_spaces(const std::string& line, b
 
 std::vector<std::vector<std::string>> split_vector_into_chunks(const std::vector<std::string>& entries, const std::vector<std::size_t>& chunks)
 {
-    // entries will be an array like ["0", "3", "4", "0", "3", "4", "0", "3", "4", "0"]
-    // chunks will be an array like {3, 3, 4} for the entries array
-    // First ensure that the sum of elements in chunks is the same as the length of entries
-    // Then do the chunking and return the output
+    const std::size_t total =
+        std::accumulate(chunks.begin(), chunks.end(), std::size_t{0});
 
-
-    const std::size_t total = std::accumulate(chunks.begin(), chunks.end(), std::size_t{0});
     if (total != entries.size()) {
         throw std::invalid_argument("sum(chunks) must equal entries.size()");
     }
 
+    using diff_t = std::vector<std::string>::difference_type;
+
     std::vector<std::vector<std::string>> result;
     result.reserve(chunks.size());
 
-    std::size_t index = 0;
-    for (std::size_t c : chunks) {
-        result.emplace_back(entries.begin() + index, entries.begin() + index + c);
+    diff_t index = 0;
+
+    for (const std::size_t c_sz : chunks) {
+        // Optional but makes the cast formally safe
+        if (c_sz > static_cast<std::size_t>(std::numeric_limits<diff_t>::max())) {
+            throw std::out_of_range("chunk size too large for iterator difference_type");
+        }
+
+        const auto c = static_cast<diff_t>(c_sz);
+
+        auto first = entries.begin() + index;
+        auto last  = first + c;
+
+        result.emplace_back(first, last);
         index += c;
     }
+
     return result;
 }
+
 
 

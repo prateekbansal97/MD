@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include "atom.h"
-#include "io.h"
+// #include "io.h"
 #include "harmonicUB.h"
 #include "HarmonicImproper.h"
 #include "HarmonicBond.h"
@@ -21,7 +21,7 @@ class Topology
 
 {
 public:
-    Topology() {};
+    Topology() = default;
     explicit Topology(const std::vector<Atom>& atoms)
         : atom_list_(atoms) {}
 
@@ -32,11 +32,11 @@ public:
         return atom_list_;
     }
 
-    const unsigned long int get_nAtoms() {return nAtoms_;}
+    [[nodiscard]] unsigned long int get_nAtoms() const {return nAtoms_;}
 
     static Topology read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
 
-    size_t get_num_atoms() { return atom_list_.size(); }
+    [[nodiscard]] size_t get_num_atoms() const { return atom_list_.size(); }
 
     std::vector<double>& get_coordinates() { return coordinates;}
     std::vector<HarmonicBond>& get_harmonic_bonds() {return HarmonicBond_list_;}
@@ -45,8 +45,8 @@ public:
     std::vector<HarmonicUB>& get_harmonic_UBs() { return HarmonicUB_list_; }
     std::vector<HarmonicImproper>& get_harmonic_impropers() { return HarmonicIMP_list_; }
     std::vector<CMapGroup>& get_cmaps() { return CMapGroup_list_; }
-    const std::vector<int>& get_charmm_cmap_resolutions() const { return charmm_cmap_resolution_; }
-    const std::vector<double>& get_cmap_grid_data(int set_index) const
+    [[nodiscard]] const std::vector<int>& get_charmm_cmap_resolutions() const { return charmm_cmap_resolution_; }
+    [[nodiscard]] const std::vector<double>& get_cmap_grid_data(const int set_index) const
     {
         switch (set_index) {
             case 1:
@@ -79,111 +79,111 @@ public:
 
     [[maybe_unused]] [[maybe_unused]] void print_atom_details_to_file();
     std::vector<Atom> atom_list_;
-    void process_pointers_section(std::string& line);
-    void process_atom_names_section(std::string& line);
-    void process_charge_section(std::string& line);
-    void process_atomic_number_section(std::string& line);
-    void process_mass_section(std::string& line);
-    void process_atom_type_index_section(std::string& line);
-    void process_number_excluded_atoms_section(std::string& line);
-    void process_nonbonded_parm_index_section(std::string& line);
+    void process_pointers_section(const std::string& line);
+    void process_atom_names_section(const std::string& line);
+    void process_charge_section(const std::string& line);
+    void process_atomic_number_section(const std::string& line);
+    void process_mass_section(const std::string& line);
+    void process_atom_type_index_section(const std::string& line);
+    void process_number_excluded_atoms_section(const std::string& line);
+    void process_nonbonded_parm_index_section(const std::string& line);
     
-    void process_residue_label_section(std::string& line);
-    void process_residue_pointer_section(std::string& line);
+    void process_residue_label_section(const std::string& line);
+    void process_residue_pointer_section(const std::string& line);
     
-    void process_bond_force_constant_section(std::string& line);
-    void process_bond_equil_section(std::string& line);
+    void process_bond_force_constant_section(const std::string& line);
+    void process_bond_equil_section(const std::string& line);
     
-    void process_angle_force_constant_section(std::string& line);
-    void process_angle_equil_section(std::string& line);
+    void process_angle_force_constant_section(const std::string& line);
+    void process_angle_equil_section(const std::string& line);
    
-    void process_charmm_urey_bradley_count_section(std::string& line);
-    void process_charmm_urey_bradley(std::string& line);
+    void process_charmm_urey_bradley_count_section(const std::string& line);
+    void process_charmm_urey_bradley(const std::string& line);
     void process_charmm_urey_bradley_assign();
-    void process_charmm_urey_bradley_force_constant(std::string& line);
-    void process_charmm_urey_bradley_equil_value(std::string& line);
+    void process_charmm_urey_bradley_force_constant(const std::string& line);
+    void process_charmm_urey_bradley_equil_value(const std::string& line);
     void process_charmm_urey_bradley_assign_ffparams();
     [[maybe_unused]] void print_UB_bonds(int max_print);
 
-    void process_dihedral_force_constant(std::string& line);
-    void process_dihedral_periodicity(std::string& line);
-    void process_dihedral_phase(std::string& line);
+    void process_dihedral_force_constant(const std::string& line);
+    void process_dihedral_periodicity(const std::string& line);
+    void process_dihedral_phase(const std::string& line);
 
-    void process_scee_scale_factor(std::string& line);
-    void process_scnb_scale_factor(std::string& line);
+    void process_scee_scale_factor(const std::string& line);
+    void process_scnb_scale_factor(const std::string& line);
 
-    void process_charmm_num_impropers(std::string& line);
-    void process_charmm_impropers(std::string& line);
+    void process_charmm_num_impropers(const std::string& line);
+    void process_charmm_impropers(const std::string& line);
     void process_charmm_improper_assign();
-    void process_charmm_num_impr_types(std::string& line);
-    void process_charmm_improper_force_constant(std::string& line);
-    void process_charmm_improper_phase(std::string& line);
+    void process_charmm_num_impr_types(const std::string& line);
+    void process_charmm_improper_force_constant(const std::string& line);
+    void process_charmm_improper_phase(const std::string& line);
     void process_improper_bradley_assign_ffparams(); 
     [[maybe_unused]] void print_IMP_bonds(int max_print);
 
-    void process_Lennard_Jones_Acoef(std::string& line);
-    void process_Lennard_Jones_Bcoef(std::string& line);
-    void process_Lennard_Jones_14_Acoef(std::string& line);
-    void process_Lennard_Jones_14_Bcoef(std::string& line);
+    void process_Lennard_Jones_Acoef(const std::string& line);
+    void process_Lennard_Jones_Bcoef(const std::string& line);
+    void process_Lennard_Jones_14_Acoef(const std::string& line);
+    void process_Lennard_Jones_14_Bcoef(const std::string& line);
 
-    void process_bonds_including_H(std::string& line);// BONDS_INC_HYDROGEN
+    void process_bonds_including_H(const std::string& line);// BONDS_INC_HYDROGEN
     void create_bonds_including_H();
     [[maybe_unused]] void print_bonds_without_H(int max_print, int start_point);
-    void process_bonds_without_H(std::string& line);
+    void process_bonds_without_H(const std::string& line);
     void create_bonds_without_H();
 
     [[maybe_unused]] [[maybe_unused]] void print_bonds_including_H(int max_print, int start_point);
 
-    void process_angles_including_H(std::string& line);// ANGLES_INC_HYDROGEN
+    void process_angles_including_H(const std::string& line);// ANGLES_INC_HYDROGEN
     void create_angles_including_H();
 
     [[maybe_unused]] [[maybe_unused]] void print_angles_without_H(int max_print, int start_point);
-    void process_angles_without_H(std::string& line);
+    void process_angles_without_H(const std::string& line);
     void create_angles_without_H();
 
     [[maybe_unused]] [[maybe_unused]] void print_angles_including_H(int max_print, int start_point);
 
 
-    void process_dihedrals_including_H(std::string& line);// DIHEDRALS_INC_HYDROGEN
+    void process_dihedrals_including_H(const std::string& line);// DIHEDRALS_INC_HYDROGEN
     void create_dihedrals_including_H();
     [[maybe_unused]] void print_dihedrals_without_H(int max_print, int start_point);
-    void process_dihedrals_without_H(std::string& line);
+    void process_dihedrals_without_H(const std::string& line);
     void create_dihedrals_without_H();
     [[maybe_unused]] void print_dihedrals_including_H(int max_print, int start_point);
 
-    void process_excluded_atoms_list(std::string& line);
+    void process_excluded_atoms_list(const std::string& line);
     void create_excluded_atoms_list();
 
-    void process_amber_atom_type(std::string& line);
+    void process_amber_atom_type(const std::string& line);
     
-    void process_Charmm_Cmap_Count(std::string& line);
-    void process_Charmm_Cmap_Resolution(std::string& line);
-    void process_Charmm_Cmap_parameter_01(std::string& line);
-    void process_Charmm_Cmap_parameter_02(std::string& line);
-    void process_Charmm_Cmap_parameter_03(std::string& line);
-    void process_Charmm_Cmap_parameter_04(std::string& line);
-    void process_Charmm_Cmap_parameter_05(std::string& line);
-    void process_Charmm_Cmap_Index(std::string& line);
+    void process_Charmm_Cmap_Count(const std::string& line);
+    void process_Charmm_Cmap_Resolution(const std::string& line);
+    void process_Charmm_Cmap_parameter_01(const std::string& line);
+    void process_Charmm_Cmap_parameter_02(const std::string& line);
+    void process_Charmm_Cmap_parameter_03(const std::string& line);
+    void process_Charmm_Cmap_parameter_04(const std::string& line);
+    void process_Charmm_Cmap_parameter_05(const std::string& line);
+    void process_Charmm_Cmap_Index(const std::string& line);
     void create_Charmm_Cmap_Index_assign();
     void create_Cmap_Coefficient_Matrix_bicubic_spline();
     std::vector<double>& get_Cmap_Coefficient_Matrix_bicubic_spline() {return coeff_matrix_24x24;}
 
-    void process_solvent_pointers(std::string& line);
+    void process_solvent_pointers(const std::string& line);
     
-    void process_atoms_per_molecule(std::string& line);
+    void process_atoms_per_molecule(const std::string& line);
     void create_molecules();
 
-    void process_box_dimensions(std::string& line);
+    void process_box_dimensions(const std::string& line);
 
-    void process_radius_set(std::string& line); 
-    void process_radii(std::string& line);
-    void process_screen(std::string& line);
+    void process_radius_set(const std::string& line);
+    void process_radii(const std::string& line);
+    void process_screen(const std::string& line);
 
-    void process_ipol(std::string& line);
+    void process_ipol(const std::string& line);
 
     void build_lj14_pairlist();
-    bool is_14_pair(int i, int j) const;
-    double get_scee_scale_for_pair(const int i, const int j) const;
+    [[nodiscard]] bool is_14_pair(int i, int j) const;
+    [[nodiscard]] double get_scee_scale_for_pair(int i, int j) const;
 
 
     int read_coords(std::ifstream& coordfile);
@@ -267,62 +267,62 @@ private:
     unsigned long int processed_atoms_index = 0;
     int index_processed = 0;
     int res_num = 0;
-    int last_residue_num = 0;
+    unsigned long int last_residue_num = 0;
 
 
     // nbmatrix of shape (nTypes_, nTypes_)
     std::vector<std::vector<unsigned long int>> nbmatrix_;
 
-    unsigned long int nUreyBradley_;
-    unsigned long int nTypesUreyBradley;
+    unsigned long int nUreyBradley_{};
+    unsigned long int nTypesUreyBradley{};
 
-    unsigned long int nCharmmImpropers_;
-    unsigned long int nCharmmImproperTypes_;
+    unsigned long int nCharmmImpropers_{};
+    unsigned long int nCharmmImproperTypes_{};
 
     // Hyperparameters
-    unsigned long int nAtoms_;
-    unsigned long int nTypes_;
-    unsigned long int nBondHs_;
-    unsigned long int nBondAs_;
-    unsigned long int nAnglesH_;
-    unsigned long int nAnglesA_;
-    unsigned long int nTorsionsH_;
-    unsigned long int nTorsionsA_;
-    unsigned long int nexclusions_;
-    unsigned long int nresidues_;
-    unsigned long int nconstraint_bonds;
-    unsigned long int nconstraint_angles;
-    unsigned long int nconstraint_torsions_;
-    unsigned long int nunique_bond_types_;
-    unsigned long int nunique_angle_types_;
-    unsigned long int nunique_torsion_types_;
-    unsigned long int nsolty_terms_;
-    unsigned long int nphb_types_;
-    unsigned long int ifpert_;
-    unsigned long int nperturbed_bonds_;
-    unsigned long int nperturbed_angles_;
-    unsigned long int nperturbed_torsions_;
-    unsigned long int mperturbed_bonds_;
-    unsigned long int mperturbed_angles_;
-    unsigned long int mperturbed_torsions_;
-    unsigned long int ifbox_;
-    unsigned long int nmaxresidue_atoms_;
-    unsigned long int nCmap_;
-    unsigned long int nCmap_unique;
-    unsigned long int protein_res_;
-    unsigned long int nsolvent_mols_;
-    unsigned long int natoms_per_solvent_;
+    unsigned long int nAtoms_{};
+    unsigned long int nTypes_{};
+    unsigned long int nBondHs_{};
+    unsigned long int nBondAs_{};
+    unsigned long int nAnglesH_{};
+    unsigned long int nAnglesA_{};
+    unsigned long int nTorsionsH_{};
+    unsigned long int nTorsionsA_{};
+    unsigned long int nexclusions_{};
+    unsigned long int nresidues_{};
+    unsigned long int nconstraint_bonds{};
+    unsigned long int nconstraint_angles{};
+    unsigned long int nconstraint_torsions_{};
+    unsigned long int nunique_bond_types_{};
+    unsigned long int nunique_angle_types_{};
+    unsigned long int nunique_torsion_types_{};
+    unsigned long int nsolty_terms_{};
+    unsigned long int nphb_types_{};
+    unsigned long int ifpert_{};
+    unsigned long int nperturbed_bonds_{};
+    unsigned long int nperturbed_angles_{};
+    unsigned long int nperturbed_torsions_{};
+    unsigned long int mperturbed_bonds_{};
+    unsigned long int mperturbed_angles_{};
+    unsigned long int mperturbed_torsions_{};
+    unsigned long int ifbox_{};
+    unsigned long int nmaxresidue_atoms_{};
+    unsigned long int nCmap_{};
+    unsigned long int nCmap_unique{};
+    unsigned long int protein_res_{};
+    unsigned long int nsolvent_mols_{};
+    unsigned long int natoms_per_solvent_{};
 
-    double box_beta;
-    double box_alpha;
-    double box_gamma;
-    double box_x;
-    double box_y;
-    double box_z;
+    double box_beta{};
+    double box_alpha{};
+    double box_gamma{};
+    double box_x{};
+    double box_y{};
+    double box_z{};
 
     std::string radius_set;
 
-    int polarizable;
+    int polarizable{};
 
 };
 

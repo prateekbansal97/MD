@@ -8,8 +8,8 @@
 class LennardJones
 {
     public:
-    LennardJones();
-    ~LennardJones();
+    // LennardJones();
+    // ~LennardJones();
 
     static double CalculateEnergy(double distance, double Aij, double Bij);
     static double CalculateGradient(double r2, double Aij, double Bij);

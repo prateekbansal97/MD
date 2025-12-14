@@ -9,24 +9,24 @@ class CosineDihedral
 {
 
     public:
-        CosineDihedral(double Dihedral_force_constant, double Dihedral_Phase, double Dihedral_Periodicity, 
-                        bool improper = false, bool exclude_14 = false) : 
-        Dihedral_force_constant(Dihedral_force_constant), 
+        CosineDihedral(const double Dihedral_force_constant, const double Dihedral_Phase, const double Dihedral_Periodicity,
+                        const bool improper = false, const bool exclude_14 = false) :
+        Dihedral_force_constant(Dihedral_force_constant),
         Dihedral_Phase(Dihedral_Phase),
         Dihedral_Periodicity(Dihedral_Periodicity), 
-        type(0),
-        atomA_index(-1), 
-        atomB_index(-1), 
+        atomA_index(-1),
+        atomB_index(-1),
         atomC_index(-1),
-        atomD_index(-1), 
+        atomD_index(-1),
+        type(0),
+        isH(false),
         improper(improper),
-        exclude_14(exclude_14),
-        isH(false) {}
+        exclude_14(exclude_14) {}
         
-        CosineDihedral(double Dihedral_force_constant, double Dihedral_Phase, double Dihedral_Periodicity, 
-                        int atomA_index, int atomB_index, int atomC_index, int atomD_index, 
-                        bool isH, bool improper = false, bool exclude_14 = false) : 
-        Dihedral_force_constant(Dihedral_force_constant), 
+        CosineDihedral(const double Dihedral_force_constant, const double Dihedral_Phase, const double Dihedral_Periodicity,
+                        const int atomA_index, const int atomB_index, const int atomC_index, const int atomD_index,
+                        const bool isH, const bool improper = false, const bool exclude_14 = false) :
+        Dihedral_force_constant(Dihedral_force_constant),
         Dihedral_Phase(Dihedral_Phase),
         Dihedral_Periodicity(Dihedral_Periodicity),
         atomA_index(atomA_index), 
@@ -34,12 +34,12 @@ class CosineDihedral
         atomC_index(atomC_index),
         atomD_index(atomD_index),
         type(0), 
+        isH(isH),
         improper(improper),
-        exclude_14(exclude_14),
-        isH(isH) {}
+        exclude_14(exclude_14) {}
 
-        CosineDihedral(int atomA_index, int atomB_index, int atomC_index, int atomD_index, bool improper = false, bool exclude_14 = false) : 
-        Dihedral_force_constant(0.0), 
+        CosineDihedral(const int atomA_index, const int atomB_index, const int atomC_index, const int atomD_index, const bool improper = false, const bool exclude_14 = false) :
+        Dihedral_force_constant(0.0),
         Dihedral_Phase(0.0),
         Dihedral_Periodicity(0.0), 
         atomA_index(atomA_index), 
@@ -47,37 +47,37 @@ class CosineDihedral
         atomC_index(atomC_index),
         atomD_index(atomD_index),
         type(0), 
+        isH(false),
         improper(improper),
-        exclude_14(exclude_14),
-        isH(false) {}
+        exclude_14(exclude_14) {}
 
-        double return_energy(double dihedral);
-        void set_energy(double energy) {this->energy = energy;}
+        [[nodiscard]] double return_energy(double dihedral) const;
+        void set_energy(const double energ) {this->energy = energ;}
 
-        void set_type(int type_id) { this->type = type_id; }
-        int get_type() const { return type; }
+        void set_type(const int type_id) { this->type = type_id; }
+        [[nodiscard]] int get_type() const { return type; }
 
-        void set_Dihedral_force_constant(double force_constant) {this->Dihedral_force_constant = force_constant; }
-        double get_Dihedral_force_constant() const {return Dihedral_force_constant; }
+        void set_Dihedral_force_constant(const double force_constant) {this->Dihedral_force_constant = force_constant; }
+        [[nodiscard]] double get_Dihedral_force_constant() const {return Dihedral_force_constant; }
 
-        void set_Dihedral_phase(double phase) {this->Dihedral_Phase = phase; }
-        double get_Dihedral_phase() const {return Dihedral_Phase; }
+        void set_Dihedral_phase(const double phase) {this->Dihedral_Phase = phase; }
+        [[nodiscard]] double get_Dihedral_phase() const {return Dihedral_Phase; }
 
-        void set_Dihedral_Periodicity(double Periodicity) {this->Dihedral_Periodicity = Periodicity; }
-        double get_Dihedral_Periodicity() const {return Dihedral_Periodicity; }
+        void set_Dihedral_Periodicity(const double Periodicity) {this->Dihedral_Periodicity = Periodicity; }
+        [[nodiscard]] double get_Dihedral_Periodicity() const {return Dihedral_Periodicity; }
 
-        void set_cosine_dihedral(double dihedral) {this->dihedral = dihedral;}
+        void set_cosine_dihedral(const double dihedra) {this->dihedral = dihedra;}
 
-        const int get_atomA_index() const {return atomA_index; }
-        const int get_atomB_index() const {return atomB_index; }
-        const int get_atomC_index() const {return atomC_index; }
-        const int get_atomD_index() const {return atomD_index; }
+        [[nodiscard]] int get_atomA_index() const {return atomA_index; }
+        [[nodiscard]] int get_atomB_index() const {return atomB_index; }
+        [[nodiscard]] int get_atomC_index() const {return atomC_index; }
+        [[nodiscard]] int get_atomD_index() const {return atomD_index; }
         
 
-        const bool get_isH() const {return isH;}
+        [[nodiscard]] bool get_isH() const {return isH;}
 
-        const bool get_improper() const {return improper;}
-        const bool get_exclude_14() const {return exclude_14;}
+        [[nodiscard]] bool get_improper() const {return improper;}
+        [[nodiscard]] bool get_exclude_14() const {return exclude_14;}
     
     private:
         double Dihedral_force_constant;
@@ -91,7 +91,7 @@ class CosineDihedral
         bool isH;
         bool improper;
         bool exclude_14;
-        double dihedral;
-        double energy;
+        double dihedral{};
+        double energy{};
 };
 #endif //COSINEDIHEDRAL_H

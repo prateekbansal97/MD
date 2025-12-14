@@ -3,10 +3,9 @@
 #include <algorithm>
 #include <iostream>
 
-bool Molecule::check_if_residue_exists(std::string& name)
+bool Molecule::check_if_residue_exists(const std::string& name)
 {
-    auto it = std::find(residue_names.begin(), residue_names.end(), name);
-    if (it == residue_names.end())
+    if (auto it = std::find(residue_names.begin(), residue_names.end(), name); it == residue_names.end())
     {
         return false;
     }
