@@ -49,6 +49,9 @@ public:
     void calculate_forces_LJ();
     void calculate_forces_EE();
 
+    void build_nonbonded_cache();
+
+
 private:
     Topology topology;
     std::vector<double> forces;
@@ -60,6 +63,10 @@ private:
     double CMAP_energy = 0.0;
     double LJ_energy = 0.0;
     double EE_energy = 0.0;
+    std::vector<int> type_;      // size N, 0-based type index
+    std::vector<double> q_;      // size N, charges
+    std::vector<unsigned long> nb_flat_;
+    int nTypes_ = 0;
 };
 
 #endif //MD_SYSTEM_H

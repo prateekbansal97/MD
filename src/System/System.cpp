@@ -15,6 +15,7 @@
 
 void System::init()
 {
+    build_nonbonded_cache();
     calculate_energies();
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
     " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << CMAP_energy << "\n"
@@ -26,6 +27,36 @@ void System::init()
     std::cout << forces[3] << " " << forces[4] << " " << forces[5] << "\n";
     std::cout << forces[6] << " " << forces[7] << " " << forces[8] << "\n";
 }
+
+void System::build_nonbonded_cache()
+{
+    const size_t N = topology.get_num_atoms();
+    type_.resize(N);
+    q_.resize(N);
+
+    // 1) type[] and q[]
+    int maxType = -1;
+    const auto& atoms = topology.get_atoms();
+    for (size_t i = 0; i < N; ++i) {
+        const int ti = static_cast<int>(topology.atom_list_[i].get_atom_type_index()) - 1; // 0-based
+        type_[i] = ti;
+        q_[i] = atoms[i].get_partial_charge();
+        if (ti > maxType) maxType = ti;
+    }
+
+    nTypes_ = maxType + 1;
+
+    // 2) flatten nbmatrix
+    const auto& nb = topology.get_nb_matrix(); // vector<vector<unsigned long>>
+    nb_flat_.assign(static_cast<size_t>(nTypes_) * static_cast<size_t>(nTypes_), 0UL);
+
+    for (int i = 0; i < nTypes_; ++i) {
+        for (int j = 0; j < nTypes_; ++j) {
+            nb_flat_[static_cast<size_t>(i) * nTypes_ + j] = nb[i][j];
+        }
+    }
+}
+
 
 void System::calculate_energies()
 {
@@ -199,26 +230,34 @@ void System::calculate_CMAP_energy()
 
 void System::calculate_LJ_energy()
 {
+
     const std::vector<double>& coordinates = topology.get_coordinates();
+    std::vector<Atom>& atom_list = topology.get_atoms();
+
+    const size_t N = topology.get_num_atoms();
+
+    const auto& A    = topology.get_lennard_jones_Acoefs_();
+    const auto& B    = topology.get_lennard_jones_Bcoefs_();
+    const auto& A14  = topology.get_lennard_jones_14_Acoefs_();
+    const auto& B14  = topology.get_lennard_jones_14_Bcoefs_();
 
     LJ_energy = 0;
-    std::vector<Atom>& atom_list = topology.get_atoms();
-    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+
+    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+        const std::vector<int>& excl = atomA.get_excluded_atoms();
+
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
         {
-            // Atom& atomB = atom_list[atomBIndex];
+            bool is14 = false;
 
-            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+                is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+                if (!is14) continue; // excluded and not 1-4 => skip
+            }
 
-            const bool excluded =
-                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
-            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
-
-            if (excluded && !is14) continue;
-
-            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
@@ -229,22 +268,21 @@ void System::calculate_LJ_energy()
 
             if (r2 < 1e-12) continue;
 
-            const int ti = static_cast<int>(topology.atom_list_[atomAIndex].get_atom_type_index()) - 1;
-            const int tj = static_cast<int>(topology.atom_list_[atomBIndex].get_atom_type_index()) - 1;
+            const int ti = type_[atomAIndex];
+            const int tj = type_[atomBIndex];
+            const unsigned long nb = nb_flat_[static_cast<size_t>(ti) * nTypes_ + tj];
 
-            const std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
-            const unsigned long nb = nbmatrix[ti][tj];
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
             const auto p = static_cast<size_t>(nb - 1);
 
             if (!is14) {
-                Aij = topology.get_lennard_jones_Acoefs_()[p];
-                Bij = topology.get_lennard_jones_Bcoefs_()[p];
+                Aij = A[p];
+                Bij = B[p];
             } else {
-                Aij = topology.get_lennard_jones_14_Acoefs_()[p];
-                Bij = topology.get_lennard_jones_14_Bcoefs_()[p];
+                Aij = A14[p];
+                Bij = B14[p];
             }
 
             const double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
@@ -256,40 +294,39 @@ void System::calculate_LJ_energy()
 void System::calculate_EE_energy()
 {
     const std::vector<double>& coordinates = topology.get_coordinates();
+    std::vector<Atom>& atom_list = topology.get_atoms();
+    const size_t N = topology.get_num_atoms();
 
     EE_energy = 0;
-    std::vector<Atom>& atom_list = topology.get_atoms();
-    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        const std::vector<int>& excl = atomA.get_excluded_atoms();
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+
+
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
         {
-            Atom& atomB = atom_list[atomBIndex];
-            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+            bool is14 = false;
+            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+                is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+                if (!is14) continue; // excluded and not 1-4 => skip
+            }
 
-            const bool excluded =
-                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
-            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
-
-            if (excluded && !is14) continue;
-
-            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
-
-
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
             const double dx = x1 - x2;
             const double dy = y1 - y2;
             const double dz = z1 - z2;
             const double r2 = dx*dx + dy*dy + dz*dz;
-            const double r = std::sqrt(r2);
             if (r2 < 1e-12) continue;
+            const double r = std::sqrt(r2);
 
             double scale = 1.0;
             if (is14) scale = topology.get_scee_scale_for_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
-            const double energy = (1/scale) * CoulombicEE::CalculateEnergy(r, atomA.get_partial_charge(), atomB.get_partial_charge(), 1);
+            const double energy = (1/scale) * CoulombicEE::CalculateEnergy(r, q_[atomAIndex], q_[atomBIndex], 1);
 
             EE_energy += energy;
         }
@@ -785,22 +822,31 @@ void System::calculate_forces_LJ()
 {
     const std::vector<double>& coordinates = topology.get_coordinates();
     std::vector<Atom>& atom_list = topology.get_atoms();
-    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+
+    const size_t N = topology.get_num_atoms();
+    const auto& A    = topology.get_lennard_jones_Acoefs_();
+    const auto& B    = topology.get_lennard_jones_Bcoefs_();
+    const auto& A14  = topology.get_lennard_jones_14_Acoefs_();
+    const auto& B14  = topology.get_lennard_jones_14_Bcoefs_();
+
+
+    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+        const std::vector<int>& excl = atomA.get_excluded_atoms();
+
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
         {
-            // Atom& atomB = atom_list[atomBIndex];
 
-            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+            bool is14 = false;
 
-            const bool excluded =
-                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
-            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
+            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+                is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+                if (!is14) continue; // excluded and not 1-4 => skip
+            }
 
-            if (excluded && !is14) continue;
 
-            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
@@ -811,22 +857,21 @@ void System::calculate_forces_LJ()
 
             if (r2 < 1e-12) continue;
 
-            const int ti = static_cast<int>(topology.atom_list_[atomAIndex].get_atom_type_index()) - 1;
-            const int tj = static_cast<int>(topology.atom_list_[atomBIndex].get_atom_type_index()) - 1;
+            const int ti = type_[atomAIndex];
+            const int tj = type_[atomBIndex];
+            const unsigned long nb = nb_flat_[static_cast<size_t>(ti) * nTypes_ + tj];
 
-            const std::vector<std::vector<unsigned long int>>& nbmatrix = topology.get_nb_matrix();
-            const unsigned long nb = nbmatrix[ti][tj];
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
             const auto p = static_cast<size_t>(nb - 1);
 
             if (!is14) {
-                Aij = topology.get_lennard_jones_Acoefs_()[p];
-                Bij = topology.get_lennard_jones_Bcoefs_()[p];
+                Aij = A[p];
+                Bij = B[p];
             } else {
-                Aij = topology.get_lennard_jones_14_Acoefs_()[p];
-                Bij = topology.get_lennard_jones_14_Bcoefs_()[p];
+                Aij = A14[p];
+                Bij = B14[p];
             }
 
             const double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
@@ -848,22 +893,24 @@ void System::calculate_forces_EE()
 {
     const std::vector<double>& coordinates = topology.get_coordinates();
     std::vector<Atom>& atom_list = topology.get_atoms();
-    for (size_t atomAIndex = 0; atomAIndex < topology.get_num_atoms(); ++atomAIndex)
+    const size_t N = topology.get_num_atoms();
+
+
+    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < topology.get_num_atoms(); ++atomBIndex)
+        const std::vector<int>& excl = atomA.get_excluded_atoms();
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
         {
-            Atom& atomB = atom_list[atomBIndex];
+            bool is14 = false;
 
-            const bool is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+                is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+                if (!is14) continue; // excluded and not 1-4 => skip
+            }
 
-            const bool excluded =
-                std::binary_search(atomA.get_excluded_atoms().begin(), atomA.get_excluded_atoms().end(), static_cast<int>(atomBIndex));
-            // (optionally also check atomB.excluded_atoms if you don’t trust symmetry)
-
-            if (excluded && !is14) continue;
-
-            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
@@ -871,14 +918,13 @@ void System::calculate_forces_EE()
             const double dy = y1 - y2;
             const double dz = z1 - z2;
             const double r2 = dx*dx + dy*dy + dz*dz;
-            const double r = std::sqrt(r2);
-
             if (r2 < 1e-12) continue;
+            const double r = std::sqrt(r2);
 
             double scale = 1.0;
             if (is14) scale = topology.get_scee_scale_for_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
 
-            const double gradient = (1/scale) * CoulombicEE::CalculateGradient(r, atomA.get_partial_charge(), atomB.get_partial_charge(), 1);
+            const double gradient = (1/scale) * CoulombicEE::CalculateGradient(r, q_[atomAIndex], q_[atomBIndex], 1);
             const double fax = gradient * dx;
             const double fay = gradient * dy;
             const double faz = gradient * dz;
