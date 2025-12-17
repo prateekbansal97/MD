@@ -16,6 +16,10 @@
 void System::init()
 {
     build_nonbonded_cache();
+
+    const auto boxdim = topology.get_box_dimensions();
+    set_box(boxdim[0], boxdim[1], boxdim[2]);
+
     calculate_energies();
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
     " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << CMAP_energy << "\n"
@@ -26,6 +30,19 @@ void System::init()
     std::cout << forces[0] << " " << forces[1] << " " << forces[2] << "\n";
     std::cout << forces[3] << " " << forces[4] << " " << forces[5] << "\n";
     std::cout << forces[6] << " " << forces[7] << " " << forces[8] << "\n";
+}
+
+inline double System::min_image_1d(double d, const double L) {
+    // move into [-L/2, L/2]
+    d -= L * std::round(d / L);
+    return d;
+}
+
+inline void System::apply_min_image(double& dx, double& dy, double& dz) const {
+    if (!pbc_enabled_) return;
+    dx = min_image_1d(dx, boxLx_);
+    dy = min_image_1d(dy, boxLy_);
+    dz = min_image_1d(dz, boxLz_);
 }
 
 void System::build_nonbonded_cache()
@@ -261,9 +278,10 @@ void System::calculate_LJ_energy()
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
-            const double dx = x1 - x2;
-            const double dy = y1 - y2;
-            const double dz = z1 - z2;
+            double dx = x1 - x2;
+            double dy = y1 - y2;
+            double dz = z1 - z2;
+            apply_min_image(dx,dy,dz);
             const double r2 = dx*dx + dy*dy + dz*dz;
 
             if (r2 < 1e-12) continue;
@@ -316,9 +334,10 @@ void System::calculate_EE_energy()
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
-            const double dx = x1 - x2;
-            const double dy = y1 - y2;
-            const double dz = z1 - z2;
+            double dx = x1 - x2;
+            double dy = y1 - y2;
+            double dz = z1 - z2;
+            apply_min_image(dx,dy,dz);
             const double r2 = dx*dx + dy*dy + dz*dz;
             if (r2 < 1e-12) continue;
             const double r = std::sqrt(r2);
@@ -850,9 +869,10 @@ void System::calculate_forces_LJ()
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
-            const double dx = x1 - x2;
-            const double dy = y1 - y2;
-            const double dz = z1 - z2;
+            double dx = x1 - x2;
+            double dy = y1 - y2;
+            double dz = z1 - z2;
+            apply_min_image(dx,dy,dz);
             const double r2 = dx*dx + dy*dy + dz*dz;
 
             if (r2 < 1e-12) continue;
@@ -914,9 +934,10 @@ void System::calculate_forces_EE()
             const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
 
             // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
-            const double dx = x1 - x2;
-            const double dy = y1 - y2;
-            const double dz = z1 - z2;
+            double dx = x1 - x2;
+            double dy = y1 - y2;
+            double dz = z1 - z2;
+            apply_min_image(dx,dy,dz);
             const double r2 = dx*dx + dy*dy + dz*dz;
             if (r2 < 1e-12) continue;
             const double r = std::sqrt(r2);

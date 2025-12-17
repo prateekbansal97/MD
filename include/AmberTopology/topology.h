@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
+#include <array>
 
 #include "atom.h"
 // #include "io.h"
@@ -69,7 +70,7 @@ public:
     std::vector<double>& get_lennard_jones_Bcoefs_() { return lennard_jones_Bcoefs_; }
     std::vector<double>& get_lennard_jones_14_Acoefs_() { return lennard_jones_14_Acoefs_; }
     std::vector<double>& get_lennard_jones_14_Bcoefs_() { return lennard_jones_14_Bcoefs_; }
-
+    [[nodiscard]] std::array<double, 3> get_box_dimensions() const noexcept { return {box_x, box_y, box_z}; }
 
     int read_topology(std::ifstream& parmtop);
 

@@ -27,6 +27,16 @@ public:
         std::fill(forces.begin(), forces.end(), 0.0);
     }
 
+    void set_lj_cutoff(const double rc) { lj_cutoff_ = rc; lj_cutoff2_ = rc*rc; }
+    void set_box(const double Lx, const double Ly, const double Lz) {
+        boxLx_ = Lx; boxLy_ = Ly; boxLz_ = Lz;
+        pbc_enabled_ = (Lx > 0 && Ly > 0 && Lz > 0);
+    }
+
+    void apply_min_image(double& dx, double& dy, double& dz) const;
+    static double min_image_1d(double d, double L);
+
+
     void calculate_energies();
     void calculate_bond_energy();
     void calculate_angle_energy();
@@ -67,6 +77,12 @@ private:
     std::vector<double> q_;      // size N, charges
     std::vector<unsigned long> nb_flat_;
     int nTypes_ = 0;
+    double lj_cutoff_  = 10.0;                 // Angstrom
+    double lj_cutoff2_ = lj_cutoff_ * lj_cutoff_;
+
+    bool pbc_enabled_ = false;
+    double boxLx_ = 0.0, boxLy_ = 0.0, boxLz_ = 0.0;
+
 };
 
 #endif //MD_SYSTEM_H
