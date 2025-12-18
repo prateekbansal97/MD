@@ -15,10 +15,16 @@
 
 void System::init()
 {
+
     build_nonbonded_cache();
 
     const auto boxdim = topology.get_box_dimensions();
     set_box(boxdim[0], boxdim[1], boxdim[2]);
+    set_lj_cutoff(10.0);
+    if (const double halfmin = 0.5 * std::min({boxLx_, boxLy_, boxLz_}); pbc_enabled_ && lj_cutoff_ > halfmin) {
+        std::cerr << "LJ cutoff too large for minimum image.\n";
+    }
+    precompute_lj_energy_force_shift();
 
     calculate_energies();
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
@@ -72,6 +78,29 @@ void System::build_nonbonded_cache()
             nb_flat_[static_cast<size_t>(i) * nTypes_ + j] = nb[i][j];
         }
     }
+}
+
+void System::precompute_lj_energy_force_shift() {
+    const auto& A   = topology.get_lennard_jones_Acoefs_();
+    const auto& B   = topology.get_lennard_jones_Bcoefs_();
+    const auto& A14 = topology.get_lennard_jones_14_Acoefs_();
+    const auto& B14 = topology.get_lennard_jones_14_Bcoefs_();
+
+    lj_Ucut_.resize(A.size());
+    for (size_t p = 0; p < A.size(); ++p)
+        lj_Ucut_[p] = LennardJones::CalculateEnergy(lj_cutoff2_, A[p], B[p]);
+
+    lj_Ucut14_.resize(A14.size());
+    for (size_t p = 0; p < A14.size(); ++p)
+        lj_Ucut14_[p] = LennardJones::CalculateEnergy(lj_cutoff2_, A14[p], B14[p]);
+
+    lj_Gcut_.resize(A.size());
+    for (size_t p = 0; p < A.size(); ++p)
+        lj_Gcut_[p] = LennardJones::CalculateGradient(lj_cutoff2_, A[p], B[p]);
+
+    lj_Gcut14_.resize(A14.size());
+    for (size_t p = 0; p < A14.size(); ++p)
+        lj_Gcut14_[p] = LennardJones::CalculateGradient(lj_cutoff2_, A14[p], B14[p]);
 }
 
 
@@ -284,6 +313,7 @@ void System::calculate_LJ_energy()
             apply_min_image(dx,dy,dz);
             const double r2 = dx*dx + dy*dy + dz*dz;
 
+            if (r2 > lj_cutoff2_) continue;
             if (r2 < 1e-12) continue;
 
             const int ti = type_[atomAIndex];
@@ -293,7 +323,10 @@ void System::calculate_LJ_energy()
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
-            const auto p = static_cast<size_t>(nb - 1);
+            // const auto p = nb - 1;
+            const size_t p = static_cast<size_t>(nb - 1);
+
+            const double r = std::sqrt(r2);
 
             if (!is14) {
                 Aij = A[p];
@@ -303,7 +336,11 @@ void System::calculate_LJ_energy()
                 Bij = B14[p];
             }
 
-            const double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
+            // const double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
+            double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
+            energy -= (!is14 ? lj_Ucut_[p] : lj_Ucut14_[p]);
+            const double gcut = (!is14 ? lj_Gcut_[p] : lj_Gcut14_[p]);
+            energy += (r - lj_cutoff_) * (gcut * lj_cutoff_);
             LJ_energy += energy;
         }
     }
@@ -875,7 +912,12 @@ void System::calculate_forces_LJ()
             apply_min_image(dx,dy,dz);
             const double r2 = dx*dx + dy*dy + dz*dz;
 
+            if (r2 > lj_cutoff2_) continue;
             if (r2 < 1e-12) continue;
+
+            const double r = std::sqrt(r2);
+            if (r < 1e-12) continue;
+
 
             const int ti = type_[atomAIndex];
             const int tj = type_[atomBIndex];
@@ -884,7 +926,8 @@ void System::calculate_forces_LJ()
             if (nb == 0) continue;
 
             double Aij = 0, Bij = 0;
-            const auto p = static_cast<size_t>(nb - 1);
+            // const auto p = nb - 1;
+            const size_t p = static_cast<size_t>(nb - 1);
 
             if (!is14) {
                 Aij = A[p];
@@ -894,7 +937,12 @@ void System::calculate_forces_LJ()
                 Bij = B14[p];
             }
 
-            const double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
+            // const double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
+
+            double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
+            const double gcut = (!is14 ? lj_Gcut_[p] : lj_Gcut14_[p]);
+            gradient -= gcut * (lj_cutoff_ / r);
+
             const double fax = gradient * dx;
             const double fay = gradient * dy;
             const double faz = gradient * dz;
@@ -959,6 +1007,8 @@ void System::calculate_forces_EE()
         }
     }
 }
+
+
 
 
 

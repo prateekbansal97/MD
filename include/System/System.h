@@ -6,6 +6,8 @@
 #define MD_SYSTEM_H
 
 #include <utility>
+#include <vector>
+#include <algorithm>
 
 #include "../../include/AmberTopology/topology.h"
 
@@ -35,6 +37,8 @@ public:
 
     void apply_min_image(double& dx, double& dy, double& dz) const;
     static double min_image_1d(double d, double L);
+    void precompute_lj_energy_force_shift();
+
 
 
     void calculate_energies();
@@ -82,6 +86,11 @@ private:
 
     bool pbc_enabled_ = false;
     double boxLx_ = 0.0, boxLy_ = 0.0, boxLz_ = 0.0;
+
+    std::vector<double> lj_Ucut_;    // same indexing as A/B (nb-1)
+    std::vector<double> lj_Ucut14_;
+    std::vector<double> lj_Gcut_;    // same indexing as A/B (p = nb-1)
+    std::vector<double> lj_Gcut14_;  // same indexing as A14/B14
 
 };
 
