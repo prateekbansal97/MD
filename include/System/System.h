@@ -45,12 +45,15 @@ public:
     void set_box(const double Lx, const double Ly, const double Lz) {
         boxLx_ = Lx; boxLy_ = Ly; boxLz_ = Lz;
         pbc_enabled_ = (Lx > 0 && Ly > 0 && Lz > 0);
+        // if (pbc_enabled_) std::cout << "\nPBC Enabled! \n" ;
     }
+
     void set_lj_skin_(const double skin)
     {
         lj_skin_ = skin;
         lj_list_cutoff = lj_skin_ + lj_cutoff_;
         lj_list_cutoff2 = lj_list_cutoff*lj_list_cutoff;
+        // std::cout << "\nlj_list_cutoff2: " << lj_list_cutoff2 << std::endl;
     }
 
     void set_lj_list_cutoff(const double cutoff)
@@ -58,6 +61,7 @@ public:
         lj_list_cutoff = cutoff;
         lj_list_cutoff2 = cutoff*cutoff;
     }
+
     [[nodiscard]] double get_lj_list_cutoff() const {return lj_list_cutoff;}
     [[nodiscard]] double get_lj_skin() const {return lj_skin_;}
 
@@ -79,6 +83,7 @@ public:
     void calculate_UB_energy();
     void calculate_CMAP_energy();
     void calculate_LJ_energy();
+    void calculate_LJ_energy_pairlist();
     void calculate_EE_energy();
 
 
@@ -107,6 +112,7 @@ private:
     double improper_energy = 0.0;
     double CMAP_energy = 0.0;
     double LJ_energy = 0.0;
+    double LJ_energy_pairlist = 0.0;
     double EE_energy = 0.0;
 
     std::vector<int> type_;      // size N, 0-based type index
@@ -142,6 +148,8 @@ private:
     std::vector<LJPair> lj_pairs_;
     std::vector<int> head;
     std::vector<int> next;
+    std::vector<double> coordinates_ref_wrapped_;
+
 
 };
 
