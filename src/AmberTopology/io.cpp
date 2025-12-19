@@ -33,10 +33,10 @@ bool check_if_line_starts_with_string(const std::string& line, const std::string
 bool check_if_line_empty(const std::string& line)
 {
     // Returns true if the line is empty or contains only whitespace
-    return std::all_of(line.begin(), line.end(),
-                       [](const unsigned char ch) {
-                           return std::isspace(static_cast<unsigned char>(ch)) != 0;
-                       });
+    return std::ranges::all_of(line,
+                               [](const unsigned char ch) {
+                                   return std::isspace(static_cast<unsigned char>(ch)) != 0;
+                               });
 }
 
 
@@ -65,10 +65,10 @@ std::string extract_header(const std::string& line)
 
 bool check_if_whitespace_in_string(const std::string& line)
 {
-    return std::any_of(line.begin(), line.end(),
-                       [](const unsigned char ch) {
-                           return std::isspace(static_cast<unsigned char>(ch)) != 0;
-                       });
+    return std::ranges::any_of(line,
+                               [](const unsigned char ch) {
+                                   return std::isspace(static_cast<unsigned char>(ch)) != 0;
+                               });
 }
 
 std::vector<std::string> split_line_fixed_length(const std::string& line, const size_t field_length)
@@ -83,8 +83,8 @@ std::vector<std::string> split_line_fixed_length(const std::string& line, const 
 std::string remove_whitespaces_from_string(const std::string& str)
 {
     std::string result;
-    std::copy_if(str.begin(), str.end(), std::back_inserter(result),
-                 [](const unsigned char ch) { return !std::isspace(ch); });
+    std::ranges::copy_if(str, std::back_inserter(result),
+                         [](const unsigned char ch) { return !std::isspace(ch); });
     return result;
 }
 

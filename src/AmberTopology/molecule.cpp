@@ -5,7 +5,7 @@
 
 bool Molecule::check_if_residue_exists(const std::string& name)
 {
-    if (const auto it = std::find(residue_names.begin(), residue_names.end(), name); it == residue_names.end())
+    if (const auto it = std::ranges::find(residue_names, name); it == residue_names.end())
     {
         return false;
     }

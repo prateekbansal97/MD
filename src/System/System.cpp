@@ -10,7 +10,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-
+#include <array>
 #include "AmberTopology/CoulombicEE.h"
 
 void System::init()
@@ -21,10 +21,24 @@ void System::init()
     const auto boxdim = topology.get_box_dimensions();
     set_box(boxdim[0], boxdim[1], boxdim[2]);
     set_lj_cutoff(10.0);
+    set_lj_skin_(2.0);
+    init_box();
+
     if (const double halfmin = 0.5 * std::min({boxLx_, boxLy_, boxLz_}); pbc_enabled_ && lj_cutoff_ > halfmin) {
         std::cerr << "LJ cutoff too large for minimum image.\n";
     }
+
     precompute_lj_energy_force_shift();
+    build_lj_pairlist();
+
+    // int npair = 0;
+    // for (auto& [i, j, p, is14]: lj_pairs_)
+    // {
+    //     std::cout << "Pair " << npair << ": " << i << " and " << j << " and pair p " << p << " and ";
+    //     std::cout << std::boolalpha;
+    //     std::cout << " pair is14 " << is14 << "\n";
+    //     npair++;
+    // }
 
     calculate_energies();
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
@@ -51,16 +65,50 @@ inline void System::apply_min_image(double& dx, double& dy, double& dz) const {
     dz = min_image_1d(dz, boxLz_);
 }
 
+inline double System::wrap(double x, const double Lx)
+{
+    x -= Lx * std::floor(x/Lx);
+    return x;
+}
+
+inline int System::get_Cell_ID(const int ix, const int iy, const int iz) const
+{
+    return ix + nCells_x*(iy + nCells_y*iz);
+}
+
+int System::cell_number_along_dim(const double x, const double L, const int nCelldim)
+{
+    // x is assumed wrapped into [0, L)
+    int ix = static_cast<int>(x * nCelldim / L);   // 0..nCells-1
+    if (ix >= nCelldim) ix = nCelldim - 1;           // safety for x ~ L due to fp
+    if (ix < 0) ix = 0;
+    return ix;
+}
+
+void System::init_box()
+{
+    if (!pbc_enabled_) return;
+    nCells_x = std::max(1, static_cast<int>(std::floor(boxLx_ / get_lj_list_cutoff())));
+    nCells_y = std::max(1, static_cast<int>(std::floor(boxLy_ / get_lj_list_cutoff())));
+    nCells_z = std::max(1, static_cast<int>(std::floor(boxLz_ / get_lj_list_cutoff())));
+
+    lcell_x = boxLx_ / nCells_x;
+    lcell_y = boxLy_ / nCells_y;
+    lcell_z = boxLz_ / nCells_z;
+
+    nCells_ = nCells_x * nCells_y * nCells_z;
+}
+
 void System::build_nonbonded_cache()
 {
-    const size_t N = topology.get_num_atoms();
-    type_.resize(N);
-    q_.resize(N);
+    // const size_t N = topology.get_num_atoms();
+    type_.resize(natoms_);
+    q_.resize(natoms_);
 
     // 1) type[] and q[]
     int maxType = -1;
     const auto& atoms = topology.get_atoms();
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < natoms_; ++i) {
         const int ti = static_cast<int>(topology.atom_list_[i].get_atom_type_index()) - 1; // 0-based
         type_[i] = ti;
         q_[i] = atoms[i].get_partial_charge();
@@ -103,6 +151,107 @@ void System::precompute_lj_energy_force_shift() {
         lj_Gcut14_[p] = LennardJones::CalculateGradient(lj_cutoff2_, A14[p], B14[p]);
 }
 
+void System::build_lj_pairlist()
+{
+    if (!pbc_enabled_) return;
+    // const size_t N = topology.get_num_atoms();
+    lj_pairs_.clear();
+    lj_pairs_.reserve(natoms_ * 60);
+
+    const auto& coordinates = topology.get_coordinates();
+    // const double rlist = get_lj_list_cutoff();
+    head.assign(nCells_, -1);
+    next.assign(natoms_, -1);
+
+    for (int i = 0; i < natoms_; ++i) // Linked list based cell-division
+    {
+        const double x = wrap(coordinates[3*i], boxLx_);
+        const double y = wrap(coordinates[3*i + 1], boxLy_);
+        const double z = wrap(coordinates[3*i + 2], boxLz_);
+
+        const int ix = cell_number_along_dim(x, boxLx_, nCells_x);
+        const int iy = cell_number_along_dim(y, boxLy_, nCells_y);
+        const int iz = cell_number_along_dim(z, boxLz_, nCells_z);
+
+        const int cell_ID = get_Cell_ID(ix, iy, iz);
+        next[i] = head[cell_ID];
+        head[cell_ID] = i;
+    }
+
+    for (int iz = 0; iz < nCells_z; ++iz)
+    {
+        for (int iy = 0; iy < nCells_y; ++iy)
+        {
+            for (int ix = 0; ix < nCells_x; ++ix)
+            {
+                const int cell_ID_1 = get_Cell_ID(ix, iy, iz);
+                std::array<int, 27> neigh{};
+                int m = 0;
+
+                for (int dz = -1; dz <= 1; ++dz)
+                {
+                    for (int dy = -1; dy <= 1; ++dy)
+                    {
+                        for (int dx = -1; dx <= 1; ++dx)
+                        {
+                            const int jx = (ix + dx + nCells_x) % nCells_x;
+                            const int jy = (iy + dy + nCells_y) % nCells_y;
+                            const int jz = (iz + dz + nCells_z) % nCells_z;
+                            neigh[m++] = get_Cell_ID(jx, jy, jz);
+                        }
+                    }
+                }
+                std::sort(neigh.begin(), neigh.begin() + m);
+                m = static_cast<int>(std::unique(neigh.begin(), neigh.begin() + m) - neigh.begin());
+
+                for (int t = 0; t < m; ++t)
+                {
+                    const int cell_ID_2 = neigh[t];
+                    if (cell_ID_2 < cell_ID_1) continue;
+
+                    for (int i = head[cell_ID_1]; i != -1; i = next[i])
+                    {
+                        Atom& ai = topology.get_atoms()[i];
+                        const auto& excl = ai.get_excluded_atoms();
+
+                        const double x1 = coordinates[3*i];
+                        const double y1 = coordinates[3*i+1];
+                        const double z1 = coordinates[3*i+2];
+
+                        for (int j = head[cell_ID_2]; j != -1; j = next[j]) {
+
+                            if (cell_ID_1 == cell_ID_2 && j <= i) continue;
+
+                            bool is14 = false;
+                            if (std::ranges::binary_search(excl, j))
+                            {
+                                is14 = topology.is_14_pair(i, j);
+                                if (!is14) continue;
+                            }
+
+                            double dxv = x1 - coordinates[3*j];
+                            double dyv = y1 - coordinates[3*j+1];
+                            double dzv = z1 - coordinates[3*j+2];
+                            apply_min_image(dxv, dyv, dzv);
+
+                            if (const double r2 = dxv*dxv + dyv*dyv + dzv*dzv; r2 <= lj_list_cutoff2 && r2 > 1e-12)
+                            {
+                                const int ti = type_[i];
+                                const int tj = type_[j];
+                                const unsigned long nb = nb_flat_[static_cast<size_t>(ti) * nTypes_ + tj];
+
+                                if (nb == 0) continue; // in the PBC while-loop version const uint32_t
+
+                                const auto p = static_cast<uint32_t>(nb - 1);
+                                lj_pairs_.push_back(LJPair{i, j, p, static_cast<uint8_t>(is14 ? 1 : 0)});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 void System::calculate_energies()
 {
@@ -280,7 +429,7 @@ void System::calculate_LJ_energy()
     const std::vector<double>& coordinates = topology.get_coordinates();
     std::vector<Atom>& atom_list = topology.get_atoms();
 
-    const size_t N = topology.get_num_atoms();
+    // const size_t N = topology.get_num_atoms();
 
     const auto& A    = topology.get_lennard_jones_Acoefs_();
     const auto& B    = topology.get_lennard_jones_Bcoefs_();
@@ -289,17 +438,17 @@ void System::calculate_LJ_energy()
 
     LJ_energy = 0;
 
-    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
+    for (size_t atomAIndex = 0; atomAIndex < natoms_; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const std::vector<int>& excl = atomA.get_excluded_atoms();
 
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < natoms_; ++atomBIndex)
         {
             bool is14 = false;
 
-            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+            if (std::ranges::binary_search(excl, static_cast<int>(atomBIndex))) {
                 is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
                 if (!is14) continue; // excluded and not 1-4 => skip
             }
@@ -324,7 +473,7 @@ void System::calculate_LJ_energy()
 
             double Aij = 0, Bij = 0;
             // const auto p = nb - 1;
-            const size_t p = static_cast<size_t>(nb - 1);
+            const auto p = static_cast<size_t>(nb - 1);
 
             const double r = std::sqrt(r2);
 
@@ -350,20 +499,20 @@ void System::calculate_EE_energy()
 {
     const std::vector<double>& coordinates = topology.get_coordinates();
     std::vector<Atom>& atom_list = topology.get_atoms();
-    const size_t N = topology.get_num_atoms();
+    // const size_t N = topology.get_num_atoms();
 
     EE_energy = 0;
-    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
+    for (size_t atomAIndex = 0; atomAIndex < natoms_; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
         const std::vector<int>& excl = atomA.get_excluded_atoms();
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
 
 
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < natoms_; ++atomBIndex)
         {
             bool is14 = false;
-            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+            if (std::ranges::binary_search(excl, static_cast<int>(atomBIndex))) {
                 is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
                 if (!is14) continue; // excluded and not 1-4 => skip
             }
@@ -879,25 +1028,25 @@ void System::calculate_forces_LJ()
     const std::vector<double>& coordinates = topology.get_coordinates();
     std::vector<Atom>& atom_list = topology.get_atoms();
 
-    const size_t N = topology.get_num_atoms();
+    // const size_t N = topology.get_num_atoms();
     const auto& A    = topology.get_lennard_jones_Acoefs_();
     const auto& B    = topology.get_lennard_jones_Bcoefs_();
     const auto& A14  = topology.get_lennard_jones_14_Acoefs_();
     const auto& B14  = topology.get_lennard_jones_14_Bcoefs_();
 
 
-    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
+    for (size_t atomAIndex = 0; atomAIndex < natoms_; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
         const std::vector<int>& excl = atomA.get_excluded_atoms();
 
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < natoms_; ++atomBIndex)
         {
 
             bool is14 = false;
 
-            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+            if (std::ranges::binary_search(excl, static_cast<int>(atomBIndex))) {
                 is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
                 if (!is14) continue; // excluded and not 1-4 => skip
             }
@@ -927,7 +1076,7 @@ void System::calculate_forces_LJ()
 
             double Aij = 0, Bij = 0;
             // const auto p = nb - 1;
-            const size_t p = static_cast<size_t>(nb - 1);
+            const auto p = static_cast<size_t>(nb - 1);
 
             if (!is14) {
                 Aij = A[p];
@@ -961,20 +1110,20 @@ void System::calculate_forces_EE()
 {
     const std::vector<double>& coordinates = topology.get_coordinates();
     std::vector<Atom>& atom_list = topology.get_atoms();
-    const size_t N = topology.get_num_atoms();
+    // const size_t N = topology.get_num_atoms();
 
 
-    for (size_t atomAIndex = 0; atomAIndex < N; ++atomAIndex)
+    for (size_t atomAIndex = 0; atomAIndex < natoms_; ++atomAIndex)
     {
         Atom& atomA = atom_list[atomAIndex];
         const std::vector<int>& excl = atomA.get_excluded_atoms();
         const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
 
-        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < N; ++atomBIndex)
+        for (size_t atomBIndex = atomAIndex + 1; atomBIndex < natoms_; ++atomBIndex)
         {
             bool is14 = false;
 
-            if (std::binary_search(excl.begin(), excl.end(), static_cast<int>(atomBIndex))) {
+            if (std::ranges::binary_search(excl, static_cast<int>(atomBIndex))) {
                 is14 = topology.is_14_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
                 if (!is14) continue; // excluded and not 1-4 => skip
             }
