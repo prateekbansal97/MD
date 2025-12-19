@@ -20,8 +20,18 @@ void System::init()
 
     const auto boxdim = topology.get_box_dimensions();
     set_box(boxdim[0], boxdim[1], boxdim[2]);
+
     set_lj_cutoff(10.0);
     set_lj_skin_(2.0);
+    set_lj_switch_radius(9.0);
+
+    set_ee_cutoff(10.0);
+    set_ee_skin(2.0);
+
+
+
+    setup_neighbor_rebuild_threshold_lj();
+    setup_neighbor_rebuild_threshold_ee();
     init_box();
 
     if (const double halfmin = 0.5 * std::min({boxLx_, boxLy_, boxLz_}); pbc_enabled_ && lj_cutoff_ > halfmin) {
@@ -29,27 +39,121 @@ void System::init()
     }
 
     precompute_lj_energy_force_shift();
-    build_lj_pairlist();
-
-    // int npair = 0;
-    // for (auto& [i, j, p, is14]: lj_pairs_)
-    // {
-    //     std::cout << "Pair " << npair << ": " << i << " and " << j << " and pair p " << p << " and ";
-    //     std::cout << std::boolalpha;
-    //     std::cout << " pair is14 " << is14 << "\n";
-    //     npair++;
-    // }
+    setup_pairlists();
+    copy_ref_coords_lj();
+    copy_ref_coords_ee();
 
     calculate_energies();
     std::cout << "\n Bond:" << bond_energies << " Angle: " << angle_energy << " CosineDihedral: " << dihedral_energy <<
     " Urey-Bradley: " << urey_bradley_energy << " Impropers: " << improper_energy << " CMAP energy: " << CMAP_energy << "\n"
-    << "VDW: " << LJ_energy << " VDW pairlist: " << LJ_energy_pairlist << "\n" << "EE: " << EE_energy << "\n";
+    << "VDW: " << LJ_energy_pairlist << "\n" << "EE: " << EE_energy << " EE pairlist: " << EE_energy_pairlist << "\n";
 
     calculate_forces();
     std::cout << "Calculated Forces! \n";
     std::cout << forces[0] << " " << forces[1] << " " << forces[2] << "\n";
     std::cout << forces[3] << " " << forces[4] << " " << forces[5] << "\n";
     std::cout << forces[6] << " " << forces[7] << " " << forces[8] << "\n";
+
+    // std::cout << "LJ pairs: " << lj_pairs_.size() << "\n";
+    // std::cout << "EE pairs span size: " << ee_pairs_.size() << "\n";
+    // std::cout << "EE buf pairs: " << ee_pairs_buf_.size() << "\n";
+
+}
+
+
+void System::set_lj_switch(const double rswitch) {
+    lj_switch_ = rswitch;
+    lj_use_switch_ = (rswitch > 0.0);
+    // optional safety:
+    if (lj_use_switch_ && !(lj_switch_ < lj_cutoff_)) {
+        throw std::runtime_error("lj_switch must be < lj_cutoff");
+    }
+}
+
+inline void System::lj_switch_factors(const double r, double& S, double& dSdr) const {
+    if (!lj_use_switch_ || r <= lj_switch_) { S = 1.0; dSdr = 0.0; return; }
+    if (r >= lj_cutoff_)                    { S = 0.0; dSdr = 0.0; return; }
+
+    const double inv = 1.0 / (lj_cutoff_ - lj_switch_);
+    const double x   = (r - lj_switch_) * inv;   // x in (0,1)
+
+    const double x2 = x*x, x3 = x2*x, x4 = x2*x2, x5 = x4*x;
+
+    // S = 1 - 10x^3 + 15x^4 - 6x^5  (same as OpenMM, just reordered)
+    S = 1.0 - 10.0*x3 + 15.0*x4 - 6.0*x5;
+
+    // dS/dx = -30x^2 + 60x^3 - 30x^4
+    const double dSdx = (-30.0*x2 + 60.0*x3 - 30.0*x4);
+    dSdr = dSdx * inv;
+}
+
+
+void System::setup_pairlists()
+{
+    build_lj_pairlist(); // fills lj_pairs_
+
+    if ((lj_skin_ == ee_skin_) && (lj_cutoff_ == ee_cutoff_)) {
+        std::cout << "Using the same lists for LJ and EE...\n";
+        ee_pairs_ = std::span<const NBPair>(lj_pairs_);
+        ee_pairs_buf_.clear();              // no duplicate allocation in use
+        ee_pairs_buf_.shrink_to_fit();    // optional if you want to release memory
+
+    } else {
+        build_ee_pairlist();                // fills ee_pairs_buf_
+        ee_pairs_ = std::span<const NBPair>(ee_pairs_buf_);
+    }
+}
+
+void System::setup_neighbor_rebuild_threshold_lj() {
+    const double half_skin = 0.5 * lj_skin_;
+    rebuild_disp2_lj = half_skin * half_skin;
+    coordinates_ref_wrapped_lj.resize(3 * natoms_);
+}
+
+void System::setup_neighbor_rebuild_threshold_ee() {
+    const double half_skin = 0.5 * ee_skin_;
+    rebuild_disp2_ee = half_skin * half_skin;
+    coordinates_ref_wrapped_ee.resize(3 * natoms_);
+}
+
+void System::copy_ref_coords_lj() {
+    const auto& c = topology.get_coordinates();
+    for (size_t i = 0; i < 3 * natoms_; ++i) coordinates_ref_wrapped_lj[i] = c[i];
+}
+
+void System::copy_ref_coords_ee() {
+    const auto& c = topology.get_coordinates();
+    for (size_t i = 0; i < 3 * natoms_; ++i) coordinates_ref_wrapped_ee[i] = c[i];
+}
+
+bool System::ljpairs_needs_rebuild() {
+    const auto& c = topology.get_coordinates();
+    double max_dr2 = 0.0;
+
+    for (int i = 0; i < natoms_; ++i) {
+        double dx = c[3*i]   - coordinates_ref_wrapped_lj[3*i];
+        double dy = c[3*i+1] - coordinates_ref_wrapped_lj[3*i+1];
+        double dz = c[3*i+2] - coordinates_ref_wrapped_lj[3*i+2];
+        apply_min_image(dx, dy, dz);
+        if (const double dr2 = dx*dx + dy*dy + dz*dz; dr2 > max_dr2) max_dr2 = dr2;
+        if (max_dr2 > rebuild_disp2_lj) return true; // early exit
+    }
+    return false;
+}
+
+bool System::eepairs_needs_rebuild() {
+    const auto& c = topology.get_coordinates();
+    double max_dr2 = 0.0;
+
+    for (int i = 0; i < natoms_; ++i) {
+        double dx = c[3*i]   - coordinates_ref_wrapped_ee[3*i];
+        double dy = c[3*i+1] - coordinates_ref_wrapped_ee[3*i+1];
+        double dz = c[3*i+2] - coordinates_ref_wrapped_ee[3*i+2];
+        apply_min_image(dx, dy, dz);
+        if (const double dr2 = dx*dx + dy*dy + dz*dz; dr2 > max_dr2) max_dr2 = dr2;
+        if (max_dr2 > rebuild_disp2_ee) return true; // early exit
+    }
+    return false;
 }
 
 inline double System::min_image_1d(double d, const double L) {
@@ -71,9 +175,14 @@ inline double System::wrap(double x, const double Lx)
     return x;
 }
 
-inline int System::get_Cell_ID(const int ix, const int iy, const int iz) const
+inline int System::get_Cell_ID_lj(const int ix, const int iy, const int iz) const
 {
-    return ix + nCells_x*(iy + nCells_y*iz);
+    return ix + nCells_x_lj*(iy + nCells_y_lj*iz);
+}
+
+inline int System::get_Cell_ID_ee(const int ix, const int iy, const int iz) const
+{
+    return ix + nCells_x_ee*(iy + nCells_y_ee*iz);
 }
 
 int System::cell_number_along_dim(const double x, const double L, const int nCelldim)
@@ -89,15 +198,25 @@ int System::cell_number_along_dim(const double x, const double L, const int nCel
 void System::init_box()
 {
     if (!pbc_enabled_) return;
-    nCells_x = std::max(1, static_cast<int>(std::floor(boxLx_ / get_lj_list_cutoff())));
-    nCells_y = std::max(1, static_cast<int>(std::floor(boxLy_ / get_lj_list_cutoff())));
-    nCells_z = std::max(1, static_cast<int>(std::floor(boxLz_ / get_lj_list_cutoff())));
+    nCells_x_lj = std::max(1, static_cast<int>(std::floor(boxLx_ / get_lj_list_cutoff())));
+    nCells_y_lj = std::max(1, static_cast<int>(std::floor(boxLy_ / get_lj_list_cutoff())));
+    nCells_z_lj = std::max(1, static_cast<int>(std::floor(boxLz_ / get_lj_list_cutoff())));
 
-    lcell_x = boxLx_ / nCells_x;
-    lcell_y = boxLy_ / nCells_y;
-    lcell_z = boxLz_ / nCells_z;
+    lcell_x_lj = boxLx_ / nCells_x_lj;
+    lcell_y_lj = boxLy_ / nCells_y_lj;
+    lcell_z_lj = boxLz_ / nCells_z_lj;
 
-    nCells_ = nCells_x * nCells_y * nCells_z;
+    nCells_lj_ = nCells_x_lj * nCells_y_lj * nCells_z_lj;
+
+    nCells_x_ee = std::max(1, static_cast<int>(std::floor(boxLx_ / get_ee_list_cutoff())));
+    nCells_y_ee = std::max(1, static_cast<int>(std::floor(boxLy_ / get_ee_list_cutoff())));
+    nCells_z_ee = std::max(1, static_cast<int>(std::floor(boxLz_ / get_ee_list_cutoff())));
+
+    lcell_x_ee = boxLx_ / nCells_x_ee;
+    lcell_y_ee = boxLy_ / nCells_y_ee;
+    lcell_z_ee = boxLz_ / nCells_z_ee;
+
+    nCells_ee_ = nCells_x_ee * nCells_y_ee * nCells_z_ee;
 }
 
 void System::build_nonbonded_cache()
@@ -161,7 +280,7 @@ void System::build_lj_pairlist()
 
     const auto& coordinates = topology.get_coordinates();
     // const double rlist = get_lj_list_cutoff();
-    head.assign(nCells_, -1);
+    head.assign(nCells_lj_, -1);
     next.assign(natoms_, -1);
 
     for (int i = 0; i < natoms_; ++i) // Linked list based cell-division
@@ -170,22 +289,22 @@ void System::build_lj_pairlist()
         const double y = wrap(coordinates[3*i + 1], boxLy_);
         const double z = wrap(coordinates[3*i + 2], boxLz_);
 
-        const int ix = cell_number_along_dim(x, boxLx_, nCells_x);
-        const int iy = cell_number_along_dim(y, boxLy_, nCells_y);
-        const int iz = cell_number_along_dim(z, boxLz_, nCells_z);
+        const int ix = cell_number_along_dim(x, boxLx_, nCells_x_lj);
+        const int iy = cell_number_along_dim(y, boxLy_, nCells_y_lj);
+        const int iz = cell_number_along_dim(z, boxLz_, nCells_z_lj);
 
-        const int cell_ID = get_Cell_ID(ix, iy, iz);
+        const int cell_ID = get_Cell_ID_lj(ix, iy, iz);
         next[i] = head[cell_ID];
         head[cell_ID] = i;
     }
 
-    for (int iz = 0; iz < nCells_z; ++iz)
+    for (int iz = 0; iz < nCells_z_lj; ++iz)
     {
-        for (int iy = 0; iy < nCells_y; ++iy)
+        for (int iy = 0; iy < nCells_y_lj; ++iy)
         {
-            for (int ix = 0; ix < nCells_x; ++ix)
+            for (int ix = 0; ix < nCells_x_lj; ++ix)
             {
-                const int cell_ID_1 = get_Cell_ID(ix, iy, iz);
+                const int cell_ID_1 = get_Cell_ID_lj(ix, iy, iz);
                 // std::cout << " \n cell ID 1: " << cell_ID_1 << std::endl;
                 std::array<int, 27> neigh{};
                 int m = 0;
@@ -196,10 +315,10 @@ void System::build_lj_pairlist()
                     {
                         for (int dx = -1; dx <= 1; ++dx)
                         {
-                            const int jx = (ix + dx + nCells_x) % nCells_x;
-                            const int jy = (iy + dy + nCells_y) % nCells_y;
-                            const int jz = (iz + dz + nCells_z) % nCells_z;
-                            neigh[m++] = get_Cell_ID(jx, jy, jz);
+                            const int jx = (ix + dx + nCells_x_lj) % nCells_x_lj;
+                            const int jy = (iy + dy + nCells_y_lj) % nCells_y_lj;
+                            const int jz = (iz + dz + nCells_z_lj) % nCells_z_lj;
+                            neigh[m++] = get_Cell_ID_lj(jx, jy, jz);
                         }
                     }
                 }
@@ -244,7 +363,7 @@ void System::build_lj_pairlist()
                                 if (nb == 0) continue; // in the PBC while-loop version const uint32_t
 
                                 const auto p = static_cast<uint32_t>(nb - 1);
-                                lj_pairs_.push_back(LJPair{a, b, p, static_cast<uint8_t>(is14 ? 1 : 0)});
+                                lj_pairs_.push_back(NBPair{a, b, p, static_cast<uint8_t>(is14 ? 1 : 0)});
                             }
                         }
                     }
@@ -252,10 +371,108 @@ void System::build_lj_pairlist()
             }
         }
     }
-    // for (const auto& [i, j, p, is14]: lj_pairs_)
-    // {
-    //     if (is14 == 1) std::cout << "\nLJ pair in between " << i << " and " << j << " with p = " << p << " and 14: " << static_cast<unsigned int>(is14);
-    // }
+}
+
+void System::build_ee_pairlist()
+{
+    if (!pbc_enabled_) return;
+    // const size_t N = topology.get_num_atoms();
+    ee_pairs_buf_.clear();
+    ee_pairs_buf_.reserve(natoms_ * 60);
+
+    const auto& coordinates = topology.get_coordinates();
+    // const double rlist = get_ee_list_cutoff();
+    head.assign(nCells_ee_, -1);
+    next.assign(natoms_, -1);
+
+    for (int i = 0; i < natoms_; ++i) // Linked list based cell-division
+    {
+        const double x = wrap(coordinates[3*i], boxLx_);
+        const double y = wrap(coordinates[3*i + 1], boxLy_);
+        const double z = wrap(coordinates[3*i + 2], boxLz_);
+
+        const int ix = cell_number_along_dim(x, boxLx_, nCells_x_ee);
+        const int iy = cell_number_along_dim(y, boxLy_, nCells_y_ee);
+        const int iz = cell_number_along_dim(z, boxLz_, nCells_z_ee);
+
+        const int cell_ID = get_Cell_ID_ee(ix, iy, iz);
+        next[i] = head[cell_ID];
+        head[cell_ID] = i;
+    }
+
+    for (int iz = 0; iz < nCells_z_ee; ++iz)
+    {
+        for (int iy = 0; iy < nCells_y_ee; ++iy)
+        {
+            for (int ix = 0; ix < nCells_x_ee; ++ix)
+            {
+                const int cell_ID_1 = get_Cell_ID_ee(ix, iy, iz);
+                // std::cout << " \n cell ID 1: " << cell_ID_1 << std::endl;
+                std::array<int, 27> neigh{};
+                int m = 0;
+
+                for (int dz = -1; dz <= 1; ++dz)
+                {
+                    for (int dy = -1; dy <= 1; ++dy)
+                    {
+                        for (int dx = -1; dx <= 1; ++dx)
+                        {
+                            const int jx = (ix + dx + nCells_x_ee) % nCells_x_ee;
+                            const int jy = (iy + dy + nCells_y_ee) % nCells_y_ee;
+                            const int jz = (iz + dz + nCells_z_ee) % nCells_z_ee;
+                            neigh[m++] = get_Cell_ID_ee(jx, jy, jz);
+                        }
+                    }
+                }
+
+                std::sort(neigh.begin(), neigh.begin() + m);
+                m = static_cast<int>(std::unique(neigh.begin(), neigh.begin() + m) - neigh.begin());
+
+                for (int t = 0; t < m; ++t)
+                {
+                    const int cell_ID_2 = neigh[t];
+                    if (cell_ID_2 < cell_ID_1) continue;
+
+                    for (int i = head[cell_ID_1]; i != -1; i = next[i])
+                    {
+                        for (int j = head[cell_ID_2]; j != -1; j = next[j]) {
+
+                            if (cell_ID_1 == cell_ID_2 && j <= i) continue;
+
+                            int a = i, b = j;
+                            if (b < a) std::swap(a, b);
+
+                            const auto& excl = topology.get_atoms()[a].get_excluded_atoms();
+
+                            bool is14 = false;
+                            if (std::ranges::binary_search(excl, b))
+                            {
+                                is14 = topology.is_14_pair(a, b);
+                                if (!is14) continue;
+                            }
+
+                            double dxv = coordinates[3*a]   - coordinates[3*b];
+                            double dyv = coordinates[3*a+1] - coordinates[3*b+1];
+                            double dzv = coordinates[3*a+2] - coordinates[3*b+2];
+                            apply_min_image(dxv, dyv, dzv);
+
+                            if (const double r2 = dxv*dxv + dyv*dyv + dzv*dzv; r2 <= ee_list_cutoff2 && r2 > 1e-12)
+                            {
+                                const int ti = type_[a];
+                                const int tj = type_[b];
+                                const unsigned long nb = nb_flat_[static_cast<size_t>(ti) * nTypes_ + tj];
+
+                                if (nb == 0) continue; // in the PBC while-loop version const uint32_t
+
+                                const auto p = static_cast<uint32_t>(nb - 1);
+                                ee_pairs_buf_.push_back(NBPair{a, b, p, static_cast<uint8_t>(is14 ? 1 : 0)});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void System::calculate_energies()
@@ -263,12 +480,13 @@ void System::calculate_energies()
     calculate_bond_energy();
     calculate_angle_energy();
     calculate_dihedral_energy();
+
     calculate_UB_energy();
     calculate_improper_energy();
     calculate_CMAP_energy();
-    calculate_LJ_energy();
     calculate_LJ_energy_pairlist();
     calculate_EE_energy();
+    calculate_EE_energy_pairlist();
 }
 
 void System::calculate_bond_energy()
@@ -506,7 +724,7 @@ void System::calculate_LJ_energy_pairlist()
 
     LJ_energy_pairlist = 0;
     const std::vector<double>& coordinates = topology.get_coordinates();
-    std::vector<Atom>& atom_list = topology.get_atoms();
+    // std::vector<Atom>& atom_list = topology.get_atoms();
 
     // const size_t N = topology.get_num_atoms();
 
@@ -545,10 +763,17 @@ void System::calculate_LJ_energy_pairlist()
 
         // const double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
         double energy = LennardJones::CalculateEnergy(r2, Aij, Bij);
-        energy -= (!is14 ? lj_Ucut_[p] : lj_Ucut14_[p]);
-        const double gcut = (!is14 ? lj_Gcut_[p] : lj_Gcut14_[p]);
-        energy += (r - lj_cutoff_) * (gcut * lj_cutoff_);
-        std::cout << energy << std::endl;
+
+        if (lj_use_switch_) {
+            double S, dSdr;
+            lj_switch_factors(r, S, dSdr); // for r<=rswitch this should return S=1
+            energy *= S;
+        } else {
+            energy -= (!is14 ? lj_Ucut_[p] : lj_Ucut14_[p]);
+            const double gcut = (!is14 ? lj_Gcut_[p] : lj_Gcut14_[p]);
+            energy += (r - lj_cutoff_) * (gcut * lj_cutoff_);
+        }
+
         LJ_energy_pairlist += energy;
     }
 }
@@ -584,6 +809,8 @@ void System::calculate_EE_energy()
             apply_min_image(dx,dy,dz);
             const double r2 = dx*dx + dy*dy + dz*dz;
             if (r2 < 1e-12) continue;
+            if (r2 > ee_cutoff2_) continue;
+
             const double r = std::sqrt(r2);
 
             double scale = 1.0;
@@ -593,6 +820,41 @@ void System::calculate_EE_energy()
 
             EE_energy += energy;
         }
+    }
+}
+
+void System::calculate_EE_energy_pairlist()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+    // std::vector<Atom>& atom_list = topology.get_atoms();
+    // const size_t N = topology.get_num_atoms();
+
+    EE_energy_pairlist = 0;
+    for (auto& [atomAIndex, atomBIndex, p, is14]: ee_pairs_)
+    {
+        // Atom& atomA = atom_list[atomAIndex];
+        // const std::vector<int>& excl = atomA.get_excluded_atoms();
+
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+        const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+        // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        double dz = z1 - z2;
+        apply_min_image(dx,dy,dz);
+        const double r2 = dx*dx + dy*dy + dz*dz;
+        if (r2 < 1e-12) continue;
+        if (r2 > ee_cutoff2_) continue;
+
+        const double r = std::sqrt(r2);
+
+        double scale = 1.0;
+        if (is14) scale = topology.get_scee_scale_for_pair(static_cast<int>(atomAIndex), static_cast<int>(atomBIndex));
+
+        const double energy = (1/scale) * CoulombicEE::CalculateEnergy(r, q_[atomAIndex], q_[atomBIndex], 1);
+
+        EE_energy_pairlist += energy;
     }
 }
 
@@ -606,7 +868,8 @@ void System::calculate_forces()
     calculate_forces_cosinedihedrals();
     calculate_forces_harmonicImpropers();
     calculate_forces_cmap();
-    calculate_forces_LJ();
+    // calculate_forces_LJ();
+    calculate_forces_LJ_pairlist();
     calculate_forces_EE();
 }
 
@@ -1163,6 +1426,73 @@ void System::calculate_forces_LJ()
         }
     }
 }
+
+void System::calculate_forces_LJ_pairlist()
+{
+    const std::vector<double>& coordinates = topology.get_coordinates();
+
+    const auto& A    = topology.get_lennard_jones_Acoefs_();
+    const auto& B    = topology.get_lennard_jones_Bcoefs_();
+    const auto& A14  = topology.get_lennard_jones_14_Acoefs_();
+    const auto& B14  = topology.get_lennard_jones_14_Bcoefs_();
+
+    for (auto& [atomAIndex, atomBIndex, p, is14]: lj_pairs_)
+    {
+        const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+        const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+        // double distance_AB = distance(x1, y1, z1, x2, y2, z2);
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        double dz = z1 - z2;
+        apply_min_image(dx,dy,dz);
+        const double r2 = dx*dx + dy*dy + dz*dz;
+
+        if (r2 > lj_cutoff2_) continue;
+        if (r2 < 1e-12) continue;
+
+        const double r = std::sqrt(r2);
+        if (r < 1e-12) continue;
+
+        double Aij = 0, Bij = 0;
+
+        if (!is14) {
+            Aij = A[p];
+            Bij = B[p];
+        } else {
+            Aij = A14[p];
+            Bij = B14[p];
+        }
+
+
+        double gradient = LennardJones::CalculateGradient(r2, Aij, Bij);
+        // const double gcut = (!is14 ? lj_Gcut_[p] : lj_Gcut14_[p]);
+        // gradient -= gcut * (lj_cutoff_ / r);
+
+        if (lj_use_switch_) {
+            double S, dSdr;
+            lj_switch_factors(r, S, dSdr);
+            const double U = LennardJones::CalculateEnergy(r2, Aij, Bij);
+            gradient = S*gradient - (U / r) * dSdr;
+        } else {
+            // Force-shift to make force go to 0 at cutoff
+            const double gcut = (!is14 ? lj_Gcut_[p] : lj_Gcut14_[p]);   // g(rc) = -U'(rc)/rc
+            gradient -= gcut * (lj_cutoff_ / r);                                // => (-U'(r)+U'(rc))/r
+        }
+
+        const double fax = gradient * dx;
+        const double fay = gradient * dy;
+        const double faz = gradient * dz;
+
+        const double fbx = -fax;
+        const double fby = -fay;
+        const double fbz = -faz;
+
+        forces[3*atomAIndex] += fax; forces[3*atomAIndex+1] += fay; forces[3*atomAIndex+2] += faz;
+        forces[3*atomBIndex] += fbx; forces[3*atomBIndex+1] += fby; forces[3*atomBIndex+2] += fbz;
+    }
+}
+
 
 void System::calculate_forces_EE()
 {
