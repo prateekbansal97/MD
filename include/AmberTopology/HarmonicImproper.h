@@ -9,60 +9,65 @@ class HarmonicImproper
 
     public:
         HarmonicImproper(const double IMP_force_constant, const double IMP_Phase) :
-            IMP_force_constant(IMP_force_constant),
-            IMP_Phase(IMP_Phase),
-            atomA_index(-1),
-            atomB_index(-1),
-            atomC_index(-1),
-            atomD_index(-1), type(0), dihedral(0), energy(0) {}
+            IMP_force_constant_(IMP_force_constant),
+            IMP_Phase_(IMP_Phase),
+            atomA_index_(-1),
+            atomB_index_(-1),
+            atomC_index_(-1),
+            atomD_index_(-1), type_(0), dihedral_(0), energy_(0) {}
 
         HarmonicImproper(const double IMP_force_constant, const double IMP_Phase, const int atomA_index, const int atomB_index, const int atomC_index, const int atomD_index) :
-            IMP_force_constant(IMP_force_constant),
-            IMP_Phase(IMP_Phase),
-            atomA_index(atomA_index),
-            atomB_index(atomB_index),
-            atomC_index(atomC_index),
-            atomD_index(atomD_index), type(0), dihedral(0), energy(0) {}
+            IMP_force_constant_(IMP_force_constant),
+            IMP_Phase_(IMP_Phase),
+            atomA_index_(atomA_index),
+            atomB_index_(atomB_index),
+            atomC_index_(atomC_index),
+            atomD_index_(atomD_index), type_(0), dihedral_(0), energy_(0) {}
 
         HarmonicImproper(const int atomA_index, const int atomB_index, const int atomC_index, const int atomD_index) :
-            IMP_force_constant(0.0),
-            IMP_Phase(0.0),
-            atomA_index(atomA_index),
-            atomB_index(atomB_index),
-            atomC_index(atomC_index),
-            atomD_index(atomD_index), type(0),
-            dihedral(0), energy(0) {}
+            IMP_force_constant_(0.0),
+            IMP_Phase_(0.0),
+            atomA_index_(atomA_index),
+            atomB_index_(atomB_index),
+            atomC_index_(atomC_index),
+            atomD_index_(atomD_index), type_(0),
+            dihedral_(0), energy_(0) {}
 
-        [[nodiscard]] double return_energy(double distance) const;
-        void set_energy(const double energy_) {this->energy = energy_;}
+        void set_energy(const double energy_) {this->energy_ = energy_;}
 
 
-        void set_type(const int type_id) { this->type = type_id; }
-        [[nodiscard]] int get_type() const { return type; }
+        void set_type(const int type_id) { this->type_ = type_id; }
 
-        void set_IMP_force_constant(const double force_constant) {this->IMP_force_constant = force_constant; }
-        [[nodiscard]] double get_IMP_force_constant() const {return IMP_force_constant; }
+        void set_IMP_force_constant(const double force_constant) {this->IMP_force_constant_ = force_constant; }
 
-        void set_IMP_phase_value(const double phase_value) {this->IMP_Phase = phase_value; }
-        [[nodiscard]] double get_IMP_phase_value() const {return IMP_Phase; }
+        void set_IMP_phase_value(const double phase_value) {this->IMP_Phase_ = phase_value; }
 
-        void set_imp_dihedral(const double dihedral_) {this->dihedral = dihedral_;}
-        [[nodiscard]] double get_imp_dihedral() const {return this->dihedral;}
+        void set_imp_dihedral(const double dihedral_) {this->dihedral_ = dihedral_;}
 
-        [[nodiscard]] int get_atomA_index() const {return atomA_index; }
-        [[nodiscard]] int get_atomB_index() const {return atomB_index; }
-        [[nodiscard]] int get_atomC_index() const {return atomC_index; }
-        [[nodiscard]] int get_atomD_index() const {return atomD_index; }
+        [[nodiscard]] int get_type() const { return type_; }
+        [[nodiscard]] double get_IMP_force_constant() const {return IMP_force_constant_; }
+        [[nodiscard]] double get_IMP_phase_value() const {return IMP_Phase_; }
+        [[nodiscard]] double get_imp_dihedral() const {return this->dihedral_;}
+        [[nodiscard]] int get_atomA_index() const {return atomA_index_; }
+        [[nodiscard]] int get_atomB_index() const {return atomB_index_; }
+        [[nodiscard]] int get_atomC_index() const {return atomC_index_; }
+        [[nodiscard]] int get_atomD_index() const {return atomD_index_; }
+        [[nodiscard]] double get_energy() const {return energy_;}
     
     private:
-        double IMP_force_constant;
-        double IMP_Phase;
-        int atomA_index;
-        int atomB_index;
-        int atomC_index;
-        int atomD_index;
-        int type;
-        double dihedral;
-        double energy;
+        double IMP_force_constant_;
+        double IMP_Phase_;
+        int atomA_index_;
+        int atomB_index_;
+        int atomC_index_;
+        int atomD_index_;
+        int type_;
+        double dihedral_;
+        double energy_;
+
+        [[nodiscard]] double calculate_energy(double distance) const;
+
+        friend class System;
+
 };
 #endif //HARMONIIMPROPER_H

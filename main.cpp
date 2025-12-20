@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <string>
-#include "include/AmberTopology/topology.h"
+#include "include/AmberTopology/Topology.h"
 #include "include/System/System.h"
 int main(const int argc, char* argv[])
 {

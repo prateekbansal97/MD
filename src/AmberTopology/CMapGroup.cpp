@@ -77,11 +77,11 @@ std::pair<double, double> CMapGroup::return_gradient_linear(const double phi_, c
     return {dE_dphi, dE_dpsi};
 }
 
-double CMapGroup::return_energy_bicubic(const double phi_, const double psi_, const int resolution, const std::vector<double>& coeffs, const std::vector<double>& grid_energies) const
+double CMapGroup::return_energy_bicubic(const double phi, const double psi, const int resolution, const std::vector<double>& coeffs, const std::vector<double>& grid_energies) const
 {
     // 1. STANDARDIZE ANGLES TO [0, 2*PI]
-    double phi_shifted = phi_;
-    double psi_shifted = psi_;
+    double phi_shifted = phi;
+    double psi_shifted = psi;
 
     while (phi_shifted <= -M_PI) phi_shifted += 2.0 * M_PI;
     while (phi_shifted > M_PI)   phi_shifted -= 2.0 * M_PI;
@@ -114,7 +114,7 @@ double CMapGroup::return_energy_bicubic(const double phi_, const double psi_, co
 
 
     const int cmap_stride = resolution * resolution * 16;
-    const int cmap_start = (parameter_set - 1) * cmap_stride;
+    const int cmap_start = (parameter_set_ - 1) * cmap_stride;
     const int cell_index = (row_grid * resolution + col_grid);
     const int coeff_start_index = cmap_start + (cell_index * 16);
 
@@ -143,11 +143,11 @@ double CMapGroup::return_energy_bicubic(const double phi_, const double psi_, co
 
 //#include <utility> // For std::pair
 
-std::pair<double, double> CMapGroup::return_gradient_bicubic(const double phi_, const double psi_, const int resolution, const std::vector<double>& coeffs, const std::vector<double>& grid_energies) const
+std::pair<double, double> CMapGroup::return_gradient_bicubic(const double phi, const double psi, const int resolution, const std::vector<double>& coeffs, const std::vector<double>& grid_energies) const
 {
     // 1. STANDARDIZE ANGLES
-    double phi_shifted = phi_;
-    double psi_shifted = psi_;
+    double phi_shifted = phi;
+    double psi_shifted = psi;
 
     while (phi_shifted <= -M_PI) phi_shifted += 2.0 * M_PI;
     while (phi_shifted > M_PI)   phi_shifted -= 2.0 * M_PI;
@@ -180,7 +180,7 @@ std::pair<double, double> CMapGroup::return_gradient_bicubic(const double phi_, 
 
     // 4. LOCATE COEFFICIENTS
     const int cmap_stride = resolution * resolution * 16;
-    const int cmap_start = (parameter_set - 1) * cmap_stride;
+    const int cmap_start = (parameter_set_ - 1) * cmap_stride;
     const int cell_index = (row_grid * resolution + col_grid);
     const int coeff_start_index = cmap_start + (cell_index * 16);
 

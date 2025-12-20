@@ -1,8 +1,8 @@
 
 #include "AmberTopology/HarmonicAngle.h"
 
-double HarmonicAngle::return_energy(const double angle_) const
+double HarmonicAngle::calculate_energy(const double angle) const
 {
-    const double energy_ = Angle_force_constant*(angle_ - Angle_Equil)*(angle_ - Angle_Equil);
-    return energy_;
+    const double energy = Angle_force_constant_*(angle - Angle_Equil_)*(angle - Angle_Equil_);
+    return energy;
 }

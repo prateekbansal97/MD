@@ -7,9 +7,10 @@
 
 class CoulombicEE
 {
-public:
+private:
     static double CalculateEnergy(double r, double chargeA, double chargeB, double epsilon);
     static double CalculateGradient(double r, double chargeA, double chargeB, double epsilon);
+    friend class System;
 };
 
 #endif //MD_COULOMBICEE_H

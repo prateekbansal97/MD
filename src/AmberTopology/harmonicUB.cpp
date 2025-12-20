@@ -1,9 +1,9 @@
 
 #include "AmberTopology/harmonicUB.h"
 
-double HarmonicUB::return_energy(const double distance_) const
+double HarmonicUB::calculate_energy(const double distance) const
 {
-    const double force = UB_force_constant*(distance_ - UB_force_equil)*(distance_ - UB_force_equil);
+    const double force = UB_force_constant_*(distance - UB_force_equil_)*(distance - UB_force_equil_);
     return force;
 }
 

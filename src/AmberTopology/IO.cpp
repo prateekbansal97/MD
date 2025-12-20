@@ -1,5 +1,5 @@
 
-#include "AmberTopology/io.h"
+#include "AmberTopology/IO.h"
 
 #include <string>
 #include <cstdlib>

@@ -1,11 +1,11 @@
-#include "AmberTopology/molecule.h"
+#include "AmberTopology/Molecule.h"
 #include <string>
 #include <algorithm>
 #include <iostream>
 
 bool Molecule::check_if_residue_exists(const std::string& name)
 {
-    if (const auto it = std::ranges::find(residue_names, name); it == residue_names.end())
+    if (const auto it = std::ranges::find(residue_names_, name); it == residue_names_.end())
     {
         return false;
     }
@@ -17,7 +17,7 @@ bool Molecule::check_if_residue_exists(const std::string& name)
 
 void Molecule::print_residue_names()
 {
-    for (std::string& name: residue_names)
+    for (std::string& name: residue_names_)
     {
         std::cout << name << "\n";
     }

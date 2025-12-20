@@ -36,7 +36,7 @@ add_library(amber_topology
         src/AmberTopology/HarmonicBond.cpp
         src/AmberTopology/HarmonicAngle.cpp
         src/AmberTopology/CosineDihedral.cpp
-        src/AmberTopology/CMapGroup.cpp
+        src/AmberTopology/cmapgroup.cpp
         src/AmberTopology/molecule.cpp
         src/AmberTopology/LennardJones.cpp
         include/AmberTopology/LennardJones.h
@@ -51,7 +51,7 @@ target_compile_features(amber_topology PUBLIC cxx_std_17)
 add_library(md_system
         src/System/system.cpp
         src/System/metrics.cpp
-        include/System/Metrics.h
+        include/System/metrics.h
 )
 target_include_directories(md_system PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(md_system PUBLIC amber_topology)

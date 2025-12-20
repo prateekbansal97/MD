@@ -7,13 +7,12 @@
 
 class LennardJones
 {
-    public:
-    // LennardJones();
-    // ~LennardJones();
+private:
 
     static double CalculateEnergy(double distance, double Aij, double Bij);
     static double CalculateGradient(double r2, double Aij, double Bij);
 
+    friend class System;
 };
 
 #endif //MD_LENNARDJONES_H
