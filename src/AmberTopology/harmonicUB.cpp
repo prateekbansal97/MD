@@ -1,6 +1,5 @@
 
-// #include "../../include/AmberTopology/atom.h"
-#include "../../include/AmberTopology/harmonicUB.h"
+#include "AmberTopology/harmonicUB.h"
 
 double HarmonicUB::return_energy(const double distance_) const
 {

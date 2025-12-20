@@ -1,14 +1,14 @@
 
+#include "AmberTopology/io.h"
+
 #include <string>
 #include <cstdlib>
 #include <vector>
-// #include <cctype>
 #include <algorithm>
 #include <numeric> 
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
-#include "../../include/AmberTopology/io.h"
 
 bool check_first_char(const std::string& line, const char target)
  {

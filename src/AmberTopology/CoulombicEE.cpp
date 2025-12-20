@@ -2,9 +2,7 @@
 // Created by Prateek Bansal on 12/13/25.
 //
 
-//18.2206899283247L
-
-#include "../../include/AmberTopology/CoulombicEE.h"
+#include "AmberTopology/CoulombicEE.h"
 
 double CoulombicEE::CalculateEnergy(const double r, const double chargeA, const double chargeB, const double epsilon)
 {

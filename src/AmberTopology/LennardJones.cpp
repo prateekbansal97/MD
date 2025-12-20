@@ -2,8 +2,7 @@
 // Created by Prateek Bansal on 12/12/25.
 //
 
-#include "../../include/AmberTopology/LennardJones.h"
-// #include <cmath>
+#include "AmberTopology/LennardJones.h"
 
 double LennardJones::CalculateEnergy(const double r2, const double Aij, const double Bij)
 {

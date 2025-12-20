@@ -5,16 +5,16 @@
 #include <vector>
 #include <algorithm>
 
-#include "../../include/AmberTopology/topology.h"
-#include "../../include/AmberTopology/harmonicUB.h"
-#include "../../include/AmberTopology/atom.h"
-#include "../../include/AmberTopology/io.h"
-#include "../../include/AmberTopology/element.h"
-#include "../../include/AmberTopology/HarmonicBond.h"
-#include "../../include/AmberTopology/HarmonicAngle.h"
-#include "../../include/AmberTopology/CosineDihedral.h"
-#include "../../include/AmberTopology/CMapGroup.h"
-#include "../../include/AmberTopology/molecule.h"
+#include "AmberTopology/topology.h"
+#include "AmberTopology/harmonicUB.h"
+#include "AmberTopology/atom.h"
+#include "AmberTopology/io.h"
+#include "AmberTopology/element.h"
+#include "AmberTopology/HarmonicBond.h"
+#include "AmberTopology/HarmonicAngle.h"
+#include "AmberTopology/CosineDihedral.h"
+#include "AmberTopology/CMapGroup.h"
+#include "AmberTopology/molecule.h"
 
 enum class Section {
     None,

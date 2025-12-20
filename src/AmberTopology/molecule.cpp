@@ -1,4 +1,4 @@
-#include "../../include/AmberTopology/molecule.h"
+#include "AmberTopology/molecule.h"
 #include <string>
 #include <algorithm>
 #include <iostream>

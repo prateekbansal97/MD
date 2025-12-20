@@ -1,17 +1,18 @@
 //
 // Created by Prateek Bansal on 12/9/25.
 //
-#include "../../include/AmberTopology/topology.h"
-#include "../../include/System/System.h"
-#include "../../include/AmberTopology/LennardJones.h"
-#include "../../include/AmberTopology/atom.h"
-#include "../../include/System/Metrics.h"
+
+#include "System/System.h"
+#include "System/Metrics.h"
+#include "AmberTopology/topology.h"
+#include "AmberTopology/LennardJones.h"
+#include "AmberTopology/atom.h"
+#include "AmberTopology/CoulombicEE.h"
 
 #include <vector>
 #include <cmath>
 #include <algorithm>
 #include <array>
-#include "AmberTopology/CoulombicEE.h"
 
 void System::init()
 {
@@ -53,10 +54,6 @@ void System::init()
     std::cout << forces[0] << " " << forces[1] << " " << forces[2] << "\n";
     std::cout << forces[3] << " " << forces[4] << " " << forces[5] << "\n";
     std::cout << forces[6] << " " << forces[7] << " " << forces[8] << "\n";
-
-    // std::cout << "LJ pairs: " << lj_pairs_.size() << "\n";
-    // std::cout << "EE pairs span size: " << ee_pairs_.size() << "\n";
-    // std::cout << "EE buf pairs: " << ee_pairs_buf_.size() << "\n";
 
 }
 

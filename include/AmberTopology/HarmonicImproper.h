@@ -2,7 +2,6 @@
 #define HARMONIIMPROPER_H
 
 
-// #include "atom.h"
 
 
 class HarmonicImproper

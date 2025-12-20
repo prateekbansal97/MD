@@ -2,9 +2,8 @@
 // Created by Prateek Bansal on 12/10/25.
 //
 
-#include "../../include/AmberTopology/CMapGroup.h"
+#include "AmberTopology/CMapGroup.h"
 #include <vector>
-// #include <cmath>
 
 double CMapGroup::return_energy_linear(const double phi_, const double psi_, const std::vector<double>& grid, const int resolution)
 {

@@ -1,6 +1,5 @@
 
-// #include "../../include/AmberTopology/atom.h"
-#include "../../include/AmberTopology/HarmonicAngle.h"
+#include "AmberTopology/HarmonicAngle.h"
 
 double HarmonicAngle::return_energy(const double angle_) const
 {

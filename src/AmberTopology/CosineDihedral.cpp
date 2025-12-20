@@ -1,5 +1,4 @@
-// #include "../../include/AmberTopology/atom.h"
-#include "../../include/AmberTopology/CosineDihedral.h"
+#include "AmberTopology/CosineDihedral.h"
 #include <cmath>
 
 double CosineDihedral::return_energy(const double dihedra) const

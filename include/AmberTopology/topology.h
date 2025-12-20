@@ -1,22 +1,23 @@
 #ifndef TOPOLOGY_H
 #define TOPOLOGY_H
 
-#include <vector>
-#include <string>
-#include <unordered_set>
-#include <unordered_map>
-#include <array>
-
 #include "atom.h"
-// #include "io.h"
 #include "harmonicUB.h"
 #include "HarmonicImproper.h"
 #include "HarmonicBond.h"
 #include "HarmonicAngle.h"
 #include "CosineDihedral.h"
-#include <iostream>
 #include "CMapGroup.h"
 #include "molecule.h"
+
+#include <vector>
+#include <string>
+#include <unordered_set>
+#include <unordered_map>
+#include <array>
+#include <iostream>
+
+
 
 class Topology 
 

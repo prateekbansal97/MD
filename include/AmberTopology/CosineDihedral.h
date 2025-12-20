@@ -2,7 +2,6 @@
 #define COSINEDIHEDRAL_H
 
 
-// #include "atom.h"
 
 
 class CosineDihedral

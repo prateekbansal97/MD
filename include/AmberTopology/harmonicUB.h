@@ -2,7 +2,6 @@
 #define HARMONICUB_H
 
 
-// #include "atom.h"
 
 
 class HarmonicUB

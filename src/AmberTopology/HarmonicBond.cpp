@@ -1,6 +1,5 @@
 
-// #include "../../include/AmberTopology/atom.h"
-#include "../../include/AmberTopology/HarmonicBond.h"
+#include "AmberTopology/HarmonicBond.h"
 
 double HarmonicBond::return_energy(const double distance_) const
 {

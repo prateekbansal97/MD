@@ -1,7 +1,5 @@
 
-// #include "../../include/AmberTopology/atom.h"
-#include "../../include/AmberTopology/HarmonicImproper.h"
-// #include <cmath>
+#include "AmberTopology/HarmonicImproper.h"
 
 double HarmonicImproper::return_energy(const double angle_radians) const
 {

@@ -12,8 +12,8 @@
 // #include <array>
 #include <ranges>
 
-#include "../../include/AmberTopology/topology.h"
-
+// #include "../../include/AmberTopology/topology.h"
+#include "AmberTopology/topology.h"
 
 struct NBPair {
     int i;

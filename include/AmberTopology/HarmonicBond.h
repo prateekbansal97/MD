@@ -2,7 +2,6 @@
 #define HARMONICBOND_H
 
 
-// #include "atom.h"
 
 
 class HarmonicBond
