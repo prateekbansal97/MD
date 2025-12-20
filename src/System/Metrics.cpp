@@ -80,4 +80,5 @@ double dihedral(const double x1, const double y1, const double z1, const double 
     const double y = val*magb1;
     return std::atan2(y, x);
 }
-}
+
+} // namespcae Metrics

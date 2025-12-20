@@ -1,8 +1,12 @@
 #ifndef HARMONICANGLE_H
 #define HARMONICANGLE_H
 
-class HarmonicAngle
+namespace md { class System; }
+
+namespace md::Bonded
 {
+    class HarmonicAngle
+    {
 
     public:
         HarmonicAngle(const double Angle_force_constant, const double Angle_Equil) :
@@ -56,6 +60,8 @@ class HarmonicAngle
         bool isH_;
         double angle_;
         double energy_;
-        friend class System;
-};
+        friend class ::md::System;
+    };
+
+} //namespace md
 #endif //HARMONICANGLE_H

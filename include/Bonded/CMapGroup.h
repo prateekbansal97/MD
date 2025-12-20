@@ -1,13 +1,18 @@
 #ifndef CMapGroup_H
 #define CMapGroup_H
 
+namespace md { class System; }
+
 #include <vector>
 #include <utility>
 
-class CMapGroup
+
+namespace md::Bonded
 {
+    class CMapGroup
+    {
     public:
-        
+
         CMapGroup(const int parameter_set, const int atomA_index, const int atomB_index, const int atomC_index, const int atomD_index, const int atomE_index) :
         parameter_set_(parameter_set),
         atomA_index_(atomA_index),
@@ -54,6 +59,7 @@ class CMapGroup
         double psi_;
         double energy_;
 
-        friend class System;
-};
+        friend class ::md::System;
+    };
+} // namespace md
 #endif //CMapGroup_H

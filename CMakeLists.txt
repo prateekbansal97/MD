@@ -1,21 +1,3 @@
-#cmake_minimum_required(VERSION 3.10)
-#project(MD)
-#
-#set(CMAKE_C_COMPILER "/usr/bin/clang")
-#set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-##include_directories(${CMAKE_SOURCE_DIR}/include/AmberTopology/)
-#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-#set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#
-#set(HEADERS include/AmberTopology/io.h include/AmberTopology/atom.h include/AmberTopology/topology.h include/AmberTopology/element.h include/AmberTopology/harmonicUB.h include/AmberTopology/HarmonicImproper.h include/AmberTopology/HarmonicBond.h include/AmberTopology/HarmonicAngle.h include/AmberTopology/CosineDihedral.h include/AmberTopology/CMapGroup.h)
-#set(SOURCES main.cpp src/AmberTopology/io.cpp src/AmberTopology/atom.cpp src/AmberTopology/element.cpp src/AmberTopology/topology.cpp src/AmberTopology/harmonicUB.cpp src/AmberTopology/HarmonicImproper.cpp src/AmberTopology/HarmonicBond.cpp src/AmberTopology/HarmonicAngle.cpp src/AmberTopology/CosineDihedral.cpp src/AmberTopology/molecule.cpp
-#        src/System/system.cpp
-#        include/System/System.h
-#        src/AmberTopology/CMapGroup.cpp)
-#add_executable(main ${SOURCES})
-
-
 cmake_minimum_required(VERSION 3.18) # 3.18+ recommended for CUDA_ARCHITECTURES
 project(MD LANGUAGES CXX)
 
@@ -27,21 +9,21 @@ option(ENABLE_CUDA "Build with CUDA acceleration" OFF)
 
 # ---- AmberTopology library ----
 add_library(amber_topology
-        src/AmberTopology/io.cpp
+        src/util/IO.cpp
         src/AmberTopology/atom.cpp
         src/AmberTopology/element.cpp
         src/AmberTopology/topology.cpp
-        src/AmberTopology/harmonicUB.cpp
-        src/AmberTopology/HarmonicImproper.cpp
-        src/AmberTopology/HarmonicBond.cpp
-        src/AmberTopology/HarmonicAngle.cpp
-        src/AmberTopology/CosineDihedral.cpp
-        src/AmberTopology/cmapgroup.cpp
         src/AmberTopology/molecule.cpp
-        src/AmberTopology/LennardJones.cpp
-        include/AmberTopology/LennardJones.h
-        include/AmberTopology/CoulombicEE.h
-        src/AmberTopology/CoulombicEE.cpp
+        src/Bonded/harmonicUB.cpp
+        src/Bonded/HarmonicImproper.cpp
+        src/Bonded/HarmonicBond.cpp
+        src/Bonded/HarmonicAngle.cpp
+        src/Bonded/CosineDihedral.cpp
+        src/Bonded/cmapgroup.cpp
+        src/NonBonded/LennardJones.cpp
+        include/NonBonded/LennardJones.h
+        include/NonBonded/CoulombicEE.h
+        src/NonBonded/CoulombicEE.cpp
 )
 
 target_include_directories(amber_topology PUBLIC ${CMAKE_SOURCE_DIR}/include)
@@ -49,9 +31,16 @@ target_compile_features(amber_topology PUBLIC cxx_std_17)
 
 # ---- System library (your integrator/forces orchestration) ----
 add_library(md_system
-        src/System/system.cpp
+        src/System/System.cpp
         src/System/metrics.cpp
         include/System/metrics.h
+        src/System/init.cpp
+        src/System/NonBondedUtils.cpp
+        src/System/PBC.cpp
+        src/System/BondedEnergy.cpp
+        src/System/NonBondedEnergy.cpp
+        src/System/BondedForces.cpp
+        src/System/NonBondedForces.cpp
 )
 target_include_directories(md_system PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(md_system PUBLIC amber_topology)
@@ -80,5 +69,5 @@ if(ENABLE_CUDA)
 endif()
 
 # ---- Executable ----
-add_executable(main main.cpp)
+add_executable(main apps/main.cpp)
 target_link_libraries(main PRIVATE md_system)

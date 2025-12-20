@@ -1,8 +1,8 @@
 
 #include <iostream>
 #include <string>
-#include "include/AmberTopology/Topology.h"
-#include "include/System/System.h"
+#include "../include/AmberTopology/Topology.h"
+#include "../include/System/System.h"
 int main(const int argc, char* argv[])
 {
     if (argc < 2) {
@@ -10,16 +10,16 @@ int main(const int argc, char* argv[])
         return 1;
     }
 
-    std::string parmtop_path = argv[1];
+    const std::string parmtop_path = argv[1];
     std::string coords_path;
 
     if (argc >= 3) {
         coords_path = argv[2];
     }
 
-    Topology top = Topology::read_topology_coordinates(parmtop_path, coords_path);
+    const md::Topology top = md::Topology::read_topology_coordinates(parmtop_path, coords_path);
 
-    System sys = System(top);
+    md::System sys = md::System(top);
 
     sys.init();
 //    sys.minimize();

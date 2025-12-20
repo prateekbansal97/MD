@@ -1,11 +1,12 @@
 #ifndef HARMONICUB_H
 #define HARMONICUB_H
 
+namespace md { class System; }
 
-
-
-class HarmonicUB
+namespace md::Bonded
 {
+    class HarmonicUB
+    {
 
     public:
         HarmonicUB(const double UB_force_constant, const double UB_force_equil) :
@@ -53,7 +54,7 @@ class HarmonicUB
 
         [[nodiscard]] double calculate_energy(double distance) const;
 
-        friend class System;
-
-};
+        friend class ::md::System;
+    };
+} //namespace md
 #endif //HARMONICUB_H

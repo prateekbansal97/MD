@@ -1,11 +1,12 @@
 #ifndef HARMONICBOND_H
 #define HARMONICBOND_H
 
+namespace md { class System; }
 
-
-
-class HarmonicBond
+namespace md::Bonded
 {
+    class HarmonicBond
+    {
 
     public:
         HarmonicBond(const double Bond_force_constant, const double Bond_Equil) :
@@ -58,6 +59,7 @@ class HarmonicBond
         double distance_;
         double energy_;
 
-        friend class System;
-};
+        friend class ::md::System;
+    };
+} //namespace md
 #endif //HARMONICBOND_H

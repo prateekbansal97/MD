@@ -1,11 +1,12 @@
 #ifndef COSINEDIHEDRAL_H
 #define COSINEDIHEDRAL_H
 
+namespace md { class System; }
 
-
-
-class CosineDihedral
+namespace md::Bonded
 {
+    class CosineDihedral
+    {
 
     public:
         CosineDihedral(const double Dihedral_force_constant, const double Dihedral_Phase, const double Dihedral_Periodicity,
@@ -21,7 +22,7 @@ class CosineDihedral
         isH_(false),
         improper_(improper),
         exclude_14_(exclude_14) {}
-        
+
         CosineDihedral(const double Dihedral_force_constant, const double Dihedral_Phase, const double Dihedral_Periodicity,
                         const int atomA_index, const int atomB_index, const int atomC_index, const int atomD_index,
                         const bool isH, const bool improper = false, const bool exclude_14 = false) :
@@ -71,7 +72,7 @@ class CosineDihedral
         [[nodiscard]] double get_energy() const {return energy_; }
         [[nodiscard]] double get_dihedral() const {return dihedral_; }
 
-    
+
     private:
         [[nodiscard]] double calculate_energy(double dihedra) const;
         double Dihedral_force_constant_;
@@ -88,6 +89,7 @@ class CosineDihedral
         double dihedral_{};
         double energy_{};
 
-        friend class System;
-};
+        friend class ::md::System;
+    };
+}
 #endif //COSINEDIHEDRAL_H

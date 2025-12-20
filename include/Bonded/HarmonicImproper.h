@@ -1,11 +1,12 @@
 #ifndef HARMONIIMPROPER_H
 #define HARMONIIMPROPER_H
 
+namespace md { class System; }
 
-
-
-class HarmonicImproper
+namespace md::Bonded
 {
+    class HarmonicImproper
+    {
 
     public:
         HarmonicImproper(const double IMP_force_constant, const double IMP_Phase) :
@@ -33,16 +34,11 @@ class HarmonicImproper
             atomD_index_(atomD_index), type_(0),
             dihedral_(0), energy_(0) {}
 
-        void set_energy(const double energy_) {this->energy_ = energy_;}
-
-
+        void set_energy(const double energy) {this->energy_ = energy;}
         void set_type(const int type_id) { this->type_ = type_id; }
-
         void set_IMP_force_constant(const double force_constant) {this->IMP_force_constant_ = force_constant; }
-
         void set_IMP_phase_value(const double phase_value) {this->IMP_Phase_ = phase_value; }
-
-        void set_imp_dihedral(const double dihedral_) {this->dihedral_ = dihedral_;}
+        void set_imp_dihedral(const double dihedral) {this->dihedral_ = dihedral;}
 
         [[nodiscard]] int get_type() const { return type_; }
         [[nodiscard]] double get_IMP_force_constant() const {return IMP_force_constant_; }
@@ -53,7 +49,7 @@ class HarmonicImproper
         [[nodiscard]] int get_atomC_index() const {return atomC_index_; }
         [[nodiscard]] int get_atomD_index() const {return atomD_index_; }
         [[nodiscard]] double get_energy() const {return energy_;}
-    
+
     private:
         double IMP_force_constant_;
         double IMP_Phase_;
@@ -67,7 +63,8 @@ class HarmonicImproper
 
         [[nodiscard]] double calculate_energy(double distance) const;
 
-        friend class System;
+        friend class ::md::System;
 
-};
+    };
+} //namespace md
 #endif //HARMONIIMPROPER_H
