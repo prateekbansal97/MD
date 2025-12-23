@@ -32,7 +32,8 @@ namespace md
         calculate_forces_cmap();
         // calculate_forces_LJ();
         calculate_forces_LJ_pairlist();
-        calculate_forces_EE();
+        // calculate_forces_EE();
+        calculate_forces_EE_pairlist();
     }
 }// namespace md
 

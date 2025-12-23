@@ -1,4 +1,4 @@
-#include "AmberTopology/Molecule.h"
+#include "ChemicalEntity/Molecule.h"
 #include <string>
 #include <algorithm>
 #include <iostream>

@@ -10,10 +10,12 @@
 #include <algorithm>
 #include <span>
 
-#include "AmberTopology/Topology.h"
+#include "AmberTopology/AmberTopology.h"
 
 namespace md
 {
+    // namespace AmberTopology { class AmberTopology; }
+
     struct NBPair {
         int i;
         int j;
@@ -27,7 +29,7 @@ namespace md
         void init();
 
         
-        explicit System(Topology  topology):
+        explicit System(AmberTopology::AmberTopology  topology):
         topology_(std::move(topology)),
         lj_cutoff2_(0.0), lj_skin_(0.0), lj_list_cutoff_(0.0),
         lj_list_cutoff2_(0.0), ee_cutoff2_(0.0), ee_list_cutoff_(0.0),
@@ -39,11 +41,11 @@ namespace md
         lcell_y_ee_(0.0), lcell_z_ee_(0.0),
         natoms_(topology.get_nAtoms()) {init_forces();}
 
-        [[nodiscard]] const md::Topology& get_topology() const { return topology_;}
+        [[nodiscard]] const md::AmberTopology::AmberTopology& get_topology() const { return topology_;}
 
         void set_lj_cutoff(const double rc) { lj_cutoff_ = rc; lj_cutoff2_ = rc*rc; }
         void set_box(double Lx, double Ly, double Lz);
-        void set_lj_switch_radius(const double rswitch);
+        void set_lj_switch_radius(double rswitch);
         void set_use_lj_switch(const bool use_lj) { lj_use_switch_ = use_lj; }
         void set_lj_skin_(double skin);
         void set_lj_list_cutoff(double cutoff);
@@ -103,6 +105,7 @@ namespace md
         void calculate_forces_LJ();
         void calculate_forces_LJ_pairlist();
         void calculate_forces_EE();
+        void calculate_forces_EE_pairlist();
 
         void build_nonbonded_cache();
         void build_lj_pairlist();
@@ -117,7 +120,7 @@ namespace md
         void lj_switch_factors(double r, double& S, double& dSdr) const;
 
 
-        Topology topology_;
+        AmberTopology::AmberTopology topology_;
         std::vector<double> forces_;
         double bond_energies_ = 0.0;
         double angle_energy_ = 0.0;

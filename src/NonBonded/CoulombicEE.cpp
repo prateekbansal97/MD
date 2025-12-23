@@ -14,6 +14,6 @@ namespace md::NonBonded
     double CoulombicEE::CalculateGradient(const double r, const double chargeA, const double chargeB, const double epsilon)
     {
         const double r3 = r * r * r;
-        return -((chargeA * chargeB) / (r3*epsilon)) * 18.2206899283247L * 18.2206899283247L;
+        return ((chargeA * chargeB) / (r3*epsilon)) * 18.2206899283247L * 18.2206899283247L;
     }
 } // namespace md

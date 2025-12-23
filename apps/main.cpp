@@ -1,8 +1,11 @@
 
 #include <iostream>
 #include <string>
-#include "../include/AmberTopology/Topology.h"
+#include "../include/AmberTopology/AmberTopology.h"
 #include "../include/System/System.h"
+
+using namespace md::AmberTopology;
+
 int main(const int argc, char* argv[])
 {
     if (argc < 2) {
@@ -17,7 +20,7 @@ int main(const int argc, char* argv[])
         coords_path = argv[2];
     }
 
-    const md::Topology top = md::Topology::read_topology_coordinates(parmtop_path, coords_path);
+    const AmberTopology top = AmberTopology::read_topology_coordinates(parmtop_path, coords_path);
 
     md::System sys = md::System(top);
 

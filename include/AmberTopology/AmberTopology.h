@@ -1,14 +1,14 @@
 #ifndef TOPOLOGY_H
 #define TOPOLOGY_H
 
-#include "Atom.h"
+#include "../ChemicalEntity/Atom.h"
 #include "Bonded/harmonicUB.h"
 #include "Bonded/HarmonicImproper.h"
 #include "Bonded/HarmonicBond.h"
 #include "Bonded/HarmonicAngle.h"
 #include "Bonded/CosineDihedral.h"
 #include "Bonded/CMapGroup.h"
-#include "Molecule.h"
+#include "../ChemicalEntity/Molecule.h"
 
 #include <vector>
 #include <string>
@@ -18,19 +18,19 @@
 #include <iostream>
 
 
-namespace md
+namespace md::AmberTopology
 {
-    class Topology
+    class AmberTopology
 
     {
     public:
-        Topology() = default;
-        explicit Topology(const std::vector<Atom>& atoms)
+        AmberTopology() = default;
+        explicit AmberTopology(const std::vector<Atom>& atoms)
             : atom_list_(atoms) {}
 
 
 
-        static Topology read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
+        static AmberTopology read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
         const std::vector<double>& get_coordinates() { return coordinates_;}
         [[nodiscard]] std::vector<Bonded::HarmonicBond>& get_harmonic_bonds() {return HarmonicBond_list_;}
         [[nodiscard]] std::vector<Bonded::HarmonicAngle>& get_harmonic_angles() {return HarmonicAngle_list_;}
@@ -317,7 +317,7 @@ namespace md
     };
 
     template<typename T, typename... Args>
-    void Topology::check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args)
+    void AmberTopology::check_if_valid_indices(const std::string& vector_name, const std::vector<T>& vector, Args... args)
     {
         auto check_index = [&](auto index) {
             if (static_cast<std::size_t>(index) >= vector.size() || static_cast<std::size_t>(index) < 0)

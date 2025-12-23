@@ -87,6 +87,7 @@ namespace md
             }
         }
     }
+    
 
     void System::calculate_forces_LJ_pairlist()
     {
@@ -182,6 +183,7 @@ namespace md
                 apply_min_image(dx,dy,dz);
                 const double r2 = dx*dx + dy*dy + dz*dz;
                 if (r2 < 1e-12) continue;
+                if (r2 > lj_cutoff2_) continue;
                 const double r = std::sqrt(r2);
 
                 double scale = 1.0;
@@ -199,6 +201,43 @@ namespace md
                 forces_[3*atomAIndex] += fax; forces_[3*atomAIndex+1] += fay; forces_[3*atomAIndex+2] += faz;
                 forces_[3*atomBIndex] += fbx; forces_[3*atomBIndex+1] += fby; forces_[3*atomBIndex+2] += fbz;
             }
+        }
+    }
+
+    void System::calculate_forces_EE_pairlist()
+    {
+        const std::vector<double>& coordinates = topology_.get_coordinates();
+
+        for (auto& [atomAIndex, atomBIndex, p, is14]: ee_pairs_)
+        {
+            const double x1 = coordinates[3*atomAIndex], y1 = coordinates[3*atomAIndex + 1], z1 = coordinates[3*atomAIndex + 2];
+            const double x2 = coordinates[3*atomBIndex], y2 = coordinates[3*atomBIndex + 1], z2 = coordinates[3*atomBIndex + 2];
+
+            double dx = x1 - x2;
+            double dy = y1 - y2;
+            double dz = z1 - z2;
+            apply_min_image(dx,dy,dz);
+            const double r2 = dx*dx + dy*dy + dz*dz;
+            if (r2 > ee_cutoff2_) continue;
+            if (r2 < 1e-12) continue;
+
+            const double r = std::sqrt(r2);
+            if (r < 1e-12) continue;
+
+            double scale = 1.0;
+            if (is14) scale = topology_.get_scee_scale_for_pair(atomAIndex, atomBIndex);
+
+            const double gradient = (1/scale) * NonBonded::CoulombicEE::CalculateGradient(r, q_[atomAIndex], q_[atomBIndex], 1);
+            const double fax = gradient * dx;
+            const double fay = gradient * dy;
+            const double faz = gradient * dz;
+
+            const double fbx = -fax;
+            const double fby = -fay;
+            const double fbz = -faz;
+
+            forces_[3*atomAIndex] += fax; forces_[3*atomAIndex+1] += fay; forces_[3*atomAIndex+2] += faz;
+            forces_[3*atomBIndex] += fbx; forces_[3*atomBIndex+1] += fby; forces_[3*atomBIndex+2] += fbz;
         }
     }
 }

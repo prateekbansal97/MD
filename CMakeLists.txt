@@ -10,10 +10,10 @@ option(ENABLE_CUDA "Build with CUDA acceleration" OFF)
 # ---- AmberTopology library ----
 add_library(amber_topology
         src/util/IO.cpp
-        src/AmberTopology/atom.cpp
-        src/AmberTopology/element.cpp
-        src/AmberTopology/topology.cpp
-        src/AmberTopology/molecule.cpp
+        src/ChemicalEntity/atom.cpp
+        src/ChemicalEntity/element.cpp
+        src/AmberTopology/AmberTopology.cpp
+        src/ChemicalEntity/molecule.cpp
         src/Bonded/harmonicUB.cpp
         src/Bonded/HarmonicImproper.cpp
         src/Bonded/HarmonicBond.cpp
@@ -21,9 +21,11 @@ add_library(amber_topology
         src/Bonded/CosineDihedral.cpp
         src/Bonded/cmapgroup.cpp
         src/NonBonded/LennardJones.cpp
-        include/NonBonded/LennardJones.h
-        include/NonBonded/CoulombicEE.h
         src/NonBonded/CoulombicEE.cpp
+        src/AmberTopology/PrintTopology.cpp
+        src/AmberTopology/CreateBondedFromParsed.cpp
+        src/AmberTopology/CreateNonBondedFromParsed.cpp
+        src/AmberTopology/TopologyParser.cpp
 )
 
 target_include_directories(amber_topology PUBLIC ${CMAKE_SOURCE_DIR}/include)
