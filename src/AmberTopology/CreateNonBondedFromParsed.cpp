@@ -30,7 +30,7 @@ namespace md::AmberTopology
 
                 // AMBER index 0 is a placeholder/null.
                 // If we find 0, we shouldn't add -1 to the list.
-                auto& excluded_vector = atom.get_excluded_atoms();
+                auto excluded_vector = atom.get_excluded_atoms();
                 if (amber_index > 0) {
                     excluded_vector.push_back(amber_index - 1);
                 }

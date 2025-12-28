@@ -21,6 +21,9 @@ namespace md
         set_ee_cutoff(10.0);
         set_ee_skin(2.0);
 
+        set_ewald_error_tolerance(1e-6);
+        calculate_ewald_alpha();
+
 
 
         setup_neighbor_rebuild_threshold_lj();
@@ -39,7 +42,13 @@ namespace md
         calculate_energies();
         std::cout << "\nBond:" << bond_energies_ << "\nAngle: " << angle_energy_ << "\nCosineDihedral: " << dihedral_energy_ <<
         "\nUrey-Bradley: " << urey_bradley_energy_ << "\nImpropers: " << improper_energy_ << "\nCMAP energy: " << CMAP_energy_
-        << "\nVDW: " << LJ_energy_pairlist_ << "\nEE: " << EE_energy_ << "\nEE pairlist: " << EE_energy_pairlist_ << "\n";
+        << "\nVDW: " << LJ_energy_pairlist_ << "\nEE: " << EE_energy_ << "\nEE pairlist: " << EE_energy_pairlist_ << "\n" << " EE_energy_pairlist_cutoff_"
+        << EE_energy_pairlist_cutoff_ << "\n" <<
+            "EE_energy_pairlist_ewald_direct_ " << EE_energy_pairlist_ewald_direct_  << "\n" <<
+                "EE_energy_pairlist_ewald_self_" << EE_energy_pairlist_ewald_self_ << "\n";
+
+
+
 
         calculate_forces();
         std::cout << "Calculated Forces! \n"

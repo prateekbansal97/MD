@@ -51,6 +51,7 @@ namespace md
         void set_lj_list_cutoff(double cutoff);
         void set_ee_cutoff(double cutoff);
         void set_ee_skin(double eeskin);
+        void set_ewald_error_tolerance(double tolerance);
 
         [[nodiscard]] double get_lj_list_cutoff() const {return lj_list_cutoff_;}
         [[nodiscard]] double get_ee_list_cutoff() const {return ee_list_cutoff_;}
@@ -93,6 +94,10 @@ namespace md
         void calculate_LJ_energy_pairlist();
         void calculate_EE_energy();
         void calculate_EE_energy_pairlist();
+        void calculate_EE_energy_pairlist_with_cutoff();
+        void calculate_EE_ewald_direct_term();
+        void calculate_EE_ewald_self_term();
+
 
         // This is the function your L-BFGS solver will call repeatedly
         void calculate_forces();
@@ -107,6 +112,7 @@ namespace md
         void calculate_forces_EE();
         void calculate_forces_EE_pairlist();
 
+
         void build_nonbonded_cache();
         void build_lj_pairlist();
         void build_ee_pairlist();
@@ -116,6 +122,8 @@ namespace md
         void copy_ref_coords_lj();
         void copy_ref_coords_ee();
         void setup_pairlists();
+        void calculate_ewald_alpha();
+        void calculate_ewald_nnodes();
         void set_lj_switch(double rswitch);
         void lj_switch_factors(double r, double& S, double& dSdr) const;
 
@@ -132,6 +140,9 @@ namespace md
         double LJ_energy_pairlist_ = 0.0;
         double EE_energy_ = 0.0;
         double EE_energy_pairlist_ = 0.0;
+        double EE_energy_pairlist_cutoff_ = 0.0;
+        double EE_energy_pairlist_ewald_direct_ = 0.0;
+        double EE_energy_pairlist_ewald_self_ = 0.0;
 
         std::vector<int> type_;      // size N, 0-based type index
         std::vector<double> q_;      // size N, charges
@@ -152,6 +163,15 @@ namespace md
         double ee_skin_ = 0.0;
         double ee_list_cutoff_;
         double ee_list_cutoff2_;
+
+        double ewald_error_tolerance_ = 1e-6;
+        double ewald_alpha_ = 0.0;
+        int newald_mesh_x;
+        int newald_mesh_y;
+        int newald_mesh_z;
+
+
+
 
 
         bool pbc_enabled_ = false;

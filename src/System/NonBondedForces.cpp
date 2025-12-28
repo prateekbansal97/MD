@@ -183,7 +183,7 @@ namespace md
                 apply_min_image(dx,dy,dz);
                 const double r2 = dx*dx + dy*dy + dz*dz;
                 if (r2 < 1e-12) continue;
-                if (r2 > lj_cutoff2_) continue;
+                if (r2 > ee_cutoff2_) continue;
                 const double r = std::sqrt(r2);
 
                 double scale = 1.0;

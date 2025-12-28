@@ -11,13 +11,15 @@ namespace md
         calculate_bond_energy();
         calculate_angle_energy();
         calculate_dihedral_energy();
-
         calculate_UB_energy();
         calculate_improper_energy();
         calculate_CMAP_energy();
         calculate_LJ_energy_pairlist();
         calculate_EE_energy();
         calculate_EE_energy_pairlist();
+        calculate_EE_energy_pairlist_with_cutoff();
+        calculate_EE_ewald_direct_term();
+        calculate_EE_ewald_self_term();
     }
 
     void System::calculate_forces()

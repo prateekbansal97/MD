@@ -40,6 +40,7 @@ public:
     [[nodiscard]] unsigned long int get_atom_type_index() const { return atom_type_index_; }
     [[nodiscard]] long double get_partial_charge() const { return partial_charge_; }
     [[nodiscard]] std::vector<int>& get_excluded_atoms() { return excluded_atoms_; }
+    [[nodiscard]] const std::vector<int>& get_excluded_atoms() const { return excluded_atoms_; }
     [[nodiscard]] double get_mass() const { return mass_; }
     [[nodiscard]] const std::string& get_element() const { return element_; }
 

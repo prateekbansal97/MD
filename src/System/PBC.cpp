@@ -78,5 +78,22 @@ namespace md
         return x;
     }
 
+    void System::set_ewald_error_tolerance(const double tolerance)
+    {
+        ewald_error_tolerance_ = tolerance;
+    }
+
+    void System::calculate_ewald_alpha()
+    {
+        ewald_alpha_ = std::sqrt(std::log( 2 * ewald_error_tolerance_ )*-1)/ee_cutoff_;
+    }
+
+    void System::calculate_ewald_nnodes()
+    {
+        newald_mesh_x = (int)(2*ewald_alpha_*boxLx_)/(3*std::pow(ewald_error_tolerance_, 0.2));
+        newald_mesh_y = (int)(2*ewald_alpha_*boxLy_)/(3*std::pow(ewald_error_tolerance_, 0.2));
+        newald_mesh_z = (int)(2*ewald_alpha_*boxLz_)/(3*std::pow(ewald_error_tolerance_, 0.2));
+
+    }
 
 }
