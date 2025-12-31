@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 #include <span>
+#include <array>
+#include "/usr/local/Cellar/fftw/3.3.10_2/include/fftw3.h"
 
 #include "AmberTopology/AmberTopology.h"
 
@@ -23,6 +25,11 @@ namespace md
         uint8_t is14;   // 0 or 1
     };
 
+    struct BsplineData {
+        std::vector<double> weights;      // The coefficients (M_n)
+        std::vector<double> dweights;     // The derivatives (dM_n/dx) for forces
+    };
+
     class System
     {
     public:
@@ -33,12 +40,13 @@ namespace md
         topology_(std::move(topology)),
         lj_cutoff2_(0.0), lj_skin_(0.0), lj_list_cutoff_(0.0),
         lj_list_cutoff2_(0.0), ee_cutoff2_(0.0), ee_list_cutoff_(0.0),
-        ee_list_cutoff2_(0.0), nCells_lj_(0), nCells_x_lj_(0),
-        nCells_y_lj_(0), nCells_z_lj_(0),
-        lcell_x_lj_(0.0), lcell_y_lj_(0.0),
+        ee_list_cutoff2_(0.0), newald_mesh_x(0), newald_mesh_y(0),
+        newald_mesh_z(0), nCells_lj_(0),
+        nCells_x_lj_(0), nCells_y_lj_(0),
+        nCells_z_lj_(0), lcell_x_lj_(0.0), lcell_y_lj_(0.0),
         lcell_z_lj_(0.0), nCells_ee_(0), nCells_x_ee_(0),
-        nCells_y_ee_(0), nCells_z_ee_(0), lcell_x_ee_(0.0),
-        lcell_y_ee_(0.0), lcell_z_ee_(0.0),
+        nCells_y_ee_(0), nCells_z_ee_(0),
+        lcell_x_ee_(0.0), lcell_y_ee_(0.0), lcell_z_ee_(0.0),
         natoms_(topology.get_nAtoms()) {init_forces();}
 
         [[nodiscard]] const md::AmberTopology::AmberTopology& get_topology() const { return topology_;}
@@ -62,6 +70,9 @@ namespace md
         [[nodiscard]] bool ljpairs_needs_rebuild();
         [[nodiscard]] bool eepairs_needs_rebuild();
 
+        void init_pme_fft();
+        void perform_forward_fft();
+        ~System();
 
 
     private:
@@ -112,6 +123,37 @@ namespace md
         void calculate_forces_EE();
         void calculate_forces_EE_pairlist();
 
+        double calculate_center_of_mass_along_direction(std::string_view direction);
+        void move_box(std::string_view direction, double displacement);
+
+        void calculate_pme_grid_point_positions();
+        void spread_charge_pme();
+        static double findClosestSorted(const std::vector<double>& vec, double value);
+        static size_t findClosestIndexSorted(const std::vector<double>& vec, double value);
+        // static std::vector<double> calculate_b_spline_coeffs(double diff);
+        static std::array<double, 5> calculate_b_spline_coeffs_order5(double u);
+
+        fftw_plan fft_forward_plan_;
+        fftw_plan fft_backward_plan_; // You will need this later for the inverse transform
+
+        fftw_complex* pme_grid_complex_;
+        bool fft_initialized_ = false;
+
+        std::vector<double> bspline_moduli_x_;
+        std::vector<double> bspline_moduli_y_;
+        std::vector<double> bspline_moduli_z_;
+
+        // Helper to calculate moduli numerically via FFT
+        static std::vector<double> compute_moduli(int mesh_size);
+        void solve_poisson_kspace();
+        void init_pme_resources();
+        void perform_backward_fft();
+        static std::pair<std::array<double, 5>, std::array<double, 5>> calculate_b_spline_coeffs_and_derivs_order5(const double u);
+        void gather_forces_pme();
+
+
+
+
 
         void build_nonbonded_cache();
         void build_lj_pairlist();
@@ -126,6 +168,7 @@ namespace md
         void calculate_ewald_nnodes();
         void set_lj_switch(double rswitch);
         void lj_switch_factors(double r, double& S, double& dSdr) const;
+
 
 
         AmberTopology::AmberTopology topology_;
@@ -166,9 +209,11 @@ namespace md
 
         double ewald_error_tolerance_ = 1e-6;
         double ewald_alpha_ = 0.0;
+
         int newald_mesh_x;
         int newald_mesh_y;
         int newald_mesh_z;
+        int newald_total;
 
 
 
@@ -212,6 +257,16 @@ namespace md
 
         std::vector<double> coordinates_ref_wrapped_lj_;
         std::vector<double> coordinates_ref_wrapped_ee_;
+
+        std::vector<double>pme_grid_point_positions_x_;
+        std::vector<double>pme_grid_point_positions_y_;
+        std::vector<double>pme_grid_point_positions_z_;
+
+        std::vector<double>pme_grid_charge_;
+        // std::vector<double>pme_grid_charge_y_;
+        // std::vector<double>pme_grid_charge_z_;
+
+
         double rebuild_disp2_lj_ = 0.0;
         double rebuild_disp2_ee_ = 0.0;
 
