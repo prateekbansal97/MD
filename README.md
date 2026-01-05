@@ -44,3 +44,70 @@ The code implements core components found in real MD engines (bonded and non-bon
   - Supports fully periodic simulation boxes
 
 ---
+```
+MD/
+├── src/ # Core MD engine implementation
+│ ├── AmberTopology/ # Amber Topology Reading
+│ ├── Bonded/ # Bonded Interactions
+│ ├── ChemicalEntity/ # Atoms, Molecules, Element
+│ ├── NonBonded/ #NonBonded Interactions
+│ ├── System/ #PBC and System Setup, Force Field Parameters and Box initialization
+│ ├── Util/ Utilities for reading text, etc.
+│
+├── apps/ # Executables / drivers
+│ ├── main.cpp #Main driver
+│
+├── CMakeLists.txt # CMake build configuration
+└── README.md
+```
+
+## Installation
+
+Prerequisites: Install CMake and the [FFTW3](https://www.fftw.org/) development library. It can be installed on Ubuntu-like systems using `sudo apt install libfftw3-dev`.
+
+Clone and build:
+
+```
+git clone https://github.com/prateekbansal97/MD.git
+cd MD
+mkdir build && cd build
+cmake ..
+make
+```
+
+This produces an executable (e.g. main or MD) in the build directory.
+
+Usage
+
+Run the compiled program with a topology and coordinate file. For example, from the `build` directory:
+```
+./main ../CB1_apo_assym.prmtop ../CB1_apo_assym_fah_sub_100.rst7
+```
+
+This should produce an output of the form:
+```
+box: 66 66 66 90 90 90 
+Box center: 20.8168 37.7142 26.1012 
+Energies:
+Bond:3617.4 
+Angle: 2478.81 
+CosineDihedral: 744.073 
+Urey-Bradley: 34.9848 
+Impropers: 183.599 
+CMAP energy: -12.6229 
+VDW: 12888.2 
+EE: -123265 
+
+Calculated Forces! Force on first three atoms (x, y, z directions): 
+-1.56291 -3.23577 -5.86805 
+-0.125699 -0.481944 -4.23094 
+-2.59804 4.19055 -0.13331
+```
+
+
+
+(The included example files demonstrate one way to initialize a simulation.) The program will compute forces and energies based on the input structure. Note: This is a demonstration project; input/output formats and user interface are minimal. Users should examine the source in apps/ or src/ to understand how the simulation is driven.
+Author & License
+
+This code was solely written by Prateek Bansal as a personal project to showcase MD implementation skills. It is released under the MIT License (see the LICENSE file for details).
+
