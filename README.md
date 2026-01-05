@@ -1,5 +1,6 @@
 # MD
-This repository contains a **from-scratch molecular dynamics (MD) engine written in C++**.  
+This repository contains a **from-scratch molecular dynamics (MD) engine written in C++** to demonstrate MD algorithms and C++ coding proficiency. It numerically integrates Newton’s equations for particles with bonded and non-bonded interactions using neighbor lists and periodic boundary conditions. Bonded terms include harmonic bonds, angles, and dihedrals; non-bonded terms include the **Lennard-Jones 12-6 potential (for van der Waals forces)** and Coulombic electrostatics. Long-range Coulomb forces are handled by the **Particle Mesh Ewald (PME) method**, which splits interactions into real-space and Fourier-space parts for rapid convergence.
+
 It is a personal project built to demonstrate understanding of **molecular dynamics algorithms**, **numerical methods**, and **modern C++ design**, rather than a production-ready MD package.
 
 The code implements core components found in real MD engines (bonded and non-bonded forces, neighbor lists, PME electrostatics, FFTs, periodic boundary conditions) with an emphasis on correctness, clarity, and performance-aware design.
