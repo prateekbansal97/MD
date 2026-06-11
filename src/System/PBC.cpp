@@ -487,6 +487,19 @@ namespace md
 
         fftw_destroy_plan(plan);
         fftw_free(complex_out);
+
+        // For even mesh sizes the Nyquist modulus (and sometimes its neighbors)
+        // can come out as ~0, which later produces 1/0 = inf in solve_poisson_kspace.
+        // Standard PME fix: smooth near-zero moduli using the average of neighbors.
+        constexpr double eps = 1e-7;
+        for (int i = 0; i < mesh_size; ++i) {
+            if (moduli[i] < eps) {
+                const int prev = (i - 1 + mesh_size) % mesh_size;
+                const int next = (i + 1) % mesh_size;
+                moduli[i] = 0.5 * (moduli[prev] + moduli[next]);
+            }
+        }
+
         return moduli;
     }
 

@@ -43,4 +43,22 @@ namespace md::NonBonded
         return energy;
     }
 
+    double CoulombicEE::CalculateGradientEwaldDirectTerm(const double r, const double chargeA, const double chargeB, const double ewald_alpha)
+    {
+        const double k = 18.2206899283247L * 18.2206899283247L;
+        const double ar = ewald_alpha * r;
+        const double r3 = r * r * r;
+        return chargeA * chargeB * k *
+               (std::erfc(ar) / r3 + (2.0 * ewald_alpha / std::sqrt(M_PI)) * std::exp(-ar * ar) / (r * r));
+    }
+
+    double CoulombicEE::CalculateGradientEwaldExclusionCorrection(const double r, const double chargeA, const double chargeB, const double ewald_alpha)
+    {
+        const double k = 18.2206899283247L * 18.2206899283247L;
+        const double ar = ewald_alpha * r;
+        const double r3 = r * r * r;
+        return chargeA * chargeB * k *
+               ((2.0 * ewald_alpha / std::sqrt(M_PI)) * std::exp(-ar * ar) / (r * r) - std::erf(ar) / r3);
+    }
+
 } // namespace md

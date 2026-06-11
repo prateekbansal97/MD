@@ -17,6 +17,8 @@ namespace md::NonBonded
         static double CalculateEnergyCutoff(double r, double rcutoff, double chargeA, double chargeB, double epsilon);
         static double CalculateEnergyEwaldDirectTerm(double r, double chargeA, double chargeB, double ewald_alpha);
         static double CalculateEnergyEwaldDirectTerm_14(double r, double chargeA, double chargeB, double ewald_alpha, double scale);
+        static double CalculateGradientEwaldDirectTerm(double r, double chargeA, double chargeB, double ewald_alpha);
+        static double CalculateGradientEwaldExclusionCorrection(double r, double chargeA, double chargeB, double ewald_alpha);
 
 
 
