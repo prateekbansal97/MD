@@ -61,7 +61,7 @@ namespace md
         perform_forward_fft();
         solve_poisson_kspace();
         perform_backward_fft();
-        gather_forces_pme();
+
 
         calculate_energies();
         std::cout << "\nBond:" << bond_energies_ << "\nAngle: " << angle_energy_ << "\nCosineDihedral: " << dihedral_energy_ <<
@@ -73,6 +73,7 @@ namespace md
 
 
         calculate_forces();
+        gather_forces_pme();
         std::cout << "Calculated Forces! \n"
         << forces_[0] << " " << forces_[1] << " " << forces_[2] << "\n"
         << forces_[3] << " " << forces_[4] << " " << forces_[5] << "\n"

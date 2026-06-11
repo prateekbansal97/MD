@@ -224,10 +224,17 @@ namespace md
             const double r = std::sqrt(r2);
             if (r < 1e-12) continue;
 
-            double scale = 1.0;
-            if (is14) scale = topology_.get_scee_scale_for_pair(atomAIndex, atomBIndex);
+            double gradient;
+            if (is14)
+            {
+                const double scale = topology_.get_scee_scale_for_pair(atomAIndex, atomBIndex);
+                gradient = (1/scale) * NonBonded::CoulombicEE::CalculateGradient(r, q_[atomAIndex], q_[atomBIndex], 1);
+            }
+            else
+            {
+                gradient = NonBonded::CoulombicEE::CalculateGradientEwaldDirectTerm(r, q_[atomAIndex], q_[atomBIndex], ewald_alpha_);
+            }
 
-            const double gradient = (1/scale) * NonBonded::CoulombicEE::CalculateGradient(r, q_[atomAIndex], q_[atomBIndex], 1);
             const double fax = gradient * dx;
             const double fay = gradient * dy;
             const double faz = gradient * dz;
@@ -238,6 +245,39 @@ namespace md
 
             forces_[3*atomAIndex] += fax; forces_[3*atomAIndex+1] += fay; forces_[3*atomAIndex+2] += faz;
             forces_[3*atomBIndex] += fbx; forces_[3*atomBIndex+1] += fby; forces_[3*atomBIndex+2] += fbz;
+        }
+
+        // Reciprocal space includes 1-2/1-3 excluded pairs too; subtract their
+        // erf(alpha*r)/r contribution here, mirroring calculate_EE_ewald_direct_term().
+        const auto& atom_list = topology_.get_atom_list();
+        for (size_t i = 0; i < atom_list.size(); ++i)
+        {
+            for (const std::vector<int>& excluded = atom_list[i].get_excluded_atoms(); const int j_idx : excluded)
+            {
+                if (j_idx <= static_cast<int>(i)) continue;
+                if (topology_.is_14_pair(static_cast<int>(i), j_idx)) continue;
+
+                const double x1e = coordinates[3*i], y1e = coordinates[3*i+1], z1e = coordinates[3*i+2];
+                const double x2e = coordinates[3*j_idx], y2e = coordinates[3*j_idx+1], z2e = coordinates[3*j_idx+2];
+
+                double dxe = x1e - x2e;
+                double dye = y1e - y2e;
+                double dze = z1e - z2e;
+                apply_min_image(dxe, dye, dze);
+
+                const double r2e = dxe*dxe + dye*dye + dze*dze;
+                if (r2e < 1e-12) continue;
+                const double re = std::sqrt(r2e);
+
+                const double gradient_corr = NonBonded::CoulombicEE::CalculateGradientEwaldExclusionCorrection(re, q_[i], q_[j_idx], ewald_alpha_);
+
+                forces_[3*i]       += gradient_corr * dxe;
+                forces_[3*i+1]     += gradient_corr * dye;
+                forces_[3*i+2]     += gradient_corr * dze;
+                forces_[3*j_idx]   -= gradient_corr * dxe;
+                forces_[3*j_idx+1] -= gradient_corr * dye;
+                forces_[3*j_idx+2] -= gradient_corr * dze;
+            }
         }
     }
 }
