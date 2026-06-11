@@ -10,7 +10,8 @@
 #include <algorithm>
 #include <span>
 #include <array>
-#include "/usr/local/Cellar/fftw/3.3.10_2/include/fftw3.h"
+#include <fftw3.h>
+// #include "/usr/local/Cellar/fftw/3.3.10_2/include/fftw3.h"
 
 #include "AmberTopology/AmberTopology.h"
 

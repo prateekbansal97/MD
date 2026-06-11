@@ -31,7 +31,7 @@ namespace md::AmberTopology
 
 
         static AmberTopology read_topology_coordinates(const std::string& parmtop_path, const std::string& coords_path="");
-        const std::vector<double>& get_coordinates() { return coordinates_;}
+        std::vector<double>& get_coordinates() { return coordinates_;}
         [[nodiscard]] std::vector<Bonded::HarmonicBond>& get_harmonic_bonds() {return HarmonicBond_list_;}
         [[nodiscard]] std::vector<Bonded::HarmonicAngle>& get_harmonic_angles() {return HarmonicAngle_list_;}
         [[nodiscard]] std::vector<Bonded::CosineDihedral>& get_cosine_dihedrals() {return CosineDihedral_list_;}

@@ -19,7 +19,7 @@
 #        src/Bonded/HarmonicBond.cpp
 #        src/Bonded/HarmonicAngle.cpp
 #        src/Bonded/CosineDihedral.cpp
-#        src/Bonded/cmapgroup.cpp
+#        src/Bonded/CMapGroup.cpp
 #        src/NonBonded/LennardJones.cpp
 #        src/NonBonded/CoulombicEE.cpp
 #        src/AmberTopology/PrintTopology.cpp
@@ -34,8 +34,8 @@
 ## ---- System library (your integrator/forces orchestration) ----
 #add_library(md_system
 #        src/System/System.cpp
-#        src/System/metrics.cpp
-#        include/System/metrics.h
+#        src/System/Metrics.cpp
+#        include/System/Metrics.h
 #        src/System/init.cpp
 #        src/System/NonBondedUtils.cpp
 #        src/System/PBC.cpp
@@ -104,7 +104,7 @@ add_library(amber_topology
         src/Bonded/HarmonicBond.cpp
         src/Bonded/HarmonicAngle.cpp
         src/Bonded/CosineDihedral.cpp
-        src/Bonded/cmapgroup.cpp
+        src/Bonded/CMapGroup.cpp
         src/NonBonded/LennardJones.cpp
         src/NonBonded/CoulombicEE.cpp
         src/AmberTopology/PrintTopology.cpp
@@ -119,8 +119,8 @@ target_compile_features(amber_topology PUBLIC cxx_std_20)
 # ---- System library (Integrator/Forces/PME) ----
 add_library(md_system
         src/System/System.cpp
-        src/System/metrics.cpp
-        include/System/metrics.h
+        src/System/Metrics.cpp
+        include/System/Metrics.h
         src/System/init.cpp
         src/System/NonBondedUtils.cpp
         src/System/PBC.cpp

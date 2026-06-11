@@ -3,7 +3,8 @@
 //
 
 #include "System/System.h"
-#include "/usr/local/Cellar/fftw/3.3.10_2/include/fftw3.h"
+#include <fftw3.h>
+// #include "/usr/local/Cellar/fftw/3.3.10_2/include/fftw3.h"
 #include <array>
 #include <complex>
 
@@ -135,7 +136,7 @@ namespace md
 
     void System::move_box(const std::string_view direction, const double displacement)
     {
-        std::vector<double> coordinates = topology_.get_coordinates();
+        std::vector<double>& coordinates = topology_.get_coordinates();
         const char axis = static_cast<char>(std::toupper(static_cast<unsigned char>(direction[0])));
         int offset = -1;
         if (axis == 'X') { offset = 0; }
